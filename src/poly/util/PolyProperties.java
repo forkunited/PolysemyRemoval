@@ -11,9 +11,16 @@ public class PolyProperties extends Properties {
 	private String cregDataDirPath;
 	private String cregCommandPath;
 	private String freebaseNELLCategoryGazetteerPath;
+	private String freebaseTypeTopicGazetteerPath;
+	private String clueWeb09FilterPattern;
+	private String polysemousPhraseGazetteerPath;
 	
 	public PolyProperties() {
-		super(new String[] { "poly.properties" } );
+		this(null);
+	}
+	
+	public PolyProperties(String path) {
+		super( new String[] { (path == null) ? "poly.properties" : path } );
 		
 		this.googleApiKey = loadProperty("googleApiKey");
 		this.clueWeb09Facc1DirPath = loadProperty("clueWeb09Facc1DirPath");
@@ -23,6 +30,9 @@ public class PolyProperties extends Properties {
 		this.cregDataDirPath = loadProperty("cregDataDirPath");
 		this.cregCommandPath = loadProperty("cregCommandPath");
 		this.freebaseNELLCategoryGazetteerPath = loadProperty("freebaseNELLCategoryGazetteerPath");
+		this.freebaseTypeTopicGazetteerPath = loadProperty("freebaseTypeTopicGazetteerPath");
+		this.clueWeb09FilterPattern = loadProperty("clueWeb09FilterPattern");
+		this.polysemousPhraseGazetteerPath = loadProperty("polysemousPhraseGazetteerPath");
 	}
 	
 	public String getGoogleApiKey() {
@@ -55,5 +65,17 @@ public class PolyProperties extends Properties {
 	
 	public String getFreebaseNELLCategoryGazetteerPath() {
 		return this.freebaseNELLCategoryGazetteerPath;
+	}
+	
+	public String getFreebaseTypeTopicGazetteerPath() {
+		return this.freebaseTypeTopicGazetteerPath;
+	}
+	
+	public String getClueWeb09FilterPattern() {
+		return this.clueWeb09FilterPattern;
+	}
+	
+	public String getPolysemousPhraseGazetteerPath() {
+		return this.polysemousPhraseGazetteerPath;
 	}
 }

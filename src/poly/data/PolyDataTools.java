@@ -5,6 +5,7 @@ import java.io.File;
 import poly.util.PolyProperties;
 
 import ark.data.DataTools;
+import ark.data.Gazetteer;
 import ark.util.OutputWriter;
 import ark.util.Stemmer;
 
@@ -47,6 +48,15 @@ public class PolyDataTools extends DataTools {
 			}
 		});
 		
+		this.addCleanFn(new DataTools.StringTransform() {
+			public String toString() {
+				return "Trim";
+			}
+			
+			public String transform(String str) {
+				return str.trim();
+			}
+		});
 	}
 	
 	/**
@@ -67,6 +77,34 @@ public class PolyDataTools extends DataTools {
 		String modelName = name.substring("CregModel/".length());
 		String modelPath = (new File(this.properties.getCregDataDirPath(), modelName)).getAbsolutePath();
 		return new Path(name, modelPath);
+	}
+	
+	public Gazetteer getGazetteer(String name) {
+		if (this.gazetteers.containsKey(name))
+			return this.gazetteers.get(name);
 		
+		if (name.equals("FreebaseNELLCategory")) {
+			this.addGazetteer(
+				new Gazetteer(name, 
+				this.properties.getFreebaseNELLCategoryGazetteerPath(),
+				this.getCleanFn("Trim"))
+			);
+		} else if (name.equals("FreebaseTypeTopic")) {
+			this.addGazetteer(
+					new Gazetteer(name, 
+					this.properties.getFreebaseTypeTopicGazetteerPath(),
+					this.getCleanFn("Trim"))
+				);
+		} else if (name.equals("PolysemousPhrase")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getPolysemousPhraseGazetteerPath(),
+					this.getCleanFn("Trim"))
+				);
+		} else {
+			return null;
+		}
+		
+		return this.gazetteers.get(name);
 	}
 }

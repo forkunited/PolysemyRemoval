@@ -1,5 +1,7 @@
 package poly.data.annotation;
 
+import java.util.List;
+
 import ark.data.DataTools;
 import ark.data.annotation.Datum;
 import ark.data.annotation.nlp.TokenSpan;
@@ -13,8 +15,16 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		this.label = label;
 	}
 	
+	public TokenSpansDatum(int id, List<TokenSpan> tokenSpans, L label) {
+		this(id, tokenSpans.toArray(new TokenSpan[] {}), label);
+	}
+	
 	public TokenSpansDatum(int id, TokenSpan tokenSpan, L label) {
 		this(id, new TokenSpan[] { tokenSpan }, label);
+	}
+	
+	public <S> TokenSpansDatum(TokenSpansDatum<S> datum, L label) {
+		this(datum.id, datum.tokenSpans, label);
 	}
 	
 	public TokenSpansDatum(int id, TokenSpansDatum<L> datum1, TokenSpansDatum<L> datum2, L label) {

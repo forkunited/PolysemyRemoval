@@ -25,7 +25,7 @@ public class SplitHazyFACC1 {
 				BufferedWriter w = new BufferedWriter(new FileWriter(new File(outputDirPath, name)));
 				w.write(document);
 				w.close();
-				System.out.println("Outputting " + name + "...");
+				//System.out.println("Outputting " + name + "...");
 			}
 			
 			r.close();

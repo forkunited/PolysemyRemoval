@@ -1,5 +1,6 @@
 package poly.data.annotation;
 
+import java.util.Collection;
 import java.util.List;
 
 import ark.data.DataTools;
@@ -39,6 +40,25 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		this.label = label;
 	}
 	
+	public TokenSpansDatum(int id, Collection<TokenSpansDatum<L>> datums, L label) {
+		this.id = id;
+		
+		int numTokenSpans = 0;
+		for (TokenSpansDatum<L> datum : datums)
+			numTokenSpans += datum.getTokenSpans().length;
+		
+		this.tokenSpans = new TokenSpan[numTokenSpans];
+		int i = 0;
+		for (TokenSpansDatum<L> datum : datums) {
+			for (TokenSpan tokenSpan : datum.tokenSpans) {
+				this.tokenSpans[i] = tokenSpan;
+				i++;
+			}
+		}
+	
+		this.label = label;
+	}
+	
 	public TokenSpan[] getTokenSpans() {
 		return this.tokenSpans;
 	}
@@ -48,6 +68,28 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			@Override
 			public String labelFromString(String str) {
 				return str;
+			}
+		};
+	
+		return tools;
+	}
+	
+	public static Tools<LabelsList> getLabelsListTools(DataTools dataTools) {
+		Tools<LabelsList> tools =  new Tools<LabelsList>(dataTools) {
+			@Override
+			public LabelsList labelFromString(String str) {
+				return LabelsList.fromString(str);
+			}
+		};
+	
+		return tools;
+	}
+	
+	public static Tools<Boolean> getBooleanTools(DataTools dataTools) {
+		Tools<Boolean> tools =  new Tools<Boolean>(dataTools) {
+			@Override
+			public Boolean labelFromString(String str) {
+				return str.toLowerCase().equals("true") || str.equals("1");
 			}
 		};
 	

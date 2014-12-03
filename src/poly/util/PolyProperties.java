@@ -14,6 +14,8 @@ public class PolyProperties extends Properties {
 	private String freebaseTypeTopicGazetteerPath;
 	private String clueWeb09FilterPattern;
 	private String polysemousPhraseGazetteerPath;
+	private String hazyFacc1DataDirPath;
+	private String polysemyDataFilePath;
 	
 	public PolyProperties() {
 		this(null);
@@ -33,6 +35,8 @@ public class PolyProperties extends Properties {
 		this.freebaseTypeTopicGazetteerPath = loadProperty("freebaseTypeTopicGazetteerPath");
 		this.clueWeb09FilterPattern = loadProperty("clueWeb09FilterPattern");
 		this.polysemousPhraseGazetteerPath = loadProperty("polysemousPhraseGazetteerPath");
+		this.hazyFacc1DataDirPath = loadProperty("hazyFacc1DataDirPath");
+		this.polysemyDataFilePath = loadProperty("polysemyDataFilePath");
 	}
 	
 	public String getGoogleApiKey() {
@@ -77,5 +81,13 @@ public class PolyProperties extends Properties {
 	
 	public String getPolysemousPhraseGazetteerPath() {
 		return this.polysemousPhraseGazetteerPath;
+	}
+	
+	public String getHazyFacc1DataDirPath() {
+		return this.hazyFacc1DataDirPath;
+	}
+	
+	public String getPolysemyDataFilePath() {
+		return this.polysemyDataFilePath;
 	}
 }

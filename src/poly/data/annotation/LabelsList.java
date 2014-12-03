@@ -1,5 +1,6 @@
 package poly.data.annotation;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,6 +23,27 @@ public class LabelsList {
 		this.labels = labelSet.toArray(new String[] {});
 	}
 	
+	public LabelsList(Collection<LabelsList> labelsLists) {
+		Set<String> labels = new HashSet<String>();
+		for (LabelsList labelsList : labelsLists) {
+			for (String label : labelsList.labels)
+			labels.add(label);
+		}
+		
+		this.labels =  labels.toArray(new String[] { });
+	}
+	
+	public boolean contains(String str) {
+		for (String label : this.labels)
+			if (label.equals(str))
+				return true;
+		return false;
+	}
+	
+	public String[] getLabels() {
+		return this.labels;
+	}
+	
 	public String toString() {
 		StringBuilder str = new StringBuilder();
 		for (int i = 0; i < this.labels.length; i++)
@@ -30,6 +52,7 @@ public class LabelsList {
 		return str.toString();
 	}
 	
+	@Override
 	public boolean equals(Object o) {
 		LabelsList l = (LabelsList)o;
 		
@@ -41,5 +64,18 @@ public class LabelsList {
 				return false;
 		
 		return true;
+	}
+	
+	@Override
+	public int hashCode() {
+		int h = 0;
+		for (String label : this.labels)
+			h ^= label.hashCode();
+		return h;
+	}
+	
+	public static LabelsList fromString(String str) {
+		String[] strParts = str.split(",");
+		return new LabelsList(strParts, 0);
 	}
 }

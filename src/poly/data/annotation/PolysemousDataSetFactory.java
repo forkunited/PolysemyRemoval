@@ -120,7 +120,7 @@ public class PolysemousDataSetFactory {
 			List<TokenSpansDatum<LabelsList>> datums = phraseEntry.getValue();
 			int prevSplitIndex = 0;
 			for (int j = 0; j < datums.size(); j++) {
-				if (i == splitIndices[sI] || j == datums.size() - 1) {
+				if ((splitIndices.length > 0 && i == splitIndices[sI]) || j == datums.size() - 1) {
 					Map<LabelsList, Double> labelsDist = new HashMap<LabelsList, Double>();
 					TokenSpansDatum<LabelsList> combinedDatum = combineDatums(datums, prevSplitIndex, j + 1, labelsDist);
 					data.add(combinedDatum);

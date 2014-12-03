@@ -84,6 +84,15 @@ public class ExperimentGSTSeqPolysemy {
 		for (String label : labels.getLabels()) {
 			DataSet<TokenSpansDatum<Boolean>, Boolean> labelData = convertToLabelIndicatorDataSet(data, label);
 			List<DataSet<TokenSpansDatum<Boolean>, Boolean>> partitionedData = labelData.makePartition(new double[] { .8, .1, .1}, data.getDatumTools().getDataTools().getGlobalRandom());
+			
+			data.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Running on train/dev/test for label " +
+				label + " with data size " + 
+				partitionedData.get(0) + "/" +
+				partitionedData.get(1) + "/" +
+				partitionedData.get(2)
+			);
+			
+			
 			ExperimentGST<TokenSpansDatum<Boolean>, Boolean> experiment = 
 					new ExperimentGST<TokenSpansDatum<Boolean>, Boolean>(experimentName, 
 																		 experimentInputPath, 

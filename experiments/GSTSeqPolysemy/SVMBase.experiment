@@ -12,5 +12,5 @@ feature_s=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cle
 model=SVM()
 {
 	validLabels=true, false
-	trainingIterations=51
+	trainingIterations=21
 }

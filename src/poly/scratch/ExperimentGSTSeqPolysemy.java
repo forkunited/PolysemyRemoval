@@ -78,6 +78,10 @@ public class ExperimentGSTSeqPolysemy {
 							+ polysemyPerformance.getFirst()
 							+ "\tperformance="
 							+ polysemyPerformance.getSecond());
+		
+		output.resultsWriteln("Polysemy\tPerformance");
+		for (Pair<Double, Double> pair : polysemyPerformanceResults)
+			output.resultsWrite(pair.getFirst() + "\t" + pair.getSecond());
 	}
 	
 	private static double runExperiments(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data) {

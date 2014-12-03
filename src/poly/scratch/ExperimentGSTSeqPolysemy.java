@@ -43,7 +43,7 @@ public class ExperimentGSTSeqPolysemy {
 		PolysemousDataSetFactory dataFactory = new PolysemousDataSetFactory(
 				properties.getPolysemyDataFilePath(), 
 				properties.getHazyFacc1DataDirPath(), 
-				5000, 
+				100000, 
 				dataTools);
 		
 		List<Pair<Double, Double>> polysemyPerformanceResults = new ArrayList<Pair<Double, Double>>();

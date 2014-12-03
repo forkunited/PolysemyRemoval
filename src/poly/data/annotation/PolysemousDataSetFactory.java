@@ -61,13 +61,13 @@ public class PolysemousDataSetFactory {
 			String line = null;
 			Random rand = this.datumTools.getDataTools().getGlobalRandom();
 			while ((line = r.readLine()) != null) {
-				if (rand.nextDouble() > dataFraction)
-					continue;
-				
 				String[] lineParts = line.split("\t");
 				String[] phraseAndLabels = lineParts[0].split(",");
 				String phrase = phraseAndLabels[0];
 				LabelsList labels = new LabelsList(phraseAndLabels, 1);
+				
+				if (rand.nextDouble() > dataFraction && !this.data.containsKey(phrase))
+					continue;
 				
 				JSONArray jsonTokenSpans = new JSONArray(lineParts[1]);
 				TokenSpan[] tokenSpans = new TokenSpanCached[jsonTokenSpans.length()];

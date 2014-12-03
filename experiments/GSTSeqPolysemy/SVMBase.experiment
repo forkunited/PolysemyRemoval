@@ -1,0 +1,16 @@
+randomSeed=1
+maxThreads=4
+trainOnDev=true
+errorExampleExtractor=FirstTokenSpan
+
+evaluation=Accuracy()
+
+gridSearchParameterValues=l2(.5,1,5,10)
+
+feature_s=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
+
+model=SVM()
+{
+	validLabels=true, false
+	trainingIterations=51
+}

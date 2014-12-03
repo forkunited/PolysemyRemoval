@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -29,7 +30,8 @@ public class PolysemousDataSetFactory {
 	private int datumCount;
 	private Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools;
 	
-	public PolysemousDataSetFactory(String dataFilePath, final String documentDirPath, int documentCacheSize, PolyDataTools dataTools) {
+	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, PolyDataTools dataTools) {
+		this.datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
 		this.documentCache = 
 				new DocumentCache(
 						new DocumentLoader() {
@@ -57,8 +59,11 @@ public class PolysemousDataSetFactory {
 		try {
 			BufferedReader r = FileUtil.getFileReader(dataFilePath);
 			String line = null;
-
+			Random rand = this.datumTools.getDataTools().getGlobalRandom();
 			while ((line = r.readLine()) != null) {
+				if (rand.nextDouble() > dataFraction)
+					continue;
+				
 				String[] lineParts = line.split("\t");
 				String[] phraseAndLabels = lineParts[0].split(",");
 				String phrase = phraseAndLabels[0];
@@ -81,7 +86,6 @@ public class PolysemousDataSetFactory {
 			
 		}
 		
-		this.datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
 	}
 	
 	public int getPhraseCount() {

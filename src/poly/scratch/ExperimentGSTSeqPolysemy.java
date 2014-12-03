@@ -25,6 +25,7 @@ public class ExperimentGSTSeqPolysemy {
 		String dataSetName = args[1];
 		int iterations = Integer.valueOf(args[2]);
 		labels = LabelsList.fromString(args[3]);
+		double dataFraction = Double.valueOf(args[4]);
 		
 		String experimentOutputName = dataSetName + "/" + experimentName;
 
@@ -41,6 +42,7 @@ public class ExperimentGSTSeqPolysemy {
 		
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
 		PolysemousDataSetFactory dataFactory = new PolysemousDataSetFactory(
+				dataFraction,
 				properties.getPolysemyDataFilePath(), 
 				properties.getHazyFacc1DataDirPath(), 
 				100000, 

@@ -87,9 +87,9 @@ public class ExperimentGSTSeqPolysemy {
 			
 			data.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Running on train/dev/test for label " +
 				label + " with data size " + 
-				partitionedData.get(0) + "/" +
-				partitionedData.get(1) + "/" +
-				partitionedData.get(2)
+				partitionedData.get(0).size() + "/" +
+				partitionedData.get(1).size() + "/" +
+				partitionedData.get(2).size()
 			);
 			
 			

@@ -285,6 +285,13 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 	}
 	
 	@Override
+	public List<String> getSentenceTokens(int sentenceIndex) {
+		if (!loadSentence(sentenceIndex))
+			return null;
+		return super.getSentenceTokens(sentenceIndex);
+	}
+	
+	@Override
 	public String getSentence(int sentenceIndex) {
 		if (!loadSentence(sentenceIndex))
 			return null;
@@ -441,9 +448,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			
 			this.tokens[sentenceIndex] = new String[tokensJson.length()];
 
-			System.out.println("Loading sentence " + sentenceIndex);
 			for (int j = 0; j < tokensJson.length(); j++) {
-				System.out.println("Token " + tokensJson.getString(j));
 				this.tokens[sentenceIndex][j] = tokensJson.getString(j);
 			}
 			

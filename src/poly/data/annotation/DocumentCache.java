@@ -37,9 +37,7 @@ public class DocumentCache {
 			synchronized (this.locks) {
 				if (this.documents.containsKey(documentName)) {
 					return this.documents.get(documentName);
-				} else {
-					System.out.println("Loading " + this.documents.size() + " document into memory " + documentName + "...");
-				}
+				} 
 			}
 			Document document = null;
 			synchronized (this) {

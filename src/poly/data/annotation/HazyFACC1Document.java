@@ -327,7 +327,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		return super.getDependencyParse(sentenceIndex);
 	}
 	
-	private boolean saveSentenceDocuments() {
+	private synchronized boolean saveSentenceDocuments() {
 		JSONObject json = toJSON();
 		
 		try {
@@ -430,7 +430,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		return true;
 	}
 	
-	private boolean loadSentence(int sentenceIndex) {
+	private synchronized boolean loadSentence(int sentenceIndex) {
 		if (this.tokens[sentenceIndex] != null)
 			return true;
 		

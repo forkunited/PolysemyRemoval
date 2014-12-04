@@ -47,7 +47,7 @@ public class ExperimentGSTSeqPolysemy {
 				dataFraction,
 				properties.getPolysemyDataFilePath(), 
 				properties.getHazyFacc1DataDirPath(), 
-				8000, 
+				1000000, 
 				properties.getHazyFacc1SentenceDataDirPath(),
 				true,
 				dataTools);

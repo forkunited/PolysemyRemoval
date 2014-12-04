@@ -400,6 +400,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			String line = null;
 			while ((line = reader.readLine()) != null)
 				str = str.append(line);
+			reader.close();
 			
 			JSONObject json = new JSONObject(str.toString());
 			if (json.has("nlpAnnotator"))

@@ -46,6 +46,8 @@ public class ExperimentGSTSeqPolysemy {
 				properties.getPolysemyDataFilePath(), 
 				properties.getHazyFacc1DataDirPath(), 
 				8000, 
+				properties.getHazyFacc1SentenceDataDirPath(),
+				true,
 				dataTools);
 		
 		List<Pair<Double, Double>> polysemyPerformanceResults = new ArrayList<Pair<Double, Double>>();

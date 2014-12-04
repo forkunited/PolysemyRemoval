@@ -1,7 +1,6 @@
 package poly.data.annotation;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum.Tools;
@@ -30,26 +28,14 @@ public class PolysemousDataSetFactory {
 	private int datumCount;
 	private Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools;
 	
-	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, PolyDataTools dataTools) {
+	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, final String sentenceDirPath, final boolean loadBySentence, PolyDataTools dataTools) {
 		this.datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
 		this.documentCache = 
 				new DocumentCache(
 						new DocumentLoader() {
 							@Override
 							public Document load(String documentName) {
-								BufferedReader r = FileUtil.getFileReader(new File(documentDirPath, documentName).getAbsolutePath());
-								StringBuilder str = new StringBuilder();
-								String line = null;
-								try {
-									while ((line = r.readLine()) != null)
-										str.append(line).append("\n");
-									r.close();
-									
-									return new HazyFACC1Document(new JSONObject(str.toString()));
-								} catch (Exception e) {
-									e.printStackTrace();
-									return null;
-								}
+								return new HazyFACC1Document(documentName, documentDirPath, sentenceDirPath, loadBySentence);
 							} 
 						}
 				, documentCacheSize);

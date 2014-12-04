@@ -15,6 +15,7 @@ public class PolyProperties extends Properties {
 	private String clueWeb09FilterPattern;
 	private String polysemousPhraseGazetteerPath;
 	private String hazyFacc1DataDirPath;
+	private String hazyFacc1SentenceDataDirPath;
 	private String polysemyDataFilePath;
 	
 	public PolyProperties() {
@@ -36,6 +37,7 @@ public class PolyProperties extends Properties {
 		this.clueWeb09FilterPattern = loadProperty("clueWeb09FilterPattern");
 		this.polysemousPhraseGazetteerPath = loadProperty("polysemousPhraseGazetteerPath");
 		this.hazyFacc1DataDirPath = loadProperty("hazyFacc1DataDirPath");
+		this.hazyFacc1SentenceDataDirPath = loadProperty("hazyFacc1SentenceDataDirPath");
 		this.polysemyDataFilePath = loadProperty("polysemyDataFilePath");
 	}
 	
@@ -85,6 +87,10 @@ public class PolyProperties extends Properties {
 	
 	public String getHazyFacc1DataDirPath() {
 		return this.hazyFacc1DataDirPath;
+	}
+	
+	public String getHazyFacc1SentenceDataDirPath() {
+		return this.hazyFacc1SentenceDataDirPath;
 	}
 	
 	public String getPolysemyDataFilePath() {

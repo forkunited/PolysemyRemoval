@@ -59,15 +59,12 @@ public class PolysemousDataSetFactory {
 		try {
 			BufferedReader r = FileUtil.getFileReader(dataFilePath);
 			String line = null;
-			Random rand = this.datumTools.getDataTools().getGlobalRandom();
+			
 			while ((line = r.readLine()) != null) {
 				String[] lineParts = line.split("\t");
 				String[] phraseAndLabels = lineParts[0].split(",");
 				String phrase = phraseAndLabels[0];
 				LabelsList labels = new LabelsList(phraseAndLabels, 1);
-				
-				if (rand.nextDouble() > dataFraction && !this.data.containsKey(phrase))
-					continue;
 				
 				JSONArray jsonTokenSpans = new JSONArray(lineParts[1]);
 				TokenSpan[] tokenSpans = new TokenSpanCached[jsonTokenSpans.length()];
@@ -86,6 +83,16 @@ public class PolysemousDataSetFactory {
 			
 		}
 		
+		Map<String, List<TokenSpansDatum<LabelsList>>> filteredData = new HashMap<String, List<TokenSpansDatum<LabelsList>>>();
+		Random rand = this.datumTools.getDataTools().getGlobalRandom();
+		
+		for (Entry<String, List<TokenSpansDatum<LabelsList>>> entry : this.data.entrySet()) {
+			if (entry.getValue().size() == 1 || rand.nextDouble() > dataFraction)
+				continue;
+			filteredData.put(entry.getKey(), entry.getValue());
+		}
+		
+		this.data = filteredData;
 	}
 	
 	public int getPhraseCount() {

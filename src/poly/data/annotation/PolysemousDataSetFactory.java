@@ -31,8 +31,6 @@ public class PolysemousDataSetFactory {
 	private Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools;
 	
 	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, PolyDataTools dataTools) {
-		Random rand = this.datumTools.getDataTools().getGlobalRandom();
-		
 		this.datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
 		this.documentCache = 
 				new DocumentCache(
@@ -56,6 +54,7 @@ public class PolysemousDataSetFactory {
 						}
 				, documentCacheSize);
 		
+		Random rand = this.datumTools.getDataTools().getGlobalRandom();
 		this.datumCount = 0;
 		this.data = new HashMap<String, List<TokenSpansDatum<LabelsList>>>();
 		try {

@@ -26,6 +26,7 @@ public class ExperimentGSTSeqPolysemy {
 		int iterations = Integer.valueOf(args[2]);
 		labels = LabelsList.fromString(args[3]);
 		double dataFraction = Double.valueOf(args[4]);
+		int randomSeed = Integer.valueOf(args[5]);
 		
 		String experimentOutputName = dataSetName + "/" + experimentName;
 
@@ -41,6 +42,7 @@ public class ExperimentGSTSeqPolysemy {
 			);
 		
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
+		dataTools.setRandomSeed(randomSeed);
 		PolysemousDataSetFactory dataFactory = new PolysemousDataSetFactory(
 				dataFraction,
 				properties.getPolysemyDataFilePath(), 

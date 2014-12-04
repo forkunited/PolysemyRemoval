@@ -329,7 +329,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			if (this.nlpAnnotator != null)
 				metaDataJson.put("nlpAnnotator", this.nlpAnnotator);
 			metaDataJson.put("language", this.language.toString());
-			metaDataJson.put("facc1", json.getJSONObject("facc1"));
+			metaDataJson.put("facc1", json.getJSONArray("facc1"));
 			metaDataJson.put("sentenceCount", this.tokens.length);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(metaDataFile));
 			writer.write(metaDataJson.toString());
@@ -337,7 +337,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			
 			File nerFile = new File(this.sentenceDirPath, this.name + ".ner");
 			writer = new BufferedWriter(new FileWriter(nerFile));
-			writer.write(json.getJSONObject("ner").toString());
+			writer.write(json.getJSONArray("ner").toString());
 			writer.close();
 			
 			for (int i = 0; i < this.tokens.length; i++) {

@@ -286,10 +286,8 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 	
 	@Override
 	public List<String> getSentenceTokens(int sentenceIndex) {
-		if (!loadSentence(sentenceIndex)) {
-			System.out.println("Failed to get sentence " + sentenceIndex + " " + this.name);
+		if (!loadSentence(sentenceIndex))
 			return null;
-		}
 		return super.getSentenceTokens(sentenceIndex);
 	}
 	
@@ -451,6 +449,9 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			this.tokens[sentenceIndex] = new String[tokensJson.length()];
 
 			for (int j = 0; j < tokensJson.length(); j++) {
+				if (tokensJson.getString(j) == null)
+					System.out.println("Failed to load token " + this.name + " " + sentenceIndex + " " + j);
+				
 				this.tokens[sentenceIndex][j] = tokensJson.getString(j);
 			}
 			

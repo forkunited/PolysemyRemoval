@@ -436,6 +436,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		
 		try {
 			File sentenceFile = new File(this.sentenceDirPath, this.name + ".s" + sentenceIndex);
+			System.out.println(sentenceFile.getAbsolutePath());
 			BufferedReader reader = FileUtil.getFileReader(sentenceFile.getAbsolutePath());
 			StringBuilder str = new StringBuilder();
 			String line = null;
@@ -465,7 +466,6 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 				this.constituencyParses[sentenceIndex] = ConstituencyParse.fromString(sentenceJson.getString("constituencyParse"), this, sentenceIndex);
 		
 		} catch (Exception e) {
-			System.out.println(this.name + " " + sentenceIndex);
 			e.printStackTrace();
 			return false;
 		}

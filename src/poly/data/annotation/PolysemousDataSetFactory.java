@@ -31,6 +31,8 @@ public class PolysemousDataSetFactory {
 	private Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools;
 	
 	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, PolyDataTools dataTools) {
+		Random rand = this.datumTools.getDataTools().getGlobalRandom();
+		
 		this.datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
 		this.documentCache = 
 				new DocumentCache(
@@ -66,6 +68,9 @@ public class PolysemousDataSetFactory {
 				String phrase = phraseAndLabels[0];
 				LabelsList labels = new LabelsList(phraseAndLabels, 1);
 				
+				if (rand.nextDouble() > dataFraction)
+					continue;
+				
 				JSONArray jsonTokenSpans = new JSONArray(lineParts[1]);
 				TokenSpan[] tokenSpans = new TokenSpanCached[jsonTokenSpans.length()];
 				for (int i = 0; i < tokenSpans.length; i++)
@@ -83,8 +88,7 @@ public class PolysemousDataSetFactory {
 			
 		}
 		
-		Map<String, List<TokenSpansDatum<LabelsList>>> filteredData = new HashMap<String, List<TokenSpansDatum<LabelsList>>>();
-		Random rand = this.datumTools.getDataTools().getGlobalRandom();
+		/*Map<String, List<TokenSpansDatum<LabelsList>>> filteredData = new HashMap<String, List<TokenSpansDatum<LabelsList>>>();
 		
 		for (Entry<String, List<TokenSpansDatum<LabelsList>>> entry : this.data.entrySet()) {
 			if (entry.getValue().size() == 1 || rand.nextDouble() > dataFraction)
@@ -92,7 +96,7 @@ public class PolysemousDataSetFactory {
 			filteredData.put(entry.getKey(), entry.getValue());
 		}
 		
-		this.data = filteredData;
+		this.data = filteredData;*/
 	}
 	
 	public int getPhraseCount() {

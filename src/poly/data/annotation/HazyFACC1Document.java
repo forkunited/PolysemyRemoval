@@ -286,8 +286,10 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 	
 	@Override
 	public List<String> getSentenceTokens(int sentenceIndex) {
-		if (!loadSentence(sentenceIndex))
+		if (!loadSentence(sentenceIndex)) {
+			System.out.println("Failed to get sentence " + sentenceIndex + " " + this.name);
 			return null;
+		}
 		return super.getSentenceTokens(sentenceIndex);
 	}
 	

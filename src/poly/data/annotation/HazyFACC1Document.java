@@ -373,10 +373,13 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			return true;
 		
 		File metaDataFile = new File(this.sentenceDirPath, this.name + ".facc1");
-		if (!metaDataFile.exists())
-			if (!loadFullDocument() || !saveSentenceDocuments())
+		if (!metaDataFile.exists()) {
+			if (!loadFullDocument())
 				return false;
-		
+			if (!saveSentenceDocuments())
+				return false;
+		}
+			
 		try {
 			BufferedReader reader = FileUtil.getFileReader(metaDataFile.getAbsolutePath());
 			StringBuilder str = new StringBuilder();

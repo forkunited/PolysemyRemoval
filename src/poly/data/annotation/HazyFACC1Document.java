@@ -347,7 +347,10 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 				writer.close();
 			}
 
-		} catch (Exception e) { return false; }
+		} catch (Exception e) { 
+			e.printStackTrace();
+			return false; 
+		}
 		return true;
 	}
 	

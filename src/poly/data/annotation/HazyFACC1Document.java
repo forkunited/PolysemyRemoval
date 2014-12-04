@@ -449,9 +449,6 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			this.tokens[sentenceIndex] = new String[tokensJson.length()];
 
 			for (int j = 0; j < tokensJson.length(); j++) {
-				if (tokensJson.getString(j) == null)
-					System.out.println("Failed to load token " + this.name + " " + sentenceIndex + " " + j);
-				
 				this.tokens[sentenceIndex][j] = tokensJson.getString(j);
 			}
 			

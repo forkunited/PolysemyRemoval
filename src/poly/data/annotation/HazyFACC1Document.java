@@ -435,6 +435,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			return true;
 		
 		try {
+			System.out.println(this.name + " " + sentenceIndex);
 			BufferedReader reader = FileUtil.getFileReader(new File(this.sentenceDirPath, this.name + ".s" + sentenceIndex).getAbsolutePath());
 			StringBuilder str = new StringBuilder();
 			String line = null;

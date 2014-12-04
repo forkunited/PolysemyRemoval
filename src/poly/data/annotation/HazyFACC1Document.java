@@ -415,6 +415,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			this.dependencyParses = new DependencyParse[sentenceCount];
 			this.constituencyParses = new ConstituencyParse[sentenceCount];
 		} catch (Exception e) {
+			e.printStackTrace();
 			return false;
 		}
 		
@@ -431,6 +432,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			String line = null;
 			while ((line = reader.readLine()) != null)
 				str = str.append(line);
+			reader.close();
 			
 			JSONObject sentenceJson = new JSONObject(str.toString());
 			JSONArray tokensJson = sentenceJson.getJSONArray("tokens");
@@ -452,6 +454,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 				this.constituencyParses[sentenceIndex] = ConstituencyParse.fromString(sentenceJson.getString("constituencyParse"), this, sentenceIndex);
 		
 		} catch (Exception e) {
+			e.printStackTrace();
 			return false;
 		}
 		

@@ -7,7 +7,7 @@ evaluation=Accuracy()
 
 gridSearchParameterValues=l2(10)
 
-feature_s=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
+feature_c=NGramContext(contextWindowSize=1, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
 
 model=SVM()
 {

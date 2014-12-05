@@ -1,11 +1,11 @@
 randomSeed=1
-maxThreads=1
+maxThreads=5
 trainOnDev=true
 errorExampleExtractor=FirstTokenSpan
 
 evaluation=Accuracy()
 
-gridSearchParameterValues=l2(10)
+gridSearchParameterValues=l2(0.01,0.1,1,5,10)
 
 feature_c=NGramContext(contextWindowSize=1, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
 

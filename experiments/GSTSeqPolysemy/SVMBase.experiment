@@ -19,5 +19,5 @@ feature_cpa2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOcc
 model=SVM()
 {
 	validLabels=true, false
-	trainingIterations=2
+	trainingIterations=21
 }

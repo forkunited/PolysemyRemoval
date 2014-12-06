@@ -34,7 +34,7 @@ public class Scratch {
 		System.out.println(x.toString());*/
 		
 		Scratch x = new Scratch();
-		String beforePattern1 = x.convertPattern(".*{<~/CD} (<p:NNP,NN,JJ,PRP>)+\\,?\\s*(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*", null);
+		String beforePattern1 = x.convertPattern(".*{<~/CD }((<p:NNP,NN,JJ,PRP>)+\\,?\\s*(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*)", null);
 		System.out.println(beforePattern1);
 	}
 	

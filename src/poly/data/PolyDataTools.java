@@ -44,6 +44,9 @@ public class PolyDataTools extends DataTools {
 					retStr = retStr.append(parts[i]).append("_");
 				}
 				
+				if (retStr.length() > 0)
+					retStr.delete(retStr.length() - 1, retStr.length());
+				
 				return retStr.toString().trim();
 			}
 		});

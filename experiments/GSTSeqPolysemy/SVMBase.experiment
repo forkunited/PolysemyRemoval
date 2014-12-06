@@ -7,7 +7,7 @@ evaluation=Accuracy()
 
 gridSearchParameterValues=l2(0.01,0.1,1,5,10)
 
-feature_c=NGramContext(contextWindowSize=1, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
+feature_c=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NNP,NN,JJ,PRP>)+\,?\s*(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*")
 
 model=SVM()
 {

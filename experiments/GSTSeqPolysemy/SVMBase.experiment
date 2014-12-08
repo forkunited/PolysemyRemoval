@@ -7,14 +7,7 @@ evaluation=Accuracy()
 
 gridSearchParameterValues=l2(0.01,0.1,1,5,10)
 
-feature_cpb1=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)+")
 feature_cpb2=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN,JJ,PRP> ((<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)+)")
-feature_cpb3=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)+")
-feature_cpb4=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN> ((<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)+)")
-feature_cpb5=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NN,JJ,NNP>)+(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)+")
-feature_cpb6=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN,JJ> ((<p:NN,JJ,NNP>)+(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)+)")
-feature_cpa1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
-feature_cpa2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*")
 
 model=SVM()
 {

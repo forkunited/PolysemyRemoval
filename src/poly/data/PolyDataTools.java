@@ -46,8 +46,11 @@ public class PolyDataTools extends DataTools {
 				
 				if (retStr.length() > 0)
 					retStr.delete(retStr.length() - 1, retStr.length());
-				
-				return retStr.toString().trim();
+			
+				if (retStr.length() == 0)
+					return str;
+				else
+					return retStr.toString().trim();
 			}
 		});
 		

@@ -34,7 +34,7 @@ public class Scratch {
 		System.out.println(x.toString());*/
 		
 		Scratch x = new Scratch();
-		String beforePattern1 = x.convertPattern(".*{<~/CD }((<p:NNP,NN,JJ,PRP>)+\\,?\\s*(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*)", null);
+		String beforePattern1 = x.convertPattern(".*<<~p:CD,NNP,NN,JJ,PRP>((<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)+)", null);
 		System.out.println(beforePattern1);
 	}
 	
@@ -43,9 +43,9 @@ public class Scratch {
 	protected Pattern negationPattern = Pattern.compile("\\{~([^\\}]*)\\}");
 	protected Pattern backwardNegationPattern = Pattern.compile("\\{<~([^\\}]*)\\}");
 	protected Pattern conjunctionPattern = Pattern.compile("(\\{[^\\}]*\\}&)*(\\{[^\\}]*\\})");
+	protected Pattern backwardNegationPosTagClassPattern = Pattern.compile("<<~p:([^>]*)>");
 	
 	protected String convertPattern(String inputPattern, Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools) {
-		
 		// Replace pos tag class references with disjunctions
 		Matcher posTagClassMatcher = this.posTagClassPattern.matcher(inputPattern);
 		while (posTagClassMatcher.find()) {
@@ -101,24 +101,21 @@ public class Scratch {
 			negationMatcher = this.backwardNegationPattern.matcher(inputPattern);
 		}
 		
-		// Replace conjunctions with correct syntax
-		Matcher conjunctionMatcher = this.conjunctionPattern.matcher(inputPattern);
-		while (conjunctionMatcher.find()) {
-			StringBuilder conjunctionStr = new StringBuilder();
-			String[] conjuncts = conjunctionMatcher.group().split("&");
-			
-			conjunctionStr.append("(");
-			for (int i = 0; i < conjuncts.length-1; i++) {
-				String conjunctStr = conjuncts[i].substring(1, conjuncts[i].length() - 1);
-				conjunctionStr.append("(?=" + conjunctStr + ")");
+		// Replace pos tag class references with disjunctions
+		Matcher backwardNegationPosTagClassMatcher = this.backwardNegationPosTagClassPattern.matcher(inputPattern);
+		while (backwardNegationPosTagClassMatcher.find()) {
+			StringBuilder posTagStr = new StringBuilder();
+			String posTagClassesStr = backwardNegationPosTagClassMatcher.group(1);
+			String[] posTagClasses = posTagClassesStr.split(",");
+			for (String posTagClass : posTagClasses) {
+				PoSTag[] posTags = PoSTagClass.fromString(posTagClass);
+				for (PoSTag posTag : posTags)
+					posTagStr.append("(?!/").append(posTag).append(" )");
 			}
 			
-			String conjunctStr = conjuncts[conjuncts.length - 1].substring(1, conjuncts[conjuncts.length - 1].length() - 1);
-			conjunctionStr.append("(" + conjunctStr + ")");
-			conjunctionStr.append(")");
+			inputPattern = inputPattern.replace(backwardNegationPosTagClassMatcher.group(), posTagStr.toString());
 			
-			inputPattern = inputPattern.replace(conjunctionMatcher.group(), conjunctionStr.toString());
-			conjunctionMatcher = this.conjunctionPattern.matcher(inputPattern);
+			posTagClassMatcher = this.backwardNegationPosTagClassPattern.matcher(inputPattern);
 		}
 		
 		inputPattern = inputPattern.replaceAll("([^'A-Z\\$/])([\\$A-Z]+)", "$1([^\\\\s]+/$2[\\\\s]+)");

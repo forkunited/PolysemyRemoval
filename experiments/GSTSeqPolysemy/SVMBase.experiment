@@ -19,5 +19,5 @@ feature_cpb6=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOc
 model=SVM()
 {
 	validLabels=true, false
-	trainingIterations=2
+	trainingIterations=21
 }

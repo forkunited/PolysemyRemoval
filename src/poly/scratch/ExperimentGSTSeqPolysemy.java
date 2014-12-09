@@ -140,10 +140,10 @@ public class ExperimentGSTSeqPolysemy {
 	private static DataSet<TokenSpansDatum<Boolean>, Boolean> convertToLabelIndicatorDataSet(DataSet<TokenSpansDatum<LabelsList>, LabelsList> inputData, String label) {
 		DataTools globalDataTools = inputData.getDatumTools().getDataTools();
 		OutputWriter output = new OutputWriter(
-				new File(experimentOutputPath + "." + label + ".debug.out"),
-				new File(experimentOutputPath + "." + label + ".results.out"),
-				new File(experimentOutputPath + "." + label + ".data.out"),
-				new File(experimentOutputPath + "." + label + ".model.out")
+				new File(experimentOutputPath + label.replaceAll("/", ".") + ".debug.out"),
+				new File(experimentOutputPath + label.replaceAll("/", ".") + ".results.out"),
+				new File(experimentOutputPath + label.replaceAll("/", ".") + ".data.out"),
+				new File(experimentOutputPath + label.replaceAll("/", ".") + ".model.out")
 			);
 		
 		PolyDataTools dataTools = new PolyDataTools(output, properties);

@@ -174,7 +174,7 @@ public class ExperimentGSTSeqPolysemy {
 			Pair<Boolean, Integer> majorityLabel = partitionedData.get(2).computeMajorityLabel();
 			double majorityBaseline = majorityLabel.getSecond()/((double)partitionedData.get(2).size());
 			labelData.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Running on train/dev/test " +
-			    "(polysemy=" + this.polysemy + ")" +
+			    "(polysemy=" + this.polysemy + ") " +
 				"for label " + this.label + " with data size " + 
 				partitionedData.get(0).size() + "/" +
 				partitionedData.get(1).size() + "/" +

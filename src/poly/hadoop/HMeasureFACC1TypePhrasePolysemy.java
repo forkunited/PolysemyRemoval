@@ -24,7 +24,6 @@ public class HMeasureFACC1TypePhrasePolysemy {
 		private Pattern FACC1TypePattern = Pattern.compile("([^\t]*)\t[^\t]*\t([^\t]*)\t[^\t]*\t[^\t]*\t[^\t]*\t[^\t]*\t([^\t]*)\t([^\t]*)");
 		private Pattern clueWeb09FilterPattern;
 		
-		
 		@Override
 		protected void setup(Context context) {
 			super.setup(context);

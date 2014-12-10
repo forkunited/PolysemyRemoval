@@ -28,6 +28,7 @@ import ark.util.Pair;
 
 public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC1Annotation> {
 	public static class FACC1Annotation {
+		private String phrase;
 		private int startByte; // Phrase start byte in clueweb
 		private int endByte; // Phrase end byte in clueweb
 		private double mcp; // Mention context posterior
@@ -35,7 +36,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		private String freebaseTopic; // Freebase topic
 		private String[] freebaseTypes; // Freebase types
 		
-		private static Pattern facc1TypePattern = Pattern.compile("[^\t]*\t[^\t]*\t[^\t]*\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)");
+		private static Pattern facc1TypePattern = Pattern.compile("[^\t]*\t[^\t]*\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)");
 		
 		public static class FACC1StartByteComparator implements Comparator<FACC1Annotation> {            
 			public int compare(FACC1Annotation a1, FACC1Annotation a2) {
@@ -57,14 +58,20 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 				return null;
 			
 			FACC1Annotation facc1 = new FACC1Annotation();
-			facc1.startByte = Integer.valueOf(facc1TypeMatcher.group(1)); 
-			facc1.endByte = Integer.valueOf(facc1TypeMatcher.group(2)); 
-			facc1.mcp = Double.valueOf(facc1TypeMatcher.group(3)); 
-			facc1.cp = Double.valueOf(facc1TypeMatcher.group(4));
-			facc1.freebaseTopic = facc1TypeMatcher.group(5);
-			facc1.freebaseTypes = facc1TypeMatcher.group(6).split(",");
+			
+			facc1.phrase = facc1TypeMatcher.group(1);
+			facc1.startByte = Integer.valueOf(facc1TypeMatcher.group(2)); 
+			facc1.endByte = Integer.valueOf(facc1TypeMatcher.group(3)); 
+			facc1.mcp = Double.valueOf(facc1TypeMatcher.group(4)); 
+			facc1.cp = Double.valueOf(facc1TypeMatcher.group(5));
+			facc1.freebaseTopic = facc1TypeMatcher.group(6);
+			facc1.freebaseTypes = facc1TypeMatcher.group(7).split(",");
 			
 			return facc1;
+		}
+		
+		public String getPhrase() {
+			return this.phrase;
 		}
 		
 		public String getFreebaseTopic() {
@@ -78,6 +85,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		public JSONObject toJSON() {
 			JSONObject json = new JSONObject();
 			try {
+				json.put("phrase", this.phrase);
 				json.put("startByte", this.startByte);
 				json.put("endByte", this.endByte);
 				json.put("mcp", this.mcp);
@@ -93,6 +101,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		public static FACC1Annotation fromJSON(JSONObject json) {
 			FACC1Annotation facc1 = new FACC1Annotation();
 			try {
+				facc1.phrase = json.getString("phrase");
 				facc1.startByte = json.getInt("startByte");
 				facc1.endByte = json.getInt("endByte");
 				facc1.mcp = json.getDouble("mcp");
@@ -113,6 +122,9 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 	
 	private Map<String, List<TokenSpan>> nerEntitiesToTokenSpans;
 	private List<Pair<TokenSpan, FACC1Annotation>> facc1Annotations;
+	private boolean failedFacc1Alignment;
+	private boolean ambiguousFacc1Alignment;
+	
 	private String documentDirPath;
 	private String sentenceDirPath;
 	private boolean loadBySentence;
@@ -155,10 +167,10 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		this.constituencyParses = new ConstituencyParse[0];
 		
 		Collections.sort(facc1Annotations, FACC1Annotation.facc1StartByteComparator);
+		List<TokenSpan> possibleFacc1TokenSpans = new ArrayList<TokenSpan>();
 		int currentFacc1 = 0;
-		
+		boolean singleFacc1Alignment = true;
 		this.nerEntitiesToTokenSpans = new HashMap<String, List<TokenSpan>>();
-		this.facc1Annotations = new ArrayList<Pair<TokenSpan, FACC1Annotation>>();
 		for (int i = 0; i < tokens.length; i++) {
 			for (int j = 0; j < tokens[i].length; j++) {
 				if (nerEntities[i][j] != null) {
@@ -171,6 +183,17 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 					if (!this.nerEntitiesToTokenSpans.containsKey(nerEntities[i][j]))
 						this.nerEntitiesToTokenSpans.put(nerEntities[i][j], new ArrayList<TokenSpan>());
 					this.nerEntitiesToTokenSpans.get(nerEntities[i][j]).add(new TokenSpan(this, i, j, endTokenIndex));
+				}
+				
+				for (int f = 0; f < facc1Annotations.size(); f++) {
+					TokenSpan matchingFacc1Span = getMatchingFacc1SpanAt(facc1Annotations.get(f), i, j);
+					if (matchingFacc1Span != null) {
+						possibleFacc1TokenSpans.add(matchingFacc1Span);
+						if (f != currentFacc1)
+							singleFacc1Alignment = false;
+						currentFacc1++;
+						break;
+					}
 				}
 				
 				if (currentFacc1 < facc1Annotations.size() && endBytes[i][j] > facc1Annotations.get(currentFacc1).startByte) {
@@ -190,6 +213,114 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 				}
 			}
 		}
+		
+		this.facc1Annotations = new ArrayList<Pair<TokenSpan, FACC1Annotation>>();
+		this.failedFacc1Alignment = false;
+		this.ambiguousFacc1Alignment = false;
+		if (possibleFacc1TokenSpans.size() < facc1Annotations.size()) {
+			this.failedFacc1Alignment = true;
+		} else if (singleFacc1Alignment) {
+			for (int i = 0; i < facc1Annotations.size(); i++)
+				this.facc1Annotations.add(new Pair<TokenSpan, FACC1Annotation>(possibleFacc1TokenSpans.get(i), facc1Annotations.get(i)));
+		} else {
+			List<Pair<TokenSpan, FACC1Annotation>> alignment = getAlignment(facc1Annotations, possibleFacc1TokenSpans);
+			if (alignment == null)
+				this.failedFacc1Alignment = true;
+			else
+				this.facc1Annotations = alignment;
+		}
+	}
+	
+	private List<Pair<TokenSpan, FACC1Annotation>> getAlignment(List<FACC1Annotation> facc1Annotations, List<TokenSpan> spans) {
+		List<Pair<TokenSpan, FACC1Annotation>> alignment = new ArrayList<Pair<TokenSpan, FACC1Annotation>>();
+		Map<Integer, Map<Integer, Integer>> facc1SpanMaxSuffix = new HashMap<Integer, Map<Integer, Integer>>();
+		
+		int alignmentLength = getAlignmentHelper(spans, facc1Annotations, facc1Annotations.size(), spans.size(), facc1SpanMaxSuffix, alignment);
+		if (alignmentLength < facc1Annotations.size()+1)
+			return null;
+		else
+			return alignment;
+	}
+	
+	private int getAlignmentHelper(List<TokenSpan> spans, List<FACC1Annotation> facc1Annotations, int facc1Index, int spansIndex, Map<Integer, Map<Integer, Integer>> facc1SpanMaxSuffix, List<Pair<TokenSpan, FACC1Annotation>> alignment) {
+		if (facc1SpanMaxSuffix.containsKey(facc1Index) && facc1SpanMaxSuffix.get(facc1Index).containsKey(spansIndex))
+			return facc1SpanMaxSuffix.get(facc1Index).get(spansIndex);
+		
+		int alignmentLength = 0;
+		
+		if (facc1Index >= 0 
+				&& spansIndex >= 0 
+				&& (facc1Index >= facc1Annotations.size() 
+					|| spansIndex >= spans.size() 
+					|| facc1MatchesSpan(facc1Annotations.get(facc1Index), spans.get(spansIndex)))) {
+			int maxLength = 0;
+			boolean ambiguousMax = false;
+			for (int i = -1; i < spansIndex; i++) {
+				int length = getAlignmentHelper(spans, facc1Annotations, facc1Index - 1, i, facc1SpanMaxSuffix, alignment);
+				if (length > maxLength) {
+					maxLength = length;
+					ambiguousMax = false;
+				} else if (length == maxLength && length > 0) {
+					ambiguousMax = true;
+				}
+			}
+			
+			alignmentLength = 1 + maxLength;
+			if (ambiguousMax)
+				this.ambiguousFacc1Alignment = true;
+		}
+		
+		if (!facc1SpanMaxSuffix.containsKey(facc1Index))
+			facc1SpanMaxSuffix.put(facc1Index, new HashMap<Integer, Integer>());
+		facc1SpanMaxSuffix.get(facc1Index).put(spansIndex, alignmentLength);
+			
+		return alignmentLength;
+	}
+	
+	private boolean facc1MatchesSpan(FACC1Annotation facc1, TokenSpan tokenSpan) {
+		String[] facc1Parts = facc1.getPhrase().split("[\\s+]");
+		StringBuilder facc1Glued = new StringBuilder();
+		for (int i = 0; i < facc1Parts.length; i++)
+			facc1Glued.append(facc1Parts[i]);
+		String facc1GluedStr = facc1Glued.toString();
+		
+		StringBuilder tokensGlued = new StringBuilder();
+		for (int i = tokenSpan.getStartTokenIndex(); i < tokenSpan.getEndTokenIndex(); i++) {
+			tokensGlued.append(this.tokens[tokenSpan.getSentenceIndex()][i]);
+		}
+		String tokensGluedStr = tokensGlued.toString();
+		return tokensGluedStr.equals(facc1GluedStr);
+	}
+	
+	private TokenSpan getMatchingFacc1SpanAt(FACC1Annotation facc1, int sentenceIndex, int startTokenIndex) {
+		String[] facc1Parts = facc1.getPhrase().split("[\\s+]");
+		StringBuilder facc1Glued = new StringBuilder();
+		for (int i = 0; i < facc1Parts.length; i++)
+			facc1Glued.append(facc1Parts[i]);
+		char[] facc1GluedStr = facc1Glued.toString().toCharArray();
+		int facc1CharIndex = 0;
+		for (int tokenIndex = startTokenIndex; tokenIndex < this.tokens[sentenceIndex].length; tokenIndex++) {
+			char[] tokenChars = this.tokens[sentenceIndex][tokenIndex].toCharArray();
+			for (int i = 0; i < tokenChars.length; i++) {
+				if (facc1CharIndex >= facc1GluedStr.length || tokenChars[i] != facc1GluedStr[facc1CharIndex])
+					return null;
+				facc1CharIndex++;
+			}
+			
+			if (facc1CharIndex >= facc1GluedStr.length) {
+				return new TokenSpan(this, sentenceIndex, startTokenIndex, tokenIndex + 1);
+			}
+		}
+		
+		return null; // reached end of sentence before end of facc1 phrase
+	}
+	
+	public boolean isAmbiguousFacc1Alignment() {
+		return this.ambiguousFacc1Alignment;
+	}
+	
+	public boolean isFailedFacc1Alignment() {
+		return this.failedFacc1Alignment;
 	}
 	
 	@Override
@@ -224,6 +355,8 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			}
 
 			json.put("facc1", facc1Json);
+			json.put("failedFacc1", this.failedFacc1Alignment);
+			json.put("ambiguousFacc1", this.ambiguousFacc1Alignment);
 			return json;
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -261,6 +394,9 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 				
 				this.facc1Annotations.add(new Pair<TokenSpan, FACC1Annotation>(tokenSpan, facc1));
 			}
+			
+			this.failedFacc1Alignment = json.getBoolean("failedFacc1");
+			this.ambiguousFacc1Alignment = json.getBoolean("ambiguousFacc1");
 		} catch (JSONException e) {
 			e.printStackTrace();
 			return false;
@@ -338,6 +474,8 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 				metaDataJson.put("nlpAnnotator", this.nlpAnnotator);
 			metaDataJson.put("language", this.language.toString());
 			metaDataJson.put("facc1", json.getJSONArray("facc1"));
+			metaDataJson.put("failedFacc1", json.getBoolean("failedFacc1"));
+			metaDataJson.put("ambiguousFacc1", json.getBoolean("ambiguousFacc1"));
 			metaDataJson.put("sentenceCount", this.tokens.length);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(metaDataFile));
 			writer.write(metaDataJson.toString());
@@ -416,6 +554,9 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 				
 				this.facc1Annotations.add(new Pair<TokenSpan, FACC1Annotation>(tokenSpan, facc1));
 			}
+			
+			this.ambiguousFacc1Alignment = json.getBoolean("ambiguousFacc1");
+			this.failedFacc1Alignment = json.getBoolean("failedFacc1");
 			
 			int sentenceCount = json.getInt("sentenceCount");
 			

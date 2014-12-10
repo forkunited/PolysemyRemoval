@@ -33,6 +33,9 @@ public class HConstructPolysemyDataSet {
 			
 			try {
 				HazyFACC1Document document = new HazyFACC1Document(new JSONObject(valueParts[1]));
+				if (document.isAmbiguousFacc1Alignment() || document.isFailedFacc1Alignment())
+					return;
+				
 				List<Pair<TokenSpan, FACC1Annotation>> annotations = document.getTokenSpanLabels();
 				
 				for (Pair<TokenSpan, FACC1Annotation> annotation : annotations) {

@@ -66,7 +66,7 @@ public class ExperimentGSTSeqPolysemy {
 		int iteration = 0;
 		// zero polysemy run
 		Pair<DataSet<TokenSpansDatum<LabelsList>, LabelsList>, Double> dataAndPolysemy = dataFactory.makePolysemousDataSet(dataFactory.getDatumCount());
-		Pair<Double, Pair<Double, Double>> polysemyPerformance;/* = new Pair<Double, Pair<Double, Double>>(dataAndPolysemy.getSecond(), runExperiments(dataAndPolysemy.getFirst(),dataAndPolysemy.getSecond(), maxLabelThreads, iteration));
+		Pair<Double, Pair<Double, Double>> polysemyPerformance = new Pair<Double, Pair<Double, Double>>(dataAndPolysemy.getSecond(), runExperiments(dataAndPolysemy.getFirst(),dataAndPolysemy.getSecond(), maxLabelThreads, iteration));
 		polysemyPerformanceResults.add(polysemyPerformance);
 		output.debugWriteln("Finished all experiments with polysemy="
 							+ polysemyPerformance.getFirst()
@@ -84,13 +84,12 @@ public class ExperimentGSTSeqPolysemy {
 					+ "\tperformance="
 					+ polysemyPerformance.getSecond().getFirst()
 					+ "\tnorm-performance=" + polysemyPerformance.getSecond().getSecond());
-		}*/
+		}
 		
 		iteration = iterations + 1;
 		
 		// total polysemy run
 		dataAndPolysemy = dataFactory.makePolysemousDataSet(dataFactory.getPhraseCount());	
-		output.debugWriteln("SANITY CHECK: " + dataAndPolysemy.getFirst().size() + " " + dataFactory.getPhraseCount());
 		polysemyPerformance = new Pair<Double, Pair<Double, Double>>(dataAndPolysemy.getSecond(), runExperiments(dataAndPolysemy.getFirst(), dataAndPolysemy.getSecond(), maxLabelThreads, iteration));
 		polysemyPerformanceResults.add(polysemyPerformance);
 		output.debugWriteln("Finished all experiments with polysemy="

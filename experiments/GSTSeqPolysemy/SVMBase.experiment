@@ -5,7 +5,7 @@ errorExampleExtractor=FirstTokenSpan
 
 evaluation=Accuracy()
 
-gridSearchParameterValues=l2(1,5,10,50,100,500)
+gridSearchParameterValues=l2(5,10,50,100,500,1000)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
 feature_cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*")

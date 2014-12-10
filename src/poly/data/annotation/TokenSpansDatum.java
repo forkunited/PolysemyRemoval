@@ -63,6 +63,17 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		return this.tokenSpans;
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		str.append(this.id).append(": ");
+		
+		for (TokenSpan tokenSpan : this.tokenSpans)
+			str.append(tokenSpan.toString()).append(", ");
+			
+		return str.toString();
+	}
+	
 	public static Tools<String> getStringTools(DataTools dataTools) {
 		Tools<String> tools =  new Tools<String>(dataTools) {
 			@Override

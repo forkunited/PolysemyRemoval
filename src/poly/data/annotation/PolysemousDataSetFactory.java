@@ -72,16 +72,6 @@ public class PolysemousDataSetFactory {
 		} catch (Exception e) {
 			
 		}
-		
-		/*Map<String, List<TokenSpansDatum<LabelsList>>> filteredData = new HashMap<String, List<TokenSpansDatum<LabelsList>>>();
-		
-		for (Entry<String, List<TokenSpansDatum<LabelsList>>> entry : this.data.entrySet()) {
-			if (entry.getValue().size() == 1 || rand.nextDouble() > dataFraction)
-				continue;
-			filteredData.put(entry.getKey(), entry.getValue());
-		}
-		
-		this.data = filteredData;*/
 	}
 	
 	public int getPhraseCount() {

@@ -16,7 +16,7 @@ public class PolyProperties extends Properties {
 	private String polysemousPhraseGazetteerPath;
 	private String hazyFacc1DataDirPath;
 	private String hazyFacc1SentenceDataDirPath;
-	private String polysemyDataFilePath;
+	private String polysemyDataFileDirPath;
 	
 	public PolyProperties() {
 		this(null);
@@ -38,7 +38,7 @@ public class PolyProperties extends Properties {
 		this.polysemousPhraseGazetteerPath = loadProperty("polysemousPhraseGazetteerPath");
 		this.hazyFacc1DataDirPath = loadProperty("hazyFacc1DataDirPath");
 		this.hazyFacc1SentenceDataDirPath = loadProperty("hazyFacc1SentenceDataDirPath");
-		this.polysemyDataFilePath = loadProperty("polysemyDataFilePath");
+		this.polysemyDataFileDirPath = loadProperty("polysemyDataFileDirPath");
 	}
 	
 	public String getGoogleApiKey() {
@@ -93,7 +93,7 @@ public class PolyProperties extends Properties {
 		return this.hazyFacc1SentenceDataDirPath;
 	}
 	
-	public String getPolysemyDataFilePath() {
-		return this.polysemyDataFilePath;
+	public String getPolysemyDataFileDirPath() {
+		return this.polysemyDataFileDirPath;
 	}
 }

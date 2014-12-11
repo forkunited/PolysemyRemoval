@@ -120,7 +120,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		}
 	}
 	
-	private Map<String, List<TokenSpan>> nerEntitiesToTokenSpans;
+	private Map<Integer, List<Pair<String, TokenSpan>>> sentencesToNerAndTokenSpans;
 	private List<Pair<TokenSpan, FACC1Annotation>> facc1Annotations;
 	private boolean failedFacc1Alignment;
 	private boolean ambiguousFacc1Alignment;
@@ -170,19 +170,22 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		List<TokenSpan> possibleFacc1TokenSpans = new ArrayList<TokenSpan>();
 		int currentFacc1 = 0;
 		boolean singleFacc1Alignment = true;
-		this.nerEntitiesToTokenSpans = new HashMap<String, List<TokenSpan>>();
+		this.sentencesToNerAndTokenSpans = new HashMap<Integer, List<Pair<String,TokenSpan>>>();
 		for (int i = 0; i < tokens.length; i++) {
 			for (int j = 0; j < tokens[i].length; j++) {
 				if (nerEntities[i][j] != null) {
 					int endTokenIndex = j + 1;
-					for (int k = j + 1; k < nerEntities[i].length; k++)
+					for (int k = j + 1; k < nerEntities[i].length; k++) {
 						if (nerEntities[i][k] == null || !nerEntities[i][k].equals(nerEntities[i][j])) {
 							endTokenIndex = k;
 							break;
 						}
-					if (!this.nerEntitiesToTokenSpans.containsKey(nerEntities[i][j]))
-						this.nerEntitiesToTokenSpans.put(nerEntities[i][j], new ArrayList<TokenSpan>());
-					this.nerEntitiesToTokenSpans.get(nerEntities[i][j]).add(new TokenSpan(this, i, j, endTokenIndex));
+						nerEntities[i][k] = null;
+					}
+					
+					if (!this.sentencesToNerAndTokenSpans.containsKey(i))
+						this.sentencesToNerAndTokenSpans.put(i, new ArrayList<Pair<String, TokenSpan>>());
+					this.sentencesToNerAndTokenSpans.get(i).add(new Pair<String, TokenSpan>(nerEntities[i][j], new TokenSpan(this, i, j, endTokenIndex)));
 				}
 				
 				for (int f = 0; f < facc1Annotations.size(); f++) {
@@ -194,22 +197,6 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 						currentFacc1++;
 						break;
 					}
-				}
-				
-				if (currentFacc1 < facc1Annotations.size() && endBytes[i][j] > facc1Annotations.get(currentFacc1).startByte) {
-					int endTokenIndex = j + 1;
-					for (int k = j; k < tokens[i].length; k++) {
-						if (endBytes[i][k] >= facc1Annotations.get(currentFacc1).endByte) {
-							endTokenIndex = k + 1;
-							break;
-						}
-					}
-					
-					this.facc1Annotations.add(new Pair<TokenSpan, FACC1Annotation>(
-							new TokenSpan(this, i, j, endTokenIndex), 
-							facc1Annotations.get(currentFacc1)));
-					
-					currentFacc1++;
 				}
 			}
 		}
@@ -232,8 +219,11 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 	}
 	
 	private List<Pair<TokenSpan, FACC1Annotation>> getAlignment(List<FACC1Annotation> facc1Annotations, List<TokenSpan> spans) {
-		List<Pair<TokenSpan, FACC1Annotation>> alignment = new ArrayList<Pair<TokenSpan, FACC1Annotation>>();
+		List<Pair<TokenSpan, FACC1Annotation>> alignment = new ArrayList<Pair<TokenSpan, FACC1Annotation>>(facc1Annotations.size());
 		Map<Integer, Map<Integer, Integer>> facc1SpanMaxSuffix = new HashMap<Integer, Map<Integer, Integer>>();
+		
+		for (int i = 0; i < facc1Annotations.size(); i++)
+			alignment.add(new Pair<TokenSpan, FACC1Annotation>(null, facc1Annotations.get(i)));
 		
 		int alignmentLength = getAlignmentHelper(spans, facc1Annotations, facc1Annotations.size(), spans.size(), facc1SpanMaxSuffix, alignment);
 		if (alignmentLength < facc1Annotations.size()+1)
@@ -258,6 +248,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			for (int i = -1; i < spansIndex; i++) {
 				int length = getAlignmentHelper(spans, facc1Annotations, facc1Index - 1, i, facc1SpanMaxSuffix, alignment);
 				if (length > maxLength) {
+					alignment.get(facc1Index-1).setFirst(spans.get(i));
 					maxLength = length;
 					ambiguousMax = false;
 				} else if (length == maxLength && length > 0) {
@@ -329,18 +320,22 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			JSONObject json = super.toJSON();
 		
 			JSONArray nerJson = new JSONArray();
-			for (Entry<String, List<TokenSpan>> entry : this.nerEntitiesToTokenSpans.entrySet()) {
-				JSONObject nerAndSpansJson = new JSONObject();
+			for (Entry<Integer, List<Pair<String,TokenSpan>>> entry : this.sentencesToNerAndTokenSpans.entrySet()) {
+				JSONObject sentenceNerSpansJson = new JSONObject();
 				
-				nerAndSpansJson.put("type", entry.getKey());
+				sentenceNerSpansJson.put("sentence", entry.getKey());
 				
-				JSONArray tokenSpansJson = new JSONArray();
-				for (TokenSpan tokenSpan : entry.getValue())
-					tokenSpansJson.put(tokenSpan.toJSON(true));
+				JSONArray nerSpansJson = new JSONArray();
+				for (Pair<String,TokenSpan> nerSpan : entry.getValue()) {
+					JSONObject nerSpanJson = new JSONObject();
+					nerSpanJson.put("tokenSpan", nerSpan.getSecond().toJSON(true));
+					nerSpanJson.put("type", nerSpan.getFirst());
+					nerSpansJson.put(nerSpanJson);
+				}
 				
-				nerAndSpansJson.put("tokenSpans", tokenSpansJson);
+				sentenceNerSpansJson.put("nerSpans", nerSpansJson);
 				
-				nerJson.put(nerAndSpansJson);
+				nerJson.put(sentenceNerSpansJson);
 			}
 			json.put("ner", nerJson);
 			
@@ -370,18 +365,23 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			return false;
 
 		try {
-			this.nerEntitiesToTokenSpans = new HashMap<String, List<TokenSpan>>();
+			this.sentencesToNerAndTokenSpans = new HashMap<Integer, List<Pair<String,TokenSpan>>>();
 
 			JSONArray nerJson = json.getJSONArray("ner");
 			for (int i = 0; i < nerJson.length(); i++) {
-				JSONObject nerAndSpansJson = nerJson.getJSONObject(i);
-				String type = nerAndSpansJson.getString("type");
-				this.nerEntitiesToTokenSpans.put(type, new ArrayList<TokenSpan>());
+				JSONObject sentenceNerSpansJson = nerJson.getJSONObject(i);
+				JSONArray nerSpans = sentenceNerSpansJson.getJSONArray("nerSpans");
+				List<Pair<String, TokenSpan>> sentenceNerSpans = new ArrayList<Pair<String, TokenSpan>>();
+				int sentenceIndex = sentenceNerSpansJson.getInt("sentence");
 				
-				JSONArray tokenSpansJson = nerAndSpansJson.getJSONArray("tokenSpans");
-				for (int j = 0; j < tokenSpansJson.length(); j++) {
-					this.nerEntitiesToTokenSpans.get(type).add(TokenSpan.fromJSON(tokenSpansJson.getJSONObject(j), this));
+				for (int j = 0; j < nerSpans.length(); j++) {
+					JSONObject nerSpan = nerSpans.getJSONObject(j);
+					TokenSpan span = TokenSpan.fromJSON(nerSpan.getJSONObject("tokenSpan"), this, sentenceIndex);
+					String nerType = nerSpan.getString("type");
+					sentenceNerSpans.add(new Pair<String, TokenSpan>(nerType, span));
 				}
+				
+				this.sentencesToNerAndTokenSpans.put(sentenceIndex, sentenceNerSpans);
 			}
 		
 		
@@ -461,6 +461,14 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		if (!loadSentence(sentenceIndex))
 			return null;
 		return super.getDependencyParse(sentenceIndex);
+	}
+	
+	public String getNerType(int sentenceIndex, int tokenIndex) {
+		List<Pair<String, TokenSpan>> nerTypeSpans = this.sentencesToNerAndTokenSpans.get(sentenceIndex);
+		for (Pair<String, TokenSpan> typeSpan : nerTypeSpans) 
+			if (typeSpan.getSecond().containsToken(sentenceIndex, tokenIndex))
+				return typeSpan.getFirst();
+		return null;
 	}
 	
 	private synchronized boolean saveSentenceDocuments() {

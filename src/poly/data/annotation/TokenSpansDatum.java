@@ -1,10 +1,16 @@
 package poly.data.annotation;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import poly.data.feature.FeatureNer;
 
 import ark.data.DataTools;
 import ark.data.annotation.Datum;
+import ark.data.annotation.Document;
 import ark.data.annotation.nlp.TokenSpan;
 
 public class TokenSpansDatum<L> extends Datum<L> {
@@ -110,6 +116,36 @@ public class TokenSpansDatum<L> extends Datum<L> {
 	private static abstract class Tools<L> extends Datum.Tools<TokenSpansDatum<L>, L> {
 		public Tools(DataTools dataTools) {
 			super(dataTools);
+			
+			this.addGenericFeature(new FeatureNer<TokenSpansDatum<L>, L>());
+			
+			this.addTokenSpanExtractor(new TokenSpanExtractor<TokenSpansDatum<L>, L>() {
+				@Override
+				public String toString() {
+					return "AllDocumentSentenceInitialTokens";
+				}
+				
+				@Override
+				public TokenSpan[] extract(TokenSpansDatum<L> tokenSpansDatum) {
+					Set<String> documents = new HashSet<String>();
+					List<TokenSpan> sentenceInitialTokens = new ArrayList<TokenSpan>();
+					
+					for (TokenSpan tokenSpan : tokenSpansDatum.tokenSpans) {
+						if (documents.contains(tokenSpan.getDocument().getName()))
+							continue;
+						Document document = tokenSpan.getDocument();
+						int sentenceCount = document.getSentenceCount();
+						for (int i = 0; i < sentenceCount; i++) {
+							if (document.getSentenceTokenCount(i) <= 0)
+								continue;
+							sentenceInitialTokens.add(new TokenSpan(document, i, 0, 1));
+						}
+							
+					}
+					
+					return sentenceInitialTokens.toArray(new TokenSpan[0]);
+				}
+			});
 			
 			this.addTokenSpanExtractor(new TokenSpanExtractor<TokenSpansDatum<L>, L>() {
 				@Override

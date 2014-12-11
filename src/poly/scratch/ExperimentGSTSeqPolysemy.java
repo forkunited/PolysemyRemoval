@@ -55,7 +55,7 @@ public class ExperimentGSTSeqPolysemy {
 		
 		PolysemousDataSetFactory dataFactory = new PolysemousDataSetFactory(
 				dataFraction,
-				properties.getPolysemyDataFilePath(), 
+				new File(properties.getPolysemyDataFileDirPath(), dataSetName + ".tsv").getAbsolutePath(), 
 				properties.getHazyFacc1DataDirPath(), 
 				1000000, 
 				properties.getHazyFacc1SentenceDataDirPath(),

@@ -204,10 +204,10 @@ public class HConstructHazyFACC1 {
 							"ROOT" 
 							: tokenAnnotation.getDependencyParentType());
 					
-					dependencyParseStr.append("(-");
+					dependencyParseStr.append("(g-");
 					dependencyParseStr.append(tokenAnnotation.getDependencyParentToken());
-					dependencyParseStr.append(",");
-					dependencyParseStr.append("-");
+					dependencyParseStr.append(", ");
+					dependencyParseStr.append("d-");
 					dependencyParseStr.append(tokenAnnotation.getTokenIndex() + 1);
 					dependencyParseStr.append(")");
 					if (j != numTokens - 1)

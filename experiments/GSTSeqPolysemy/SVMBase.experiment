@@ -5,7 +5,7 @@ errorExampleExtractor=FirstTokenSpan
 
 evaluation=Accuracy()
 
-gridSearchParameterValues=l2(5,10,50,100,500,1000)
+gridSearchParameterValues=l2(.5,1,5,10,50,100)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
 feature_cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*")
@@ -19,9 +19,9 @@ feature_cpnb6=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureO
 feature_cpb1=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".* (IN|TO|JJ)")
 feature_cpa1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((<p:RB,VB>)*<p:VB>).*")
 
-feature_dep=NGramDep(mode=ParentsAndChildren, useRelationTypes=true, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
-feature_sent1=NGramSentence(minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
-feature_doc1=NGramSentence(minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
+feature_dep=NGramDep(scale=INDICATOR, mode=ParentsAndChildren, useRelationTypes=true, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
+feature_sent1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
+feature_doc1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
 feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
 
 model=SVM()

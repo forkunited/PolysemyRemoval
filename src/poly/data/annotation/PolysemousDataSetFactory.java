@@ -2,6 +2,7 @@ package poly.data.annotation;
 
 import java.io.BufferedReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,6 +99,7 @@ public class PolysemousDataSetFactory {
 		System.out.println(size + " " + getDatumCount() + " " + getPhraseCount());
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(this.datumTools, null);
 		int[] splitIndices = MathUtil.reservoirSample(getDatumCount()-getPhraseCount(), size-getPhraseCount(), this.datumTools.getDataTools().getGlobalRandom());
+		Arrays.sort(splitIndices);
 		
 		int i = 1;
 		int sI = 0;

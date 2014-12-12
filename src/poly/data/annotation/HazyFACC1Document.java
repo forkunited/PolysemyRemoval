@@ -464,6 +464,9 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 	}
 	
 	public String getNerType(int sentenceIndex, int tokenIndex) {
+		if (!loadNer())
+			return null;
+		
 		List<Pair<String, TokenSpan>> nerTypeSpans = this.sentencesToNerAndTokenSpans.get(sentenceIndex);
 		for (Pair<String, TokenSpan> typeSpan : nerTypeSpans) 
 			if (typeSpan.getSecond().containsToken(sentenceIndex, tokenIndex))
@@ -500,7 +503,6 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 				writer.write(json.getJSONArray("sentences").getJSONObject(i).toString());
 				writer.close();
 			}
-
 		} catch (Exception e) { 
 			e.printStackTrace();
 			return false; 
@@ -518,6 +520,44 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 			r.close();
 			
 			fromJSON(new JSONObject(str.toString()));
+		} catch (Exception e) {
+			return false;
+		}
+		
+		return true;
+	}
+	
+	private boolean loadNer() {
+		if (this.sentencesToNerAndTokenSpans != null)
+			return true;
+		
+		try {
+			File nerFile = new File(this.sentenceDirPath, this.name + ".ner");
+			BufferedReader reader = FileUtil.getFileReader(nerFile.getAbsolutePath());
+			StringBuilder str = new StringBuilder();
+			String line = null;
+			while ((line = reader.readLine()) != null)
+				str = str.append(line);
+			reader.close();
+			
+			this.sentencesToNerAndTokenSpans = new HashMap<Integer, List<Pair<String,TokenSpan>>>();
+
+			JSONArray nerJson = new JSONArray(str.toString());
+			for (int i = 0; i < nerJson.length(); i++) {
+				JSONObject sentenceNerSpansJson = nerJson.getJSONObject(i);
+				JSONArray nerSpans = sentenceNerSpansJson.getJSONArray("nerSpans");
+				List<Pair<String, TokenSpan>> sentenceNerSpans = new ArrayList<Pair<String, TokenSpan>>();
+				int sentenceIndex = sentenceNerSpansJson.getInt("sentence");
+				
+				for (int j = 0; j < nerSpans.length(); j++) {
+					JSONObject nerSpan = nerSpans.getJSONObject(j);
+					TokenSpan span = TokenSpan.fromJSON(nerSpan.getJSONObject("tokenSpan"), this, sentenceIndex);
+					String nerType = nerSpan.getString("type");
+					sentenceNerSpans.add(new Pair<String, TokenSpan>(nerType, span));
+				}
+				
+				this.sentencesToNerAndTokenSpans.put(sentenceIndex, sentenceNerSpans);
+			}
 		} catch (Exception e) {
 			return false;
 		}

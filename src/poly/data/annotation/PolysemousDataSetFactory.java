@@ -96,7 +96,6 @@ public class PolysemousDataSetFactory {
 	 * @return a data set of the given size and a measure of its polysemy
 	 */
 	public Pair<DataSet<TokenSpansDatum<LabelsList>, LabelsList>, Double> makePolysemousDataSet(int size) {
-		System.out.println(size + " " + getDatumCount() + " " + getPhraseCount());
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(this.datumTools, null);
 		int[] splitIndices = MathUtil.reservoirSample(getDatumCount()-getPhraseCount(), size-getPhraseCount(), this.datumTools.getDataTools().getGlobalRandom());
 		Arrays.sort(splitIndices);

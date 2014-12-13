@@ -26,10 +26,10 @@ public class ConstructNounPhraseNELLCategoryGazetteer {
 		BufferedReader r = FileUtil.getFileReader(path);
 		try {
 			String line = null;
-			int i = 0;
+			int l = 0;
 			while ((line = r.readLine()) != null) {
-				if (i % 1000 == 0)
-					System.out.println("Reading line: " + i);
+				if (l % 1000 == 0)
+					System.out.println("Reading line: " + l);
 				String[] lineParts = line.split("\t");
 				String np = lineParts[0];
 				for (int i = 1; i < lineParts.length; i++) {
@@ -41,7 +41,7 @@ public class ConstructNounPhraseNELLCategoryGazetteer {
 						categoriesToPhrases.put(category, new ArrayList<Pair<String, Double>>());
 					categoriesToPhrases.get(category).add(new Pair<String, Double>(np, weight));
 				}
-				i++;
+				l++;
 			}
 			
 			r.close();

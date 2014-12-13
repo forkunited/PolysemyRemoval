@@ -11,6 +11,8 @@ import poly.data.feature.FeatureNer;
 import ark.data.DataTools;
 import ark.data.annotation.Datum;
 import ark.data.annotation.Document;
+import ark.data.annotation.nlp.PoSTag;
+import ark.data.annotation.nlp.PoSTagClass;
 import ark.data.annotation.nlp.TokenSpan;
 
 public class TokenSpansDatum<L> extends Datum<L> {
@@ -113,11 +115,32 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		return tools;
 	}
 	
-	private static abstract class Tools<L> extends Datum.Tools<TokenSpansDatum<L>, L> {
+	private static abstract class Tools<L> extends Datum.Tools<TokenSpansDatum<L>, L> { 
 		public Tools(DataTools dataTools) {
 			super(dataTools);
 			
+			PoSTag[][] NPTagClass = { PoSTagClass.NNP, PoSTagClass.NN };
+			
 			this.addGenericFeature(new FeatureNer<TokenSpansDatum<L>, L>());
+			
+			this.addStringExtractor(new StringExtractor<TokenSpansDatum<L>, L>() {
+				@Override
+				public String toString() {
+					return "FirstTokenSpan";
+				}
+				
+				@Override 
+				public String[] extract(TokenSpansDatum<L> tokenSpansDatum) {
+					return new String[] { tokenSpansDatum.getTokenSpans()[0].toString() };
+				}
+			});
+			
+			this.addStringExtractor(new StringExtractorNGramPoSTag("AllSentenceUnigramsNP", NPTagClass, false, 1));
+			this.addStringExtractor(new StringExtractorNGramPoSTag("AllDocumentUnigramsNP", NPTagClass, true, 1));
+			this.addStringExtractor(new StringExtractorNGramPoSTag("AllSentenceBigramsNP", NPTagClass, false, 2));
+			this.addStringExtractor(new StringExtractorNGramPoSTag("AllDocumentBigramsNP", NPTagClass, true, 2));
+			this.addStringExtractor(new StringExtractorNGramPoSTag("AllSentenceTrigramsNP", NPTagClass, false, 3));
+			this.addStringExtractor(new StringExtractorNGramPoSTag("AllDocumentTrigramsNP", NPTagClass, true, 3));
 			
 			this.addTokenSpanExtractor(new TokenSpanExtractor<TokenSpansDatum<L>, L>() {
 				@Override
@@ -186,6 +209,74 @@ public class TokenSpansDatum<L> extends Datum<L> {
 					return new TokenSpan[] { tokenSpansDatum.tokenSpans[tokenSpansDatum.tokenSpans.length - 1] };
 				}
 			});
+		}
+		
+		private class StringExtractorNGramPoSTag implements StringExtractor<TokenSpansDatum<L>, L> {
+			private String name;
+			private PoSTag[][] posTags;
+			private boolean fullDocument;
+			private int n;
+			
+			public StringExtractorNGramPoSTag(String name, PoSTag[][] posTags, boolean fullDocument, int n) {
+				this.name = name;
+				this.posTags = posTags;
+				this.fullDocument = fullDocument;
+				this.n = n;
+			}
+			
+			@Override
+			public String toString() {
+				return this.name;
+			}
+			
+			@Override
+			public String[] extract(TokenSpansDatum<L> datum) {
+				TokenSpan[] tokenSpans = datum.getTokenSpans();
+				Set<String> strs = new HashSet<String>();
+				Set<String> documents = new HashSet<String>();
+				for (TokenSpan tokenSpan : tokenSpans) {
+					if (this.fullDocument) {
+						Document document = tokenSpan.getDocument();
+						if (documents.contains(document.getName()))
+							continue;
+						documents.add(document.getName());
+						for (int sentenceIndex = 0; sentenceIndex < document.getSentenceCount(); sentenceIndex++) {
+							extractForSentence(document, sentenceIndex, strs);
+						}
+					} else {
+						extractForSentence(tokenSpan.getDocument(), tokenSpan.getSentenceIndex(), strs);
+					}
+				}
+				
+				return strs.toArray(new String[0]);
+			}
+			
+			private boolean extractForSentence(Document document, int sentenceIndex, Set<String> strs) {
+				int sentenceTokenCount = document.getSentenceTokenCount(sentenceIndex);
+				for (int i = 0; i < sentenceTokenCount - n + 1; i++) {
+					if (!ngramHasPosTag(document, sentenceIndex, i))
+						continue;
+					StringBuilder ngram = new StringBuilder();
+					for (int j = i; j < i + n; j++) {
+						ngram.append(document.getToken(sentenceIndex, j)).append(" ");
+					}
+					strs.add(ngram.toString().trim());
+				}
+				
+				return true;
+			}
+			
+			private boolean ngramHasPosTag(Document document, int sentenceIndex, int tokenIndex) {
+				for (int i = tokenIndex; i < tokenIndex + this.n; i++) {
+					for (PoSTag[] posTagClass : this.posTags) {
+						PoSTag posTag = document.getPoSTag(sentenceIndex, i);
+						if (PoSTagClass.classContains(posTagClass, posTag))
+							return true;
+					}
+				}
+				
+				return false;
+			}
 		}
 	}
 }

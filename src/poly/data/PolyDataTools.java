@@ -107,6 +107,13 @@ public class PolyDataTools extends DataTools {
 					this.properties.getPolysemousPhraseGazetteerPath(),
 					this.getCleanFn("Trim"))
 				);
+		} else if (name.equals("NounPhraseNELLCategory")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNounPhraseNELLCategoryGazetteerPath(),
+					this.getCleanFn("PolyDefaultCleanFn"),
+					true)
+				);
 		} else {
 			return null;
 		}

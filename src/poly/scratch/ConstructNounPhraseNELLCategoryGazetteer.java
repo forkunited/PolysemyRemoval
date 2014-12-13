@@ -27,6 +27,7 @@ public class ConstructNounPhraseNELLCategoryGazetteer {
 		try {
 			String line = null;
 			while ((line = r.readLine()) != null) {
+				System.out.println("Reading line: " + line);
 				String[] lineParts = line.split("\t");
 				String np = lineParts[0];
 				for (int i = 1; i < lineParts.length; i++) {
@@ -54,6 +55,8 @@ public class ConstructNounPhraseNELLCategoryGazetteer {
 			BufferedWriter w = new BufferedWriter(new FileWriter(properties.getNounPhraseNELLCategoryGazetteerPath()));
 		
 			for (Entry<String, List<Pair<String, Double>>> entry : categoriesToPhrases.entrySet()) {
+				System.out.println("Writing category: " + entry.getKey());
+				
 				w.write(entry.getKey() + "\t");
 				StringBuilder str = new StringBuilder();
 				for (Pair<String, Double> phrase : entry.getValue()) {

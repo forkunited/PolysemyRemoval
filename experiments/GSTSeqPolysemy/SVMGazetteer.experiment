@@ -1,0 +1,16 @@
+randomSeed=1
+maxThreads=6
+trainOnDev=true
+errorExampleExtractor=FirstTokenSpan
+
+evaluation=Accuracy()
+
+gridSearchParameterValues=l2(.1,.5,1,5,10,50)
+
+feature_gnp=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=FirstTokenSpan, includeIds=true, includeWeights=true, weightThreshold=0.80)
+
+model=SVM()
+{
+	validLabels=true, false
+	trainingIterations=21
+}

@@ -74,7 +74,7 @@ public class PolyDataTools extends DataTools {
 	 * stored in the directory specified by 'cregDataDirPath' in
 	 * poly.properties.
 	 */
-	public Path getPath(String name) {
+	public synchronized Path getPath(String name) {
 		if (name == null)
 			return null;
 		if (!name.startsWith("CregModel"))
@@ -85,7 +85,7 @@ public class PolyDataTools extends DataTools {
 		return new Path(name, modelPath);
 	}
 	
-	public Gazetteer getGazetteer(String name) {
+	public synchronized Gazetteer getGazetteer(String name) {
 		if (this.gazetteers.containsKey(name))
 			return this.gazetteers.get(name);
 		

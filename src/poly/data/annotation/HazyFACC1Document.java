@@ -464,7 +464,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 	}
 	
 	public String getNerType(int sentenceIndex, int tokenIndex) {
-		if (!loadNer())
+		if (!loadNer() || !this.sentencesToNerAndTokenSpans.containsKey(sentenceIndex))
 			return null;
 		
 		List<Pair<String, TokenSpan>> nerTypeSpans = this.sentencesToNerAndTokenSpans.get(sentenceIndex);

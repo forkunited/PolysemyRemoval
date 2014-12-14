@@ -11,6 +11,7 @@ import java.util.Random;
 
 import org.json.JSONArray;
 
+import ark.data.DataTools;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum.Tools;
 import ark.data.annotation.Document;
@@ -28,6 +29,11 @@ public class PolysemousDataSetFactory {
 	private Map<String, List<TokenSpansDatum<LabelsList>>> data;
 	private int datumCount;
 	private Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools;
+	
+	// Initialized polysemous data set
+	private int polysemousDataSetSize;
+	private int[] polysemousSplitIndices;
+	
 	
 	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, final String sentenceDirPath, final boolean loadBySentence, PolyDataTools dataTools) {
 		this.datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
@@ -73,6 +79,8 @@ public class PolysemousDataSetFactory {
 		} catch (Exception e) {
 			
 		}
+		
+		initializePolysemousDataSet(getDatumCount());
 	}
 	
 	public int getPhraseCount() {
@@ -83,22 +91,32 @@ public class PolysemousDataSetFactory {
 		return this.datumCount;
 	}
 	
-	public Pair<DataSet<TokenSpansDatum<LabelsList>, LabelsList>, Double> makePolysemousDataSet() {
+	public int getPolysemousDataSetSize() {
+		return this.polysemousDataSetSize;
+	}
+	
+	public Tools<TokenSpansDatum<LabelsList>, LabelsList> getDatumTools() {
+		return this.datumTools;
+	}
+	
+	public boolean initializePolysemousDataSet() {
 		int maxSize = getDatumCount()-1;
 		int minSize = getPhraseCount()+1;
 		int size = MathUtil.uniformSample(minSize, maxSize, this.datumTools.getDataTools().getGlobalRandom());
 		
-		return makePolysemousDataSet(size);
+		return initializePolysemousDataSet(size);
 	}
 	
-	/**
-	 * @param size
-	 * @return a data set of the given size and a measure of its polysemy
-	 */
-	public Pair<DataSet<TokenSpansDatum<LabelsList>, LabelsList>, Double> makePolysemousDataSet(int size) {
+	public boolean initializePolysemousDataSet(int size) {
+		this.polysemousDataSetSize = size;
+		this.polysemousSplitIndices = MathUtil.reservoirSample(getDatumCount()-getPhraseCount(), size-getPhraseCount(), this.datumTools.getDataTools().getGlobalRandom());
+		Arrays.sort(this.polysemousSplitIndices);
+		
+		return true;
+	}
+	
+	public Pair<DataSet<TokenSpansDatum<LabelsList>, LabelsList>, Double> makePolysemousDataSet() {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(this.datumTools, null);
-		int[] splitIndices = MathUtil.reservoirSample(getDatumCount()-getPhraseCount(), size-getPhraseCount(), this.datumTools.getDataTools().getGlobalRandom());
-		Arrays.sort(splitIndices);
 		
 		int i = 1;
 		int sI = 0;
@@ -108,7 +126,7 @@ public class PolysemousDataSetFactory {
 			List<TokenSpansDatum<LabelsList>> datums = phraseEntry.getValue();
 			int prevSplitIndex = 0;
 			for (int j = 0; j < datums.size(); j++) {
-				if ((splitIndices.length > 0 && i == splitIndices[sI]) || j == datums.size() - 1) {
+				if ((this.polysemousSplitIndices.length > 0 && i == this.polysemousSplitIndices[sI]) || j == datums.size() - 1) {
 					Map<LabelsList, Double> labelsDist = new HashMap<LabelsList, Double>();
 					TokenSpansDatum<LabelsList> combinedDatum = combineDatums(datums, prevSplitIndex, j + 1, labelsDist);
 					data.add(combinedDatum);
@@ -119,7 +137,7 @@ public class PolysemousDataSetFactory {
 					polysemy += numTokenSpans*MathUtil.computeEntropy(labelsDist);
 					
 					prevSplitIndex = j + 1;
-					if (j != datums.size() - 1 && sI < splitIndices.length - 1)
+					if (j != datums.size() - 1 && sI < this.polysemousSplitIndices.length - 1)
 						sI++;
 				}
 				
@@ -131,6 +149,52 @@ public class PolysemousDataSetFactory {
 		polysemy /= tokenSpansCount;
 		
 		return new Pair<DataSet<TokenSpansDatum<LabelsList>, LabelsList>, Double>(data, polysemy);
+	}
+	
+	public Pair<DataSet<TokenSpansDatum<Boolean>, Boolean>, Double> makePolysemousDataSetForLabel(String label, DataTools dataTools) {
+		DataSet<TokenSpansDatum<Boolean>, Boolean> data = new DataSet<TokenSpansDatum<Boolean>, Boolean>(TokenSpansDatum.getBooleanTools(dataTools), null);
+		
+		int i = 1;
+		int sI = 0;
+		double tokenSpansCount = 0;
+		double polysemy = 0;
+		for (Entry<String, List<TokenSpansDatum<LabelsList>>> phraseEntry : this.data.entrySet()) {
+			List<TokenSpansDatum<LabelsList>> datums = phraseEntry.getValue();
+			int prevSplitIndex = 0;
+			for (int j = 0; j < datums.size(); j++) {
+				if ((this.polysemousSplitIndices.length > 0 && i == this.polysemousSplitIndices[sI]) || j == datums.size() - 1) {
+					Map<LabelsList, Double> labelsDist = new HashMap<LabelsList, Double>();
+					TokenSpansDatum<LabelsList> combinedDatum = combineDatums(datums, prevSplitIndex, j + 1, labelsDist);
+					TokenSpansDatum<Boolean> combinedIndicatorDatum = new TokenSpansDatum<Boolean>(combinedDatum.getId(), combinedDatum.getTokenSpans(), combinedDatum.getLabel().contains(label));
+					data.add(combinedIndicatorDatum);
+					
+					Map<Boolean, Double> indicatorDist = new HashMap<Boolean, Double>();
+					indicatorDist.put(true, 0.0);
+					indicatorDist.put(false, 0.0);
+					double numTokenSpans = 0.0;
+					for (Entry<LabelsList, Double> entry : labelsDist.entrySet()) {
+						boolean indicator = entry.getKey().contains(label);
+						indicatorDist.put(indicator, indicatorDist.get(indicator) + entry.getValue());
+						numTokenSpans += entry.getValue();
+					}
+
+					tokenSpansCount += numTokenSpans;
+					indicatorDist = MathUtil.normalize(indicatorDist, numTokenSpans);
+					polysemy += numTokenSpans*MathUtil.computeEntropy(indicatorDist);
+					
+					prevSplitIndex = j + 1;
+					if (j != datums.size() - 1 && sI < this.polysemousSplitIndices.length - 1)
+						sI++;
+				}
+				
+				if (j < datums.size() - 1)
+					i++;
+			}
+		}
+		
+		polysemy /= tokenSpansCount;
+		
+		return new Pair<DataSet<TokenSpansDatum<Boolean>, Boolean>, Double>(data, polysemy);
 	}
 	
 	/**

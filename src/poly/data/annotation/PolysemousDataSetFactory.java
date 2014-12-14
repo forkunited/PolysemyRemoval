@@ -169,11 +169,11 @@ public class PolysemousDataSetFactory {
 					data.add(combinedIndicatorDatum);
 					
 					Map<Boolean, Double> indicatorDist = new HashMap<Boolean, Double>();
-					indicatorDist.put(true, 0.0);
-					indicatorDist.put(false, 0.0);
 					double numTokenSpans = 0.0;
 					for (Entry<LabelsList, Double> entry : labelsDist.entrySet()) {
 						boolean indicator = entry.getKey().contains(label);
+						if (!indicatorDist.containsKey(indicator))
+							indicatorDist.put(indicator, 0.0);
 						indicatorDist.put(indicator, indicatorDist.get(indicator) + entry.getValue());
 						numTokenSpans += entry.getValue();
 					}

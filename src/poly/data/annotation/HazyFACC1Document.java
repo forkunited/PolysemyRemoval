@@ -510,7 +510,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		return true;
 	}
 	
-	private boolean loadFullDocument() {
+	private synchronized boolean loadFullDocument() {
 		BufferedReader r = FileUtil.getFileReader(new File(this.documentDirPath, this.name).getAbsolutePath());
 		StringBuilder str = new StringBuilder();
 		String line = null;
@@ -527,7 +527,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		return true;
 	}
 	
-	private boolean loadNer() {
+	private synchronized boolean loadNer() {
 		if (this.sentencesToNerAndTokenSpans != null)
 			return true;
 		
@@ -565,7 +565,7 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		return true;
 	}
 	
-	private boolean loadFACC1MetaData() {
+	private synchronized boolean loadFACC1MetaData() {
 		if (this.facc1Annotations != null)
 			return true;
 		

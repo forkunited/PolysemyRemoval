@@ -63,7 +63,7 @@ public class ConstructNounPhraseNELLCategoryGazetteer {
 				w.write(entry.getKey() + "\t");
 				StringBuilder str = new StringBuilder();
 				for (Pair<String, Double> phrase : entry.getValue()) {
-					str.append(phrase.getFirst()).append(":").append(phrase.getSecond());
+					str.append(phrase.getFirst()).append(":").append(phrase.getSecond()).append("\t");
 				}
 				w.write(str.toString().trim());
 				w.write("\n");

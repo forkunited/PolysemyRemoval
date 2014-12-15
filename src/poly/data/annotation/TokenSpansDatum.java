@@ -2,8 +2,10 @@ package poly.data.annotation;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import poly.data.feature.FeatureNer;
@@ -217,11 +219,14 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			private boolean fullDocument;
 			private int n;
 			
+			private Map<String, Set<String>> strCache;
+			
 			public StringExtractorNGramPoSTag(String name, PoSTag[][] posTags, boolean fullDocument, int n) {
 				this.name = name;
 				this.posTags = posTags;
 				this.fullDocument = fullDocument;
 				this.n = n;
+				this.strCache = new HashMap<String, Set<String>>();
 			}
 			
 			@Override
@@ -240,8 +245,13 @@ public class TokenSpansDatum<L> extends Datum<L> {
 						if (documents.contains(document.getName()))
 							continue;
 						documents.add(document.getName());
-						for (int sentenceIndex = 0; sentenceIndex < document.getSentenceCount(); sentenceIndex++) {
-							extractForSentence(document, sentenceIndex, strs);
+						
+						if (this.strCache.containsKey(document.getName())) {
+							strs.addAll(this.strCache.get(document.getName()));
+						} else {	
+							for (int sentenceIndex = 0; sentenceIndex < document.getSentenceCount(); sentenceIndex++) {
+								extractForSentence(document, sentenceIndex, strs);
+							}
 						}
 					} else {
 						extractForSentence(tokenSpan.getDocument(), tokenSpan.getSentenceIndex(), strs);
@@ -253,14 +263,23 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			
 			private boolean extractForSentence(Document document, int sentenceIndex, Set<String> strs) {
 				int sentenceTokenCount = document.getSentenceTokenCount(sentenceIndex);
-				for (int i = 0; i < sentenceTokenCount - n + 1; i++) {
+				for (int i = 0; i < sentenceTokenCount - this.n + 1; i++) {
 					if (!ngramHasPosTag(document, sentenceIndex, i))
 						continue;
 					StringBuilder ngram = new StringBuilder();
-					for (int j = i; j < i + n; j++) {
+					for (int j = i; j < i + this.n; j++) {
 						ngram.append(document.getToken(sentenceIndex, j)).append(" ");
 					}
-					strs.add(ngram.toString().trim());
+					
+					String ngramStr = ngram.toString().trim();
+					
+					if (this.fullDocument) {
+						if (!this.strCache.containsKey(document.getName()))
+							this.strCache.put(document.getName(), new HashSet<String>());
+						this.strCache.get(document.getName()).add(ngramStr);
+					}
+					
+					strs.add(ngramStr);
 				}
 				
 				return true;

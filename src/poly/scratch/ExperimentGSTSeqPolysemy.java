@@ -60,7 +60,7 @@ public class ExperimentGSTSeqPolysemy {
 				properties.getHazyFacc1DataDirPath(), 
 				1000000, 
 				properties.getHazyFacc1SentenceDataDirPath(),
-				true,
+				false,
 				dataTools);
 		
 		List<Pair<Pair<Double,Double>, Pair<Double, Double>>> polysemyPerformanceResults = new ArrayList<Pair<Pair<Double,Double>, Pair<Double, Double>>>();

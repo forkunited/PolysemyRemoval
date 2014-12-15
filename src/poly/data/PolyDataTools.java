@@ -1,6 +1,7 @@
 package poly.data;
 
 import java.io.File;
+import java.util.Map.Entry;
 
 import poly.util.PolyProperties;
 
@@ -11,6 +12,13 @@ import ark.util.Stemmer;
 
 public class PolyDataTools extends DataTools {
 	private PolyProperties properties;
+	
+	public PolyDataTools(OutputWriter outputWriter, PolyDataTools dataTools) {
+		this(outputWriter, dataTools.properties);
+		
+		for (Entry<String, Gazetteer> entry : dataTools.gazetteers.entrySet())
+			this.gazetteers.put(entry.getKey(), entry.getValue());
+	}
 	
 	public PolyDataTools(OutputWriter outputWriter, PolyProperties properties) {
 		super(outputWriter);

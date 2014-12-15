@@ -15,7 +15,6 @@ import poly.data.annotation.LabelsList;
 import poly.data.annotation.PolysemousDataSetFactory;
 import poly.data.annotation.TokenSpansDatum;
 import poly.util.PolyProperties;
-import ark.data.DataTools;
 import ark.data.annotation.DataSet;
 import ark.experiment.ExperimentGST;
 import ark.util.OutputWriter;
@@ -52,6 +51,7 @@ public class ExperimentGSTSeqPolysemy {
 			);
 		
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
+		dataTools.getGazetteer("NounPhraseNELLCategory"); // Ensures that this gazetteer is only loaded once
 		dataTools.setRandomSeed(randomSeed);
 		
 		PolysemousDataSetFactory dataFactory = new PolysemousDataSetFactory(
@@ -162,7 +162,7 @@ public class ExperimentGSTSeqPolysemy {
 	}
 	
 	private static Pair<DataSet<TokenSpansDatum<Boolean>, Boolean>, Double> makeDataSet(PolysemousDataSetFactory dataFactory, String label, int iteration) {
-		DataTools globalDataTools = dataFactory.getDatumTools().getDataTools();
+		PolyDataTools globalDataTools = (PolyDataTools)dataFactory.getDatumTools().getDataTools();
 		OutputWriter output = new OutputWriter(
 				new File(experimentOutputPath + "." + iteration + label.replaceAll("/", ".") + ".debug.out"),
 				new File(experimentOutputPath + "." + iteration + label.replaceAll("/", ".") + ".results.out"),
@@ -170,7 +170,7 @@ public class ExperimentGSTSeqPolysemy {
 				new File(experimentOutputPath + "." + iteration + label.replaceAll("/", ".") + ".model.out")
 			);
 		
-		PolyDataTools dataTools = new PolyDataTools(output, properties);
+		PolyDataTools dataTools = new PolyDataTools(output, globalDataTools);
 		dataTools.setRandomSeed(globalDataTools.getGlobalRandom().nextLong());
 		
 		return dataFactory.makePolysemousDataSetForLabel(label, dataTools);

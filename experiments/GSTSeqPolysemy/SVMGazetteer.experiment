@@ -7,7 +7,7 @@ evaluation=Accuracy()
 
 gridSearchParameterValues=l2(.1,.5,1,5,10,50)
 
-feature_gnp=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=FirstTokenSpan, includeIds=true, includeWeights=true, weightThreshold=0.80)
+feature_gnp=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=FirstTokenSpan, includeIds=true, includeWeights=true, weightThreshold=0.9)
 
 model=SVM()
 {

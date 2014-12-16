@@ -4,6 +4,9 @@ trainOnDev=true
 errorExampleExtractor=FirstTokenSpan
 
 evaluation=Accuracy()
+evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1)
+evaluation=Precision(weighted=false, filterLabel=true)
+evaluation=Recall(weighted=false, filterLabel=true)
 
 gridSearchParameterValues=l2(.1,.5,1,5,10,50)
 

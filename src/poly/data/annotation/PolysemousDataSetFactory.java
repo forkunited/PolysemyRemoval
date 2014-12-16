@@ -4,10 +4,12 @@ import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 
 import org.json.JSONArray;
 
@@ -152,12 +154,16 @@ public class PolysemousDataSetFactory {
 	}
 	
 	public Pair<DataSet<TokenSpansDatum<Boolean>, Boolean>, Double> makePolysemousDataSetForLabel(String label, DataTools dataTools) {
-		DataSet<TokenSpansDatum<Boolean>, Boolean> data = new DataSet<TokenSpansDatum<Boolean>, Boolean>(TokenSpansDatum.getBooleanTools(dataTools), null);
+		return makePolysemousDataSetForLabel(label, dataTools, 0.0);
+	}
+	
+	public Pair<DataSet<TokenSpansDatum<Boolean>, Boolean>, Double> makePolysemousDataSetForLabel(String label, DataTools dataTools, double targetBaseline) {
+		List<Pair<TokenSpansDatum<Boolean>, Double>> trueData = new ArrayList<Pair<TokenSpansDatum<Boolean>, Double>>();
+		List<Pair<TokenSpansDatum<Boolean>, Double>> falseData = new ArrayList<Pair<TokenSpansDatum<Boolean>, Double>>();
 		
 		int i = 1;
 		int sI = 0;
-		double tokenSpansCount = 0;
-		double polysemy = 0;
+		
 		for (Entry<String, List<TokenSpansDatum<LabelsList>>> phraseEntry : this.data.entrySet()) {
 			List<TokenSpansDatum<LabelsList>> datums = phraseEntry.getValue();
 			int prevSplitIndex = 0;
@@ -166,7 +172,6 @@ public class PolysemousDataSetFactory {
 					Map<LabelsList, Double> labelsDist = new HashMap<LabelsList, Double>();
 					TokenSpansDatum<LabelsList> combinedDatum = combineDatums(datums, prevSplitIndex, j + 1, labelsDist);
 					TokenSpansDatum<Boolean> combinedIndicatorDatum = new TokenSpansDatum<Boolean>(combinedDatum.getId(), combinedDatum.getTokenSpans(), combinedDatum.getLabel().contains(label));
-					data.add(combinedIndicatorDatum);
 					
 					Map<Boolean, Double> indicatorDist = new HashMap<Boolean, Double>();
 					double numTokenSpans = 0.0;
@@ -177,11 +182,15 @@ public class PolysemousDataSetFactory {
 						indicatorDist.put(indicator, indicatorDist.get(indicator) + entry.getValue());
 						numTokenSpans += entry.getValue();
 					}
-
-					tokenSpansCount += numTokenSpans;
-					indicatorDist = MathUtil.normalize(indicatorDist, numTokenSpans);
-					polysemy += numTokenSpans*MathUtil.computeEntropy(indicatorDist);
 					
+					indicatorDist = MathUtil.normalize(indicatorDist, numTokenSpans);
+					double polysemy = MathUtil.computeEntropy(indicatorDist);
+					
+					if (combinedIndicatorDatum.getLabel())
+						trueData.add(new Pair<TokenSpansDatum<Boolean>, Double>(combinedIndicatorDatum, polysemy));
+					else
+						falseData.add(new Pair<TokenSpansDatum<Boolean>, Double>(combinedIndicatorDatum, polysemy));
+						
 					prevSplitIndex = j + 1;
 					if (j != datums.size() - 1 && sI < this.polysemousSplitIndices.length - 1)
 						sI++;
@@ -190,6 +199,49 @@ public class PolysemousDataSetFactory {
 				if (j < datums.size() - 1)
 					i++;
 			}
+		}
+		
+		// Remove a random set of data to adjust the majority baseline label to the target
+		double baseline = ((double)falseData.size())/(trueData.size() + falseData.size());
+		Set<Integer> removeTrue = new HashSet<Integer>();
+		Set<Integer> removeFalse = new HashSet<Integer>();
+		if (targetBaseline != 0.0) {
+			if (baseline < targetBaseline) {
+				int numToRemove = (int)((targetBaseline*falseData.size()+targetBaseline*trueData.size()-falseData.size())/targetBaseline);
+				int[] toRemove = MathUtil.reservoirSample(trueData.size(), numToRemove, this.datumTools.getDataTools().getGlobalRandom());
+				for (int r : toRemove)
+					removeTrue.add(r - 1);
+			} else if (baseline > targetBaseline) {
+				int numToRemove = (int)((falseData.size()-targetBaseline*falseData.size()-targetBaseline*trueData.size())/(1.0-targetBaseline));
+				int[] toRemove = MathUtil.reservoirSample(falseData.size(), numToRemove, this.datumTools.getDataTools().getGlobalRandom());
+				for (int r : toRemove)
+					removeFalse.add(r - 1);
+			}
+		}
+		
+		DataSet<TokenSpansDatum<Boolean>, Boolean> data = new DataSet<TokenSpansDatum<Boolean>, Boolean>(TokenSpansDatum.getBooleanTools(dataTools), null);
+		double tokenSpansCount = 0;
+		double polysemy = 0;
+		for (i = 0; i < trueData.size(); i++) {
+			Pair<TokenSpansDatum<Boolean>, Double> pair = trueData.get(i);
+			if (removeTrue.contains(i))
+				continue;
+			
+			int numTokenSpans = pair.getFirst().getTokenSpans().length;
+			tokenSpansCount += numTokenSpans;
+			polysemy += numTokenSpans*pair.getSecond();
+			data.add(pair.getFirst());
+		}
+		
+		for (i = 0; i < falseData.size(); i++) {
+			Pair<TokenSpansDatum<Boolean>, Double> pair = falseData.get(i);
+			if (removeFalse.contains(i))
+				continue;
+			
+			int numTokenSpans = pair.getFirst().getTokenSpans().length;
+			tokenSpansCount += numTokenSpans;
+			polysemy += numTokenSpans*pair.getSecond();
+			data.add(pair.getFirst());
 		}
 		
 		polysemy /= tokenSpansCount;

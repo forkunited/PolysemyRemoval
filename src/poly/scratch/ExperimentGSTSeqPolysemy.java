@@ -3,6 +3,7 @@ package poly.scratch;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -17,6 +18,7 @@ import poly.data.annotation.TokenSpansDatum;
 import poly.util.PolyProperties;
 import ark.data.annotation.DataSet;
 import ark.experiment.ExperimentGST;
+import ark.model.evaluation.metric.SupervisedModelEvaluation;
 import ark.util.OutputWriter;
 import ark.util.Pair;
 
@@ -26,6 +28,8 @@ public class ExperimentGSTSeqPolysemy {
 	private static String experimentInputPath;
 	private static String experimentOutputPath;
 	private static PolyProperties properties;
+	private static Map<String, Double> targetBaselines;
+	private static boolean constantBaselines;
 	
 	public static void main(String[] args) {
 		experimentName = "GSTSeqPolysemy/" + args[0];
@@ -35,7 +39,9 @@ public class ExperimentGSTSeqPolysemy {
 		double dataFraction = Double.valueOf(args[4]);
 		int randomSeed = Integer.valueOf(args[5]);
 		int maxLabelThreads = Integer.valueOf(args[6]);
-		boolean runBaselineExperiments = Boolean.valueOf(args[7]);
+		boolean onlyBaselineExperiments = Boolean.valueOf(args[7]);
+		boolean loadBySentence = Boolean.valueOf(args[8]);
+		constantBaselines = Boolean.valueOf(args[9]);
 		
 		String experimentOutputName = dataSetName + "/" + experimentName;
 
@@ -60,68 +66,63 @@ public class ExperimentGSTSeqPolysemy {
 				properties.getHazyFacc1DataDirPath(), 
 				1000000, 
 				properties.getHazyFacc1SentenceDataDirPath(),
-				false,
+				loadBySentence,
 				dataTools);
 		
-		List<Pair<Pair<Double,Double>, Pair<Double, Double>>> polysemyPerformanceResults = new ArrayList<Pair<Pair<Double,Double>, Pair<Double, Double>>>();
+		List<LabelExperimentResult> results = new ArrayList<LabelExperimentResult>();
 		int iteration = 0;
 		
-		Pair<Pair<Double,Double>, Pair<Double,Double>> polysemyPerformance = null;
+		LabelExperimentResult polysemyPerformance = null;
 		
-		if (runBaselineExperiments) {
-			// zero polysemy run
-			dataFactory.initializePolysemousDataSet(dataFactory.getDatumCount());
-			polysemyPerformance = runExperiments(dataFactory, maxLabelThreads, iteration);
-			polysemyPerformanceResults.add(polysemyPerformance);
-			output.debugWriteln("Finished all experiments with baseline="
-								+ polysemyPerformance.getFirst().getFirst()
-								+ "\tpolysemy="
-								+ polysemyPerformance.getFirst().getSecond()
-								+ "\tperformance="
-								+ polysemyPerformance.getSecond().getFirst()
-								+ "\tnorm-performance=" + polysemyPerformance.getSecond().getSecond());
-		}
+		// zero polysemy run
+		dataFactory.initializePolysemousDataSet(dataFactory.getDatumCount());
+		polysemyPerformance = runExperiments(dataFactory, maxLabelThreads, iteration);
+		results.add(polysemyPerformance);
 		
-		// partial polysemy runs
-		for (iteration = 1; iteration < iterations+1; iteration++) {
-			dataFactory.initializePolysemousDataSet();
-			polysemyPerformance = runExperiments(dataFactory, maxLabelThreads, iteration);
-			polysemyPerformanceResults.add(polysemyPerformance);
-			output.debugWriteln("Finished all experiments with baseline="
-								+ polysemyPerformance.getFirst().getFirst()
-								+ "\tpolysemy="
-								+ polysemyPerformance.getFirst().getSecond()
-								+ "\tperformance="
-								+ polysemyPerformance.getSecond().getFirst()
-								+ "\tnorm-performance=" + polysemyPerformance.getSecond().getSecond());
-		}
-		
-		if (runBaselineExperiments) {
+		if (!onlyBaselineExperiments) {
+			// partial polysemy runs
+			for (iteration = 1; iteration < iterations+1; iteration++) {
+				dataFactory.initializePolysemousDataSet();
+				polysemyPerformance = runExperiments(dataFactory, maxLabelThreads, iteration);
+				results.add(polysemyPerformance);
+			}
+			
 			iteration = iterations + 1;
 			
 			// total polysemy run
 			dataFactory.initializePolysemousDataSet(dataFactory.getPhraseCount());
 			polysemyPerformance = runExperiments(dataFactory, maxLabelThreads, iteration);
-			polysemyPerformanceResults.add(polysemyPerformance);
-			output.debugWriteln("Finished all experiments with baseline="
-								+ polysemyPerformance.getFirst().getFirst()
-								+ "\tpolysemy="
-								+ polysemyPerformance.getFirst().getSecond()
-								+ "\tperformance="
-								+ polysemyPerformance.getSecond().getFirst()
-								+ "\tnorm-performance=" + polysemyPerformance.getSecond().getSecond());
+			results.add(polysemyPerformance);
 		}
 		
-		output.resultsWriteln("Baseline\tPolysemy\tPerformance\tNorm-performance");
-		for (Pair<Pair<Double,Double>, Pair<Double, Double>> pair : polysemyPerformanceResults)
-			output.resultsWriteln(pair.getFirst().getFirst() + "\t" + pair.getFirst().getSecond() + "\t" + pair.getSecond().getFirst() + "\t" + pair.getSecond().getSecond());
+		StringBuilder resultsHeadingStr = new StringBuilder();
+		resultsHeadingStr.append("Baseline\tPolysemy\t");
+		for (int i = 0; i < results.get(0).getEvaluations().size(); i++)
+			resultsHeadingStr.append(results.get(0).getEvaluations().get(i)).append("\t");
+		resultsHeadingStr.append("Norm-").append(results.get(0).getEvaluations().get(0).toString());
+		output.resultsWriteln(resultsHeadingStr.toString());
+		
+		for (LabelExperimentResult result : results) {
+			StringBuilder resultsStr = new StringBuilder();
+			
+			resultsStr.append(result.getMajorityBaseline()).append("\t").append(result.getPolysemy());
+			
+			for (int i = 0; i < result.getEvaluationValues().size(); i++)
+				resultsStr.append("\t").append(result.getEvaluationValues().get(i)).append("\t");
+				
+			resultsStr.append(result.getNormPerformance());
+			
+			output.resultsWriteln(resultsStr.toString());
+		}
+		
 	}
 	
-	private static Pair<Pair<Double, Double>, Pair<Double, Double>> runExperiments(PolysemousDataSetFactory dataFactory, int maxThreads, int iteration) {
-		double avgPerformance = 0.0;
-		double avgNormPerformance = 0.0;
-		double avgPolysemy = 0.0;
+	private static LabelExperimentResult runExperiments(PolysemousDataSetFactory dataFactory, int maxThreads, int iteration) {
+		List<SupervisedModelEvaluation<TokenSpansDatum<Boolean>, Boolean>> evaluations = new ArrayList<SupervisedModelEvaluation<TokenSpansDatum<Boolean>, Boolean>>();
+		List<Double> avgEvaluations = new ArrayList<Double>();
 		double avgBaseline = 0.0; 
+		double avgPolysemy = 0.0;
+		double avgNormPerformance = 0.0;
 		
 		ExecutorService threadPool = Executors.newFixedThreadPool(maxThreads);
 		List<LabelExperimentThread> tasks = new ArrayList<LabelExperimentThread>();
@@ -133,17 +134,28 @@ public class ExperimentGSTSeqPolysemy {
  		}
 		
 		try {
-			List<Future<Pair<Double, Pair<Double, Double>>>> results = threadPool.invokeAll(tasks);
+			List<Future<LabelExperimentResult>> results = threadPool.invokeAll(tasks);
 			threadPool.shutdown();
 			threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			for (Future<Pair<Double, Pair<Double, Double>>> futureResult : results) {
-				Pair<Double, Pair<Double, Double>> result = futureResult.get();
+			for (Future<LabelExperimentResult> futureResult : results) {
+				LabelExperimentResult result = futureResult.get();
 				if (result == null)
 					return null;
 				
-				avgBaseline += result.getFirst();
-				avgPerformance += result.getSecond().getFirst();
-				avgNormPerformance += result.getSecond().getSecond();
+				avgBaseline += result.getMajorityBaseline();
+			
+				for (int i = 0; i < result.getEvaluationValues().size(); i++) {
+					if (avgEvaluations.size() < i + 1)
+						avgEvaluations.add(0.0);
+					avgEvaluations.set(i, avgEvaluations.get(i) + result.getEvaluationValues().get(i));
+				}
+				
+				avgNormPerformance += result.getNormPerformance();
+				evaluations = result.getEvaluations();
+			
+				if (iteration == 0 && constantBaselines) {
+					targetBaselines.put(result.getLabel(), result.getMajorityBaseline());
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -152,13 +164,20 @@ public class ExperimentGSTSeqPolysemy {
 		
 		avgBaseline /= labels.getLabels().length;
 		avgPolysemy /= labels.getLabels().length;
-		avgPerformance /= labels.getLabels().length;
+		for (int i = 0; i < avgEvaluations.size(); i++)
+			avgEvaluations.set(i, avgEvaluations.get(i)/ labels.getLabels().length);
 		avgNormPerformance /= labels.getLabels().length;
 		
-		Pair<Double, Double> baselinePolysemy = new Pair<Double, Double>(avgBaseline, avgPolysemy);
-		Pair<Double, Double> performance = new Pair<Double, Double>(avgPerformance, avgNormPerformance);
+		OutputWriter output = dataFactory.getDatumTools().getDataTools().getOutputWriter();
+		output.debugWriteln("Finished all experiments with average baseline="
+				+ avgBaseline + ", "
+				+ "polysemy="
+				+ avgPolysemy + ", "
+				+ evaluations.get(0).toString() + "="
+				+ avgEvaluations.get(0) + ", "
+				+ "norm-" + evaluations.get(0).toString() + "=" + avgNormPerformance);
 		
-		return new Pair<Pair<Double,Double>, Pair<Double,Double>>(baselinePolysemy, performance);
+		return new LabelExperimentResult(avgBaseline, avgPolysemy, evaluations, avgEvaluations, avgNormPerformance);
 	}
 	
 	private static Pair<DataSet<TokenSpansDatum<Boolean>, Boolean>, Double> makeDataSet(PolysemousDataSetFactory dataFactory, String label, int iteration) {
@@ -173,10 +192,56 @@ public class ExperimentGSTSeqPolysemy {
 		PolyDataTools dataTools = new PolyDataTools(output, globalDataTools);
 		dataTools.setRandomSeed(globalDataTools.getGlobalRandom().nextLong());
 		
-		return dataFactory.makePolysemousDataSetForLabel(label, dataTools);
+		return dataFactory.makePolysemousDataSetForLabel(label, dataTools, (iteration == 0 || !constantBaselines) ? 0.0 : targetBaselines.get(label));
 	}
 	
-	private static class LabelExperimentThread implements Callable<Pair<Double, Pair<Double, Double>>> {
+	private static class LabelExperimentResult {
+		private double majorityBaseline;
+		private double polysemy;
+		private List<SupervisedModelEvaluation<TokenSpansDatum<Boolean>, Boolean>> evaluations;
+		private List<Double> evaluationValues;
+		private double normPerformance;
+		private String label;
+		
+		public LabelExperimentResult(double majorityBaseline, double polysemy, List<SupervisedModelEvaluation<TokenSpansDatum<Boolean>, Boolean>> evaluations, List<Double> evaluationValues, double normPerformance) {
+			this.majorityBaseline = majorityBaseline;
+			this.polysemy = polysemy;
+			this.evaluations = evaluations;
+			this.evaluationValues = evaluationValues;
+			this.normPerformance = normPerformance;
+		}
+		
+		public boolean setLabel(String label) {
+			this.label = label;
+			return true;
+		}
+		
+		public double getMajorityBaseline() {
+			return this.majorityBaseline;
+		}
+		
+		public double getPolysemy() {
+			return this.polysemy;
+		}
+		
+		public List<SupervisedModelEvaluation<TokenSpansDatum<Boolean>, Boolean>> getEvaluations() {
+			return this.evaluations;
+		}
+		
+		public List<Double> getEvaluationValues() {
+			return this.evaluationValues;
+		}
+		
+		public double getNormPerformance() {
+			return this.normPerformance;
+		}
+		
+		public String getLabel() {
+			return this.label;
+		}
+	}
+	
+	private static class LabelExperimentThread implements Callable<LabelExperimentResult> {
 		private double polysemy;
 		private String label;
 		private DataSet<TokenSpansDatum<Boolean>, Boolean> labelData;
@@ -189,11 +254,11 @@ public class ExperimentGSTSeqPolysemy {
 			this.random = this.labelData.getDatumTools().getDataTools().makeLocalRandom();
 		}
 		
-		public Pair<Double, Pair<Double, Double>> call() {
+		public LabelExperimentResult call() {
 			List<DataSet<TokenSpansDatum<Boolean>, Boolean>> partitionedData = labelData.makePartition(new double[] { .8, .1, .1}, this.random);
 			Pair<Boolean, Integer> majorityLabel = partitionedData.get(2).computeMajorityLabel();
 			double majorityBaseline = majorityLabel.getSecond()/((double)partitionedData.get(2).size());
-			labelData.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Running on train/dev/test " +
+			this.labelData.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Running on train/dev/test " +
 			    "(polysemy=" + this.polysemy + ") " +
 				"for label " + this.label + " with data size " + 
 				partitionedData.get(0).size() + "/" +
@@ -210,10 +275,14 @@ public class ExperimentGSTSeqPolysemy {
 			experiment.run();
 			double performance = experiment.getEvaluationValues().get(0);
 			double normPerformance = (performance-majorityBaseline)/(1.0-majorityBaseline);
-			labelData.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Finished running for label " + this.label 
-					+ " with polysemy=" + this.polysemy + ", performance=" + performance + ", norm-performance=" + normPerformance);
+			this.labelData.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Finished running for label " + this.label 
+					+ " with polysemy=" + this.polysemy + ", "
+					+ experiment.getEvaluations().get(0).toString() + "=" + performance + ", " +
+					"norm-" + experiment.getEvaluations().get(0).toString() + "=" + normPerformance);
 		
-			return new Pair<Double, Pair<Double, Double>>(majorityBaseline, new Pair<Double, Double>(performance, normPerformance));
+			LabelExperimentResult result = new LabelExperimentResult(majorityBaseline, this.polysemy, experiment.getEvaluations(), experiment.getEvaluationValues(), normPerformance);
+			result.setLabel(this.label);
+			return result;
 		}
 	}
 }

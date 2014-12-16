@@ -2,6 +2,7 @@ package poly.scratch;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -42,6 +43,8 @@ public class ExperimentGSTSeqPolysemy {
 		boolean onlyBaselineExperiments = Boolean.valueOf(args[7]);
 		boolean loadBySentence = Boolean.valueOf(args[8]);
 		constantBaselines = Boolean.valueOf(args[9]);
+
+		targetBaselines = new HashMap<String, Double>();
 		
 		String experimentOutputName = dataSetName + "/" + experimentName;
 

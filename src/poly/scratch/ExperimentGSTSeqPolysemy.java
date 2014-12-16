@@ -43,7 +43,8 @@ public class ExperimentGSTSeqPolysemy {
 		boolean onlyBaselineExperiments = Boolean.valueOf(args[7]);
 		boolean loadBySentence = Boolean.valueOf(args[8]);
 		constantBaselines = Boolean.valueOf(args[9]);
-
+		boolean nellFiltering = Boolean.valueOf(args[10]);
+		
 		targetBaselines = new HashMap<String, Double>();
 		
 		String experimentOutputName = dataSetName + "/" + experimentName;
@@ -70,7 +71,8 @@ public class ExperimentGSTSeqPolysemy {
 				1000000, 
 				properties.getHazyFacc1SentenceDataDirPath(),
 				loadBySentence,
-				dataTools);
+				dataTools,
+				nellFiltering);
 		
 		List<LabelExperimentResult> results = new ArrayList<LabelExperimentResult>();
 		int iteration = 0;
@@ -129,10 +131,10 @@ public class ExperimentGSTSeqPolysemy {
 		
 		ExecutorService threadPool = Executors.newFixedThreadPool(maxThreads);
 		List<LabelExperimentThread> tasks = new ArrayList<LabelExperimentThread>();
-		
+		Random random = new Random(dataFactory.getDatumTools().getDataTools().getGlobalRandom().nextLong());
  		for (String label : labels.getLabels()) {
 			Pair<DataSet<TokenSpansDatum<Boolean>, Boolean>, Double> labelData = makeDataSet(dataFactory, label, iteration);
-			tasks.add(new LabelExperimentThread(labelData.getSecond(), label, labelData.getFirst()));
+			tasks.add(new LabelExperimentThread(labelData.getSecond(), label, labelData.getFirst(), random));
 			avgPolysemy += labelData.getSecond();
  		}
 		
@@ -250,11 +252,11 @@ public class ExperimentGSTSeqPolysemy {
 		private DataSet<TokenSpansDatum<Boolean>, Boolean> labelData;
 		private Random random;
 		
-		public LabelExperimentThread(double polysemy, String label, DataSet<TokenSpansDatum<Boolean>, Boolean> labelData) {
+		public LabelExperimentThread(double polysemy, String label, DataSet<TokenSpansDatum<Boolean>, Boolean> labelData, Random random) {
 			this.polysemy = polysemy;
 			this.label = label;
 			this.labelData = labelData;
-			this.random = this.labelData.getDatumTools().getDataTools().makeLocalRandom();
+			this.random = random;
 		}
 		
 		public LabelExperimentResult call() {

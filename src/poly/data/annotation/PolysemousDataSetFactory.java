@@ -14,6 +14,7 @@ import java.util.Set;
 import org.json.JSONArray;
 
 import ark.data.DataTools;
+import ark.data.Gazetteer;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum.Tools;
 import ark.data.annotation.Document;
@@ -31,13 +32,14 @@ public class PolysemousDataSetFactory {
 	private Map<String, List<TokenSpansDatum<LabelsList>>> data;
 	private int datumCount;
 	private Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools;
+	private boolean nellFiltering;
 	
 	// Initialized polysemous data set
 	private int polysemousDataSetSize;
 	private int[] polysemousSplitIndices;
 	
 	
-	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, final String sentenceDirPath, final boolean loadBySentence, PolyDataTools dataTools) {
+	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, final String sentenceDirPath, final boolean loadBySentence, PolyDataTools dataTools, boolean nellFiltering) {
 		this.datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
 		this.documentCache = 
 				new DocumentCache(
@@ -81,6 +83,8 @@ public class PolysemousDataSetFactory {
 		} catch (Exception e) {
 			
 		}
+		
+		this.nellFiltering = nellFiltering;
 		
 		initializePolysemousDataSet(getDatumCount());
 	}
@@ -186,11 +190,13 @@ public class PolysemousDataSetFactory {
 					indicatorDist = MathUtil.normalize(indicatorDist, numTokenSpans);
 					double polysemy = MathUtil.computeEntropy(indicatorDist);
 					
-					if (combinedIndicatorDatum.getLabel())
-						trueData.add(new Pair<TokenSpansDatum<Boolean>, Double>(combinedIndicatorDatum, polysemy));
-					else
-						falseData.add(new Pair<TokenSpansDatum<Boolean>, Double>(combinedIndicatorDatum, polysemy));
-						
+					if (!this.nellFiltering || nellAssignsLabel(combinedIndicatorDatum.getTokenSpans()[0].toString(), label)) {
+						if (combinedIndicatorDatum.getLabel())
+							trueData.add(new Pair<TokenSpansDatum<Boolean>, Double>(combinedIndicatorDatum, polysemy));
+						else
+							falseData.add(new Pair<TokenSpansDatum<Boolean>, Double>(combinedIndicatorDatum, polysemy));
+					}
+					
 					prevSplitIndex = j + 1;
 					if (j != datums.size() - 1 && sI < this.polysemousSplitIndices.length - 1)
 						sI++;
@@ -267,5 +273,20 @@ public class PolysemousDataSetFactory {
 		}
 		
 		return new TokenSpansDatum<LabelsList>(datums.get(0).getId(), datums, new LabelsList(labels));
+	}
+	
+	private boolean nellAssignsLabel(String phrase, String label) {
+		Gazetteer npCategory = this.datumTools.getDataTools().getGazetteer("NounPhraseNELLCategory");
+		Gazetteer freebaseCategory = this.datumTools.getDataTools().getGazetteer("FreebaseNELLCategory");
+		
+		if (!npCategory.contains(phrase) || !freebaseCategory.contains(label))
+			return false;
+		
+		List<String> phraseCategories = npCategory.getIds(phrase);
+		List<String> labelCategories = freebaseCategory.getIds(label);
+		for (String labelCategory : labelCategories)
+			if (phraseCategories.contains(labelCategory))
+				return true;
+		return false;
 	}
 }

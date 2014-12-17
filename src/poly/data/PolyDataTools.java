@@ -40,7 +40,7 @@ public class PolyDataTools extends DataTools {
 			public String transform(String str) {
 				str = str.trim();
 				str = str.replaceAll("[\\W&&[^\\s]]+", " ") // replaces all non-alpha-numeric (differs from http://qwone.com/~jason/writing/loocv.pdf)
-						 .replaceAll("\\d", "[D]") 
+						 .replaceAll("\\d+", "[D]") 
 						 .replaceAll("_", " ")
 						 .trim()
 						 .toLowerCase();

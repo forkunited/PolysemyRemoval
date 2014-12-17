@@ -63,6 +63,7 @@ public class ExperimentGSTSeqPolysemy {
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
 		dataTools.getGazetteer("NounPhraseNELLCategory"); // Ensures that this gazetteer is only loaded once
 		dataTools.setRandomSeed(randomSeed);
+		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
 		PolysemousDataSetFactory dataFactory = new PolysemousDataSetFactory(
 				dataFraction,
@@ -195,6 +196,8 @@ public class ExperimentGSTSeqPolysemy {
 			);
 		
 		PolyDataTools dataTools = new PolyDataTools(output, globalDataTools);
+		dataTools.addToParameterEnvironment("ITERATION", String.valueOf(iteration));
+		dataTools.addToParameterEnvironment("LABEL", label.replace("/", "."));
 		dataTools.setRandomSeed(globalDataTools.getGlobalRandom().nextLong());
 		
 		return dataFactory.makePolysemousDataSetForLabel(label, dataTools, (iteration == 0 || !constantBaselines) ? 0.0 : targetBaselines.get(label));

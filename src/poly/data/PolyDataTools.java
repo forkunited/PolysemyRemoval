@@ -18,6 +18,9 @@ public class PolyDataTools extends DataTools {
 		
 		for (Entry<String, Gazetteer> entry : dataTools.gazetteers.entrySet())
 			this.gazetteers.put(entry.getKey(), entry.getValue());
+		
+		for (Entry<String, String> entry : dataTools.parameterEnvironment.entrySet())
+			this.addToParameterEnvironment(entry.getKey(), entry.getValue());
 	}
 	
 	public PolyDataTools(OutputWriter outputWriter, PolyProperties properties) {

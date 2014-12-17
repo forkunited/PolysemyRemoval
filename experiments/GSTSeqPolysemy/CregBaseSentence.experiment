@@ -33,7 +33,8 @@ feature_gnps1=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtracto
 feature_gnps2=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceBigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
 feature_gnps3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceTrigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
 
-model=Creg(cmdPath=CregCmd, modelPath=CregModel/${DOCUMENT_SET}/GSTTLinkType/CregBase, l1=.5, l2=0, warmRestart=false)
+
+model=Creg(cmdPath=CregCmd, modelPath=CregModel/${DATA_SET}/GSTSeqPolysemy/CregBaseSentence.${ITERATION}.${LABEL}, l1=.5, l2=0, warmRestart=false)
 {
 	validLabels=true, false
 }

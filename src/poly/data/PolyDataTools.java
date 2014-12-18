@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 
 import poly.util.PolyProperties;
 
+import ark.cluster.ClustererAffix;
 import ark.data.DataTools;
 import ark.data.Gazetteer;
 import ark.util.OutputWriter;
@@ -74,6 +75,8 @@ public class PolyDataTools extends DataTools {
 				return str.trim();
 			}
 		});
+		
+		this.addStringClusterer(new ClustererAffix("AffixMaxLength5", 5));
 	}
 	
 	/**

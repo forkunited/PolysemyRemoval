@@ -27,7 +27,8 @@ feature_sent1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1,
 feature_doc1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
 feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
 
-feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
+feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
+feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
 
 feature_gnp=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=FirstTokenSpan, includeIds=true, includeWeights=true, weightThreshold=0.90)
 

@@ -11,7 +11,7 @@ evaluation=Recall(weighted=false, filterLabel=true)
 gridSearchParameterValues=l2(.1,.5,1,5,10,50)
 
 feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
-feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
+feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
 
 model=SVM()
 {

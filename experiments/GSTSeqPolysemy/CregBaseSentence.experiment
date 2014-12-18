@@ -26,13 +26,13 @@ feature_dep=NGramDep(scale=INDICATOR, mode=ParentsAndChildren, useRelationTypes=
 feature_sent1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
 feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
 
-feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
+feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
+feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
 
 feature_gnp=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=FirstTokenSpan, includeIds=true, includeWeights=true, weightThreshold=0.90)
 feature_gnps1=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceUnigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
 feature_gnps2=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceBigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
 feature_gnps3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceTrigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
-
 
 model=Creg(cmdPath=CregCmd, modelPath=CregModel/${DATA_SET}/GSTSeqPolysemy/CregBaseSentencel1${l1}.${ITERATION}${LABEL}, l1=.5, l2=0, warmRestart=false)
 {

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,6 +30,7 @@ public class ExperimentGSTSeqPolysemy {
 	private static PolyProperties properties;
 	private static Map<String, Double> targetBaselines;
 	private static boolean constantBaselines;
+	private static PolysemousDataSetFactory dataFactory;
 	
 	public static void main(String[] args) {
 		experimentName = "GSTSeqPolysemy/" + args[0];
@@ -65,7 +65,7 @@ public class ExperimentGSTSeqPolysemy {
 		dataTools.setRandomSeed(randomSeed);
 		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
-		PolysemousDataSetFactory dataFactory = new PolysemousDataSetFactory(
+		dataFactory = new PolysemousDataSetFactory(
 				dataFraction,
 				new File(properties.getPolysemyDataFileDirPath(), dataSetName + ".tsv").getAbsolutePath(), 
 				properties.getHazyFacc1DataDirPath(), 
@@ -79,6 +79,9 @@ public class ExperimentGSTSeqPolysemy {
 		int iteration = 0;
 		
 		LabelExperimentResult polysemyPerformance = null;
+		
+		// Initialize train/dev/test partition to be used by all iterations
+		dataFactory.initializePartition(new double[] {.8, .1, .1});
 		
 		// zero polysemy run
 		dataFactory.initializePolysemousDataSet(dataFactory.getDatumCount());
@@ -132,10 +135,9 @@ public class ExperimentGSTSeqPolysemy {
 		
 		ExecutorService threadPool = Executors.newFixedThreadPool(maxThreads);
 		List<LabelExperimentThread> tasks = new ArrayList<LabelExperimentThread>();
-		Random random = new Random(dataFactory.getDatumTools().getDataTools().getGlobalRandom().nextLong());
  		for (String label : labels.getLabels()) {
 			Pair<DataSet<TokenSpansDatum<Boolean>, Boolean>, Double> labelData = makeDataSet(dataFactory, label, iteration);
-			tasks.add(new LabelExperimentThread(labelData.getSecond(), label, labelData.getFirst(), random));
+			tasks.add(new LabelExperimentThread(labelData.getSecond(), label, labelData.getFirst()));
 			avgPolysemy += labelData.getSecond();
  		}
 		
@@ -253,17 +255,15 @@ public class ExperimentGSTSeqPolysemy {
 		private double polysemy;
 		private String label;
 		private DataSet<TokenSpansDatum<Boolean>, Boolean> labelData;
-		private Random random;
 		
-		public LabelExperimentThread(double polysemy, String label, DataSet<TokenSpansDatum<Boolean>, Boolean> labelData, Random random) {
+		public LabelExperimentThread(double polysemy, String label, DataSet<TokenSpansDatum<Boolean>, Boolean> labelData) {
 			this.polysemy = polysemy;
 			this.label = label;
 			this.labelData = labelData;
-			this.random = random;
 		}
 		
 		public LabelExperimentResult call() {
-			List<DataSet<TokenSpansDatum<Boolean>, Boolean>> partitionedData = labelData.makePartition(new double[] { .8, .1, .1}, this.random);
+			List<DataSet<TokenSpansDatum<Boolean>, Boolean>> partitionedData = dataFactory.makePartition(this.labelData);
 			Pair<Boolean, Integer> majorityLabel = partitionedData.get(2).computeMajorityLabel();
 			double majorityBaseline = majorityLabel.getSecond()/((double)partitionedData.get(2).size());
 			this.labelData.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Running on train/dev/test " +

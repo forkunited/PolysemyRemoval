@@ -38,6 +38,10 @@ public class PolysemousDataSetFactory {
 	private int polysemousDataSetSize;
 	private int[] polysemousSplitIndices;
 	
+	// Initialized partition mapping datum id to partition id
+	private int partitionSize;
+	private Map<Integer, Integer> partitionMap;
+	
 	
 	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, final String sentenceDirPath, final boolean loadBySentence, PolyDataTools dataTools, boolean nellFiltering) {
 		this.datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
@@ -74,7 +78,7 @@ public class PolysemousDataSetFactory {
 			
 				if (!this.data.containsKey(phrase))
 					this.data.put(phrase, new ArrayList<TokenSpansDatum<LabelsList>>());
-				this.data.get(phrase).add(new TokenSpansDatum<LabelsList>(this.datumCount, tokenSpans, labels));
+				this.data.get(phrase).add(new TokenSpansDatum<LabelsList>(this.datumCount, tokenSpans, labels, false));
 				
 				this.datumCount++;
 			}
@@ -119,6 +123,41 @@ public class PolysemousDataSetFactory {
 		Arrays.sort(this.polysemousSplitIndices);
 		
 		return true;
+	}
+	
+	public boolean initializePartition(double[] distribution) {
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> dataSet = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.datumTools.getDataTools()), null);
+		
+		for (Entry<String, List<TokenSpansDatum<LabelsList>>> entry : this.data.entrySet()) {
+			for (TokenSpansDatum<LabelsList> datum : entry.getValue())
+				dataSet.add(datum);
+		}
+		
+		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> partition = dataSet.makePartition(distribution, this.datumTools.getDataTools().getGlobalRandom());
+		
+		this.partitionSize = distribution.length;
+		this.partitionMap = new HashMap<Integer, Integer>();
+		
+		for (int i = 0; i < partition.size(); i++) {
+			DataSet<TokenSpansDatum<LabelsList>, LabelsList> part = partition.get(i);
+			for (TokenSpansDatum<LabelsList> datum : part)
+				this.partitionMap.put(datum.getId(), i);
+		}
+		
+		return true;
+	}
+	
+	public List<DataSet<TokenSpansDatum<Boolean>, Boolean>> makePartition(DataSet<TokenSpansDatum<Boolean>, Boolean> data) {
+		List<DataSet<TokenSpansDatum<Boolean>, Boolean>> partition = new ArrayList<DataSet<TokenSpansDatum<Boolean>, Boolean>>();
+		
+		for (int i = 0; i < this.partitionSize; i++) {
+			partition.add(new DataSet<TokenSpansDatum<Boolean>, Boolean>(TokenSpansDatum.getBooleanTools(data.getDatumTools().getDataTools()), null));
+		}
+		
+		for (TokenSpansDatum<Boolean> datum : data)
+			partition.get(this.partitionMap.get(datum.getId())).add(datum);
+		
+		return partition;
 	}
 	
 	public Pair<DataSet<TokenSpansDatum<LabelsList>, LabelsList>, Double> makePolysemousDataSet() {
@@ -175,7 +214,7 @@ public class PolysemousDataSetFactory {
 				if ((this.polysemousSplitIndices.length > 0 && i == this.polysemousSplitIndices[sI]) || j == datums.size() - 1) {
 					Map<LabelsList, Double> labelsDist = new HashMap<LabelsList, Double>();
 					TokenSpansDatum<LabelsList> combinedDatum = combineDatums(datums, prevSplitIndex, j + 1, labelsDist);
-					TokenSpansDatum<Boolean> combinedIndicatorDatum = new TokenSpansDatum<Boolean>(combinedDatum.getId(), combinedDatum.getTokenSpans(), combinedDatum.getLabel().contains(label));
+					TokenSpansDatum<Boolean> combinedIndicatorDatum = new TokenSpansDatum<Boolean>(combinedDatum.getId(), combinedDatum.getTokenSpans(), combinedDatum.getLabel().contains(label), combinedDatum.isPolysemous());
 					
 					Map<Boolean, Double> indicatorDist = new HashMap<Boolean, Double>();
 					double numTokenSpans = 0.0;
@@ -272,7 +311,7 @@ public class PolysemousDataSetFactory {
 			labelsDist.put(inputDatums.get(i).getLabel(), (double)inputDatums.get(i).getTokenSpans().length);
 		}
 		
-		return new TokenSpansDatum<LabelsList>(datums.get(0).getId(), datums, new LabelsList(labels));
+		return new TokenSpansDatum<LabelsList>(datums.get(0).getId(), datums, new LabelsList(labels), labels.size() > 1);
 	}
 	
 	private boolean nellAssignsLabel(String phrase, String label) {

@@ -9,6 +9,10 @@ import java.util.Map;
 import java.util.Set;
 
 import poly.data.feature.FeatureNer;
+import poly.model.evaluation.metric.SupervisedModelEvaluationPolyAccuracy;
+import poly.model.evaluation.metric.SupervisedModelEvaluationPolyF;
+import poly.model.evaluation.metric.SupervisedModelEvaluationPolyPrecision;
+import poly.model.evaluation.metric.SupervisedModelEvaluationPolyRecall;
 
 import ark.data.DataTools;
 import ark.data.annotation.Datum;
@@ -19,26 +23,28 @@ import ark.data.annotation.nlp.TokenSpan;
 
 public class TokenSpansDatum<L> extends Datum<L> {
 	private TokenSpan[] tokenSpans;
+	private boolean polysemous;
 	
-	public TokenSpansDatum(int id, TokenSpan[] tokenSpans, L label) {
+	public TokenSpansDatum(int id, TokenSpan[] tokenSpans, L label, boolean polysemous) {
 		this.id = id;
 		this.tokenSpans = tokenSpans;
 		this.label = label;
+		this.polysemous = polysemous;
 	}
 	
-	public TokenSpansDatum(int id, List<TokenSpan> tokenSpans, L label) {
-		this(id, tokenSpans.toArray(new TokenSpan[] {}), label);
+	public TokenSpansDatum(int id, List<TokenSpan> tokenSpans, L label, boolean polysemous) {
+		this(id, tokenSpans.toArray(new TokenSpan[] {}), label, polysemous);
 	}
 	
-	public TokenSpansDatum(int id, TokenSpan tokenSpan, L label) {
-		this(id, new TokenSpan[] { tokenSpan }, label);
+	public TokenSpansDatum(int id, TokenSpan tokenSpan, L label, boolean polysemous) {
+		this(id, new TokenSpan[] { tokenSpan }, label, polysemous);
 	}
 	
-	public <S> TokenSpansDatum(TokenSpansDatum<S> datum, L label) {
-		this(datum.id, datum.tokenSpans, label);
+	public <S> TokenSpansDatum(TokenSpansDatum<S> datum, L label, boolean polysemous) {
+		this(datum.id, datum.tokenSpans, label, polysemous);
 	}
 	
-	public TokenSpansDatum(int id, TokenSpansDatum<L> datum1, TokenSpansDatum<L> datum2, L label) {
+	public TokenSpansDatum(int id, TokenSpansDatum<L> datum1, TokenSpansDatum<L> datum2, L label, boolean polysemous) {
 		this.id = id;
 		
 		this.tokenSpans = new TokenSpan[datum1.tokenSpans.length + datum2.tokenSpans.length];
@@ -48,9 +54,10 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			this.tokenSpans[datum1.tokenSpans.length + i] = datum2.tokenSpans[i];
 	
 		this.label = label;
+		this.polysemous = polysemous;
 	}
 	
-	public TokenSpansDatum(int id, Collection<TokenSpansDatum<L>> datums, L label) {
+	public TokenSpansDatum(int id, Collection<TokenSpansDatum<L>> datums, L label, boolean polysemous) {
 		this.id = id;
 		
 		int numTokenSpans = 0;
@@ -67,10 +74,15 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		}
 	
 		this.label = label;
+		this.polysemous = polysemous;
 	}
 	
 	public TokenSpan[] getTokenSpans() {
 		return this.tokenSpans;
+	}
+	
+	public boolean isPolysemous() {
+		return this.polysemous;
 	}
 	
 	@Override
@@ -124,6 +136,11 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			PoSTag[][] NPTagClass = { PoSTagClass.NNP, PoSTagClass.NN };
 			
 			this.addGenericFeature(new FeatureNer<TokenSpansDatum<L>, L>());
+			
+			this.addGenericEvaluation(new SupervisedModelEvaluationPolyAccuracy<L>());
+			this.addGenericEvaluation(new SupervisedModelEvaluationPolyF<L>());
+			this.addGenericEvaluation(new SupervisedModelEvaluationPolyPrecision<L>());
+			this.addGenericEvaluation(new SupervisedModelEvaluationPolyRecall<L>());
 			
 			this.addStringExtractor(new StringExtractor<TokenSpansDatum<L>, L>() {
 				@Override

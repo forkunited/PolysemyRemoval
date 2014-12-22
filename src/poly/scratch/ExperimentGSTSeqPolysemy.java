@@ -45,6 +45,7 @@ public class ExperimentGSTSeqPolysemy {
 		constantBaselines = Boolean.valueOf(args[9]);
 		boolean nellFiltering = Boolean.valueOf(args[10]);
 		boolean singleMentionDatums = Boolean.valueOf(args[11]);
+		boolean onlyPolysemous = Boolean.valueOf(args[12]);
 		
 		targetBaselines = new HashMap<String, Double>();
 		
@@ -75,7 +76,8 @@ public class ExperimentGSTSeqPolysemy {
 				loadBySentence,
 				dataTools,
 				nellFiltering,
-				singleMentionDatums);
+				singleMentionDatums,
+				onlyPolysemous);
 		
 		List<LabelExperimentResult> results = new ArrayList<LabelExperimentResult>();
 		int iteration = 0;

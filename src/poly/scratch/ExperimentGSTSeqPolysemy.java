@@ -44,6 +44,7 @@ public class ExperimentGSTSeqPolysemy {
 		boolean loadBySentence = Boolean.valueOf(args[8]);
 		constantBaselines = Boolean.valueOf(args[9]);
 		boolean nellFiltering = Boolean.valueOf(args[10]);
+		boolean singleMentionDatums = Boolean.valueOf(args[11]);
 		
 		targetBaselines = new HashMap<String, Double>();
 		
@@ -73,7 +74,8 @@ public class ExperimentGSTSeqPolysemy {
 				properties.getHazyFacc1SentenceDataDirPath(),
 				loadBySentence,
 				dataTools,
-				nellFiltering);
+				nellFiltering,
+				singleMentionDatums);
 		
 		List<LabelExperimentResult> results = new ArrayList<LabelExperimentResult>();
 		int iteration = 0;

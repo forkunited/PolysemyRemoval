@@ -43,7 +43,7 @@ public class PolysemousDataSetFactory {
 	private Map<Integer, Integer> partitionMap;
 	
 	
-	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, final String sentenceDirPath, final boolean loadBySentence, PolyDataTools dataTools, boolean nellFiltering) {
+	public PolysemousDataSetFactory(double dataFraction, String dataFilePath, final String documentDirPath, int documentCacheSize, final String sentenceDirPath, final boolean loadBySentence, PolyDataTools dataTools, boolean nellFiltering, boolean singleMentionDatums) {
 		this.datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
 		this.documentCache = 
 				new DocumentCache(
@@ -78,9 +78,17 @@ public class PolysemousDataSetFactory {
 			
 				if (!this.data.containsKey(phrase))
 					this.data.put(phrase, new ArrayList<TokenSpansDatum<LabelsList>>());
-				this.data.get(phrase).add(new TokenSpansDatum<LabelsList>(this.datumCount, tokenSpans, labels, false));
 				
-				this.datumCount++;
+				if (singleMentionDatums) {
+					for (TokenSpan tokenSpan : tokenSpans) {
+						this.data.get(phrase).add(new TokenSpansDatum<LabelsList>(this.datumCount, tokenSpan, labels, false));
+						this.datumCount++;
+					}
+				} else {
+					this.data.get(phrase).add(new TokenSpansDatum<LabelsList>(this.datumCount, tokenSpans, labels, false));
+					this.datumCount++;
+				}
+				
 			}
 			
 			r.close();

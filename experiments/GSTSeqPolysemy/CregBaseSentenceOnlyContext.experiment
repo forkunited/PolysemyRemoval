@@ -13,7 +13,7 @@ evaluation=PolyF(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1)
 evaluation=PolyPrecision(weighted=false, filterLabel=true)
 evaluation=PolyRecall(weighted=false, filterLabel=true)
 
-gridSearchParameterValues=l2(0,1,5,10)
+gridSearchParameterValues=l2(0)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
 feature_cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*")
@@ -35,7 +35,7 @@ feature_gnps1=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtracto
 feature_gnps2=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceBigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
 feature_gnps3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceTrigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
 
-model=Creg(cmdPath=CregCmd, modelPath=CregModel/${DATA_SET}/GSTSeqPolysemy/CregBaseSentencel1_${l1}.l2_${l2}.${ITERATION}${LABEL}, l1=1, l2=0, warmRestart=false)
+model=Creg(cmdPath=CregCmd, modelPath=CregModel/${DATA_SET}/GSTSeqPolysemy/CregBaseSentencel1_${l1}.l2_${l2}.${ITERATION}${LABEL}, l1=0, l2=0, warmRestart=false)
 {
 	validLabels=true, false
 }

@@ -101,7 +101,14 @@ public class PolysemousDataSetFactory {
 		if (!singleMentionDatums && onlyPolysemous) {
 			Set<String> nonPolysemousPhrases = new HashSet<String>();
 			for (Entry<String, List<TokenSpansDatum<LabelsList>>> entry : this.data.entrySet()) {
-				if (entry.getValue().size() <= 1)
+				Map<LabelsList, Double> dist = new HashMap<LabelsList, Double>();
+				double totalMentions = 0;
+				for (TokenSpansDatum<LabelsList> datum : entry.getValue()) { 
+					dist.put(datum.getLabel(), (double)datum.getTokenSpans().length);
+					totalMentions += datum.getTokenSpans().length;
+				}
+				dist = MathUtil.normalize(dist, totalMentions);
+				if (MathUtil.computeEntropy(dist) < .2)
 					nonPolysemousPhrases.add(entry.getKey());
 			}
 			

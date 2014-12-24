@@ -108,7 +108,7 @@ public class PolysemousDataSetFactory {
 					totalMentions += datum.getTokenSpans().length;
 				}
 				dist = MathUtil.normalize(dist, totalMentions);
-				if (MathUtil.computeEntropy(dist) < .2)
+				if (MathUtil.computeEntropy(dist) < .5)
 					nonPolysemousPhrases.add(entry.getKey());
 			}
 			

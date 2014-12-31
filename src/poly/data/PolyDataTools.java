@@ -76,6 +76,16 @@ public class PolyDataTools extends DataTools {
 			}
 		});
 		
+		this.addCleanFn(new DataTools.StringTransform() {
+			public String toString() {
+				return "TrimToLower";
+			}
+			
+			public String transform(String str) {
+				return str.trim().toLowerCase();
+			}
+		});
+		
 		this.addStringClusterer(new ClustererAffix("AffixMaxLength5", 5));
 	}
 	
@@ -107,7 +117,7 @@ public class PolyDataTools extends DataTools {
 			this.addGazetteer(
 				new Gazetteer(name, 
 				this.properties.getFreebaseNELLCategoryGazetteerPath(),
-				this.getCleanFn("Trim"))
+				this.getCleanFn("TrimToLower"))
 			);
 		} else if (name.equals("FreebaseTypeTopic")) {
 			this.addGazetteer(
@@ -128,6 +138,18 @@ public class PolyDataTools extends DataTools {
 					this.getCleanFn("PolyDefaultCleanFn"),
 					true)
 				);
+		} else if (name.equals("NELLCategoryGeneralization")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNELLCategoryGeneralizationGazetteerPath(),
+					this.getCleanFn("Trim"))
+			);
+		} else if (name.equals("NELLCategoryMutex")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNELLCategoryMutexGazetteerPath(),
+					this.getCleanFn("Trim"))
+			);
 		} else {
 			return null;
 		}

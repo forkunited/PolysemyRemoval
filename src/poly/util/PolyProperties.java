@@ -18,6 +18,8 @@ public class PolyProperties extends Properties {
 	private String hazyFacc1SentenceDataDirPath;
 	private String polysemyDataFileDirPath;
 	private String nounPhraseNELLCategoryGazetteerPath;
+	private String NELLCategoryGeneralizationGazetteerPath;
+	private String NELLCategoryMutexGazetteerPath;
 	
 	public PolyProperties() {
 		this(null);
@@ -41,6 +43,8 @@ public class PolyProperties extends Properties {
 		this.hazyFacc1SentenceDataDirPath = loadProperty("hazyFacc1SentenceDataDirPath");
 		this.polysemyDataFileDirPath = loadProperty("polysemyDataFileDirPath");
 		this.nounPhraseNELLCategoryGazetteerPath = loadProperty("nounPhraseNELLCategoryGazetteerPath");
+		this.NELLCategoryGeneralizationGazetteerPath = loadProperty("NELLCategoryGeneralizationGazetteerPath");
+		this.NELLCategoryMutexGazetteerPath = loadProperty("NELLCategoryMutexGazetteerPath");
 	}
 	
 	public String getGoogleApiKey() {
@@ -101,5 +105,13 @@ public class PolyProperties extends Properties {
 	
 	public String getNounPhraseNELLCategoryGazetteerPath() {
 		return this.nounPhraseNELLCategoryGazetteerPath;
+	}
+	
+	public String getNELLCategoryGeneralizationGazetteerPath() {
+		return this.NELLCategoryGeneralizationGazetteerPath;
+	}
+	
+	public String getNELLCategoryMutexGazetteerPath() {
+		return this.NELLCategoryMutexGazetteerPath;
 	}
 }

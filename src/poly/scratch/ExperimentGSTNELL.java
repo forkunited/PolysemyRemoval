@@ -66,10 +66,10 @@ public class ExperimentGSTNELL {
 			for (TokenSpan np : nps) {
 				String npStr = np.toString();
 				List<String> categories = nell.getNounPhraseNELLCategories(npStr);
-				System.out.print(npStr + "\t");
+				/*System.out.print(npStr + "\t");
 				for (String category : categories)
 					System.out.print(category);
-				System.out.println();
+				System.out.println();*/
 				
 				totalNps++;
 				if (categories.size() > 0)

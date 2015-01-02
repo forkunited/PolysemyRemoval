@@ -49,6 +49,8 @@ public class NELL {
 	public List<String> getNounPhraseNELLCategories(String nounPhrase) {
 		List<Pair<String, Double>> weightedCategories = this.nounPhraseCategory.getWeightedIds(nounPhrase);
 		List<String> categories = new ArrayList<String>();
+		if (weightedCategories == null)
+			return categories;
 		
 		for (Pair<String, Double> weightedCategory : weightedCategories)
 			if (weightedCategory.getSecond() >= this.confidenceThreshold)

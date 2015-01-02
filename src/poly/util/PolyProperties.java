@@ -20,6 +20,14 @@ public class PolyProperties extends Properties {
 	private String nounPhraseNELLCategoryGazetteerPath;
 	private String NELLCategoryGeneralizationGazetteerPath;
 	private String NELLCategoryMutexGazetteerPath;
+	private String NELLPrefixAbbreviationGazetteerPath;
+	private String NELLSuffixAbbreviationGazetteerPath;
+	private String NELLNounPhraseBadPrefixGazetteerPath;
+	private String NELLNounPhraseBadSuffixGazetteerPath;
+	private String NELLNounPhraseBadTokenGazetteerPath;
+	private String NELLNounPhrasePhraseDictionaryGazetteerPath;
+	private String NELLNounPhraseFnWordGazetteerPath;
+	private String NELLNounPhraseStopWordGazetteerPath;
 	
 	public PolyProperties() {
 		this(null);
@@ -45,6 +53,14 @@ public class PolyProperties extends Properties {
 		this.nounPhraseNELLCategoryGazetteerPath = loadProperty("nounPhraseNELLCategoryGazetteerPath");
 		this.NELLCategoryGeneralizationGazetteerPath = loadProperty("NELLCategoryGeneralizationGazetteerPath");
 		this.NELLCategoryMutexGazetteerPath = loadProperty("NELLCategoryMutexGazetteerPath");
+		this.NELLPrefixAbbreviationGazetteerPath = loadProperty("NELLPrefixAbbreviationGazetteerPath");
+		this.NELLSuffixAbbreviationGazetteerPath = loadProperty("NELLSuffixAbbreviationGazetteerPath");
+		this.NELLNounPhraseBadPrefixGazetteerPath = loadProperty("NELLNounPhraseBadPrefixGazetteerPath");
+		this.NELLNounPhraseBadSuffixGazetteerPath = loadProperty("NELLNounPhraseBadSuffixGazetteerPath");
+		this.NELLNounPhraseBadTokenGazetteerPath = loadProperty("NELLNounPhraseBadTokenGazetteerPath");
+		this.NELLNounPhrasePhraseDictionaryGazetteerPath = loadProperty("NELLNounPhrasePhraseDictionaryGazetteerPath");
+		this.NELLNounPhraseFnWordGazetteerPath = loadProperty("NELLNounPhraseFnWordGazetteerPath");
+		this.NELLNounPhraseStopWordGazetteerPath = loadProperty("NELLNounPhraseStopWordGazetteerPath");
 	}
 	
 	public String getGoogleApiKey() {
@@ -113,5 +129,37 @@ public class PolyProperties extends Properties {
 	
 	public String getNELLCategoryMutexGazetteerPath() {
 		return this.NELLCategoryMutexGazetteerPath;
+	}
+	
+	public String getNELLPrefixAbbreviationGazetteerPath() {
+		return this.NELLPrefixAbbreviationGazetteerPath;
+	}
+	
+	public String getNELLSuffixAbbreviationGazetteerPath() {
+		return this.NELLSuffixAbbreviationGazetteerPath;
+	}
+	
+	public String getNELLNounPhraseBadPrefixGazetteerPath() {
+		return this.NELLNounPhraseBadPrefixGazetteerPath;
+	}
+	
+	public String getNELLNounPhraseBadSuffixGazetteerPath() {
+		return this.NELLNounPhraseBadSuffixGazetteerPath;
+	}
+	
+	public String getNELLNounPhraseBadTokenGazetteerPath() {
+		return this.NELLNounPhraseBadTokenGazetteerPath;
+	}
+	
+	public String getNELLNounPhrasePhraseDictionaryGazetteerPath() {
+		return this.NELLNounPhrasePhraseDictionaryGazetteerPath;
+	}
+	
+	public String getNELLNounPhraseFnWordGazetteerPath() {
+		return this.NELLNounPhraseFnWordGazetteerPath;
+	}
+	
+	public String getNELLNounPhraseStopWordGazetteerPath() {
+		return this.NELLNounPhraseStopWordGazetteerPath;
 	}
 }

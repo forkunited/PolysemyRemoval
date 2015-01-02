@@ -1,0 +1,40 @@
+randomSeed=1
+maxThreads=4
+trainOnDev=true
+errorExampleExtractor=FirstTokenSpan
+
+evaluation=Accuracy()
+evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1)
+evaluation=Precision(weighted=false, filterLabel=true)
+evaluation=Recall(weighted=false, filterLabel=true)
+
+gridSearchParameterValues=l2(0,1,5,10)
+
+feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
+feature_cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*")
+feature_cpnb1=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*")
+feature_cpnb2=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN,JJ,PRP> ((<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*)")
+feature_cpnb3=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*")
+feature_cpnb4=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN> ((<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*)")
+feature_cpnb5=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NN,JJ,NNP>)+(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*")
+feature_cpnb6=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN,JJ> ((<p:NN,JJ,NNP>)+(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*)")
+
+feature_cpb1=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".* (IN|TO|JJ)")
+feature_cpa1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((<p:RB,VB>)*<p:VB>).*")
+
+feature_dep=NGramDep(scale=INDICATOR, mode=ParentsAndChildren, useRelationTypes=true, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
+feature_sent1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=AllTokenSpans)
+feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
+
+feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
+feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
+
+feature_gnp=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=FirstTokenSpan, includeIds=true, includeWeights=true, weightThreshold=0.90)
+feature_gnps1=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceUnigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
+feature_gnps2=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceBigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
+feature_gnps3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceTrigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
+
+model=Creg(cmdPath=CregCmd, modelPath=CregModel/${DATA_SET}/GSTSeqPolysemy/CregBaseSentencel1_${l1}.l2_${l2}.${ITERATION}${LABEL}, l1=0, l2=0, warmRestart=false)
+{
+	validLabels=true, false
+}

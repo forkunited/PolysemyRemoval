@@ -150,7 +150,55 @@ public class PolyDataTools extends DataTools {
 					this.properties.getNELLCategoryMutexGazetteerPath(),
 					this.getCleanFn("Trim"))
 			);
-		} else {
+		} else if (name.equals("NELLPrefixAbbreviation")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNELLPrefixAbbreviationGazetteerPath(),
+					this.getCleanFn("Trim"))
+			);
+		} else if (name.equals("NELLSuffixAbbreviation")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNELLSuffixAbbreviationGazetteerPath(),
+					this.getCleanFn("Trim"))
+			);		
+		} else if (name.equals("NELLNounPhraseBadPrefix")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNELLNounPhraseBadPrefixGazetteerPath(),
+					this.getCleanFn("Trim"))
+			);
+		} else if (name.equals("NELLNounPhraseBadSuffix")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNELLNounPhraseBadSuffixGazetteerPath(),
+					this.getCleanFn("Trim"))
+			);		
+		} else if (name.equals("NELLNounPhraseBadToken")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNELLNounPhraseBadTokenGazetteerPath(),
+					this.getCleanFn("Trim"))
+			);
+		} else if (name.equals("NELLNounPhrasePhraseDictionary")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNELLNounPhrasePhraseDictionaryGazetteerPath(),
+					this.getCleanFn("Trim"))
+			);
+		} else if (name.equals("NELLNounPhraseFnWord")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNELLNounPhraseFnWordGazetteerPath(),
+					this.getCleanFn("Trim"))
+			);
+		} else if (name.equals("NELLNounPhraseStopWord")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getNELLNounPhraseStopWordGazetteerPath(),
+					this.getCleanFn("TrimToLower"))
+			);
+ 		} else {
 			return null;
 		}
 		

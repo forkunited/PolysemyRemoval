@@ -33,12 +33,12 @@ public class ExperimentGSTNELL {
 		String experimentInputPath = new File(properties.getExperimentInputDirPath(), experimentName + ".experiment").getAbsolutePath();
 		String experimentOutputPath = new File(properties.getExperimentOutputDirPath(), experimentOutputName).getAbsolutePath(); 
 		
-		OutputWriter output = new OutputWriter(
+		OutputWriter output = null; /*new OutputWriter(
 				new File(experimentOutputPath + ".debug.out"),
 				new File(experimentOutputPath + ".results.out"),
 				new File(experimentOutputPath + ".data.out"),
 				new File(experimentOutputPath + ".model.out")
-			);
+			);*/
 		
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
 		dataTools.setRandomSeed(randomSeed);

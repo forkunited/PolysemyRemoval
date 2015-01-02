@@ -275,7 +275,7 @@ public class NELL {
 		int i = startIndex;	
 		
 		// look forward for DT? [A-Z]/* ((IN|DT|CC|POS{1,3} [A-Z]/*)+)*
-		if (i < tokenCount && document.getPoSTag(sentenceIndex, startIndex - 1) == PoSTag.DT) {
+		if (i < tokenCount && startIndex > 0 && document.getPoSTag(sentenceIndex, startIndex - 1) == PoSTag.DT) {
 			i++;
 		}
 		

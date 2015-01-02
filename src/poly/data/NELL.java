@@ -214,7 +214,8 @@ public class NELL {
 			if (j > 0 && (i + j) < tokenCount && Character.isUpperCase(document.getToken(sentenceIndex, i + j).charAt(0)))
 				return;
 		}
-
+		
+		i = endIndex;
 		int firstNPIndex = -1;
 		boolean hasFn = false;
 		while (i >= 0) {

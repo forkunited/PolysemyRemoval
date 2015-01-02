@@ -230,7 +230,8 @@ public class NELL {
 			}
 		}
 		
-		///
+		if (firstNPIndex < 0)
+			return;
 		
 		TokenSpan npSpan = new TokenSpan(document, sentenceIndex, firstNPIndex, endIndex + 1);
 		if (spanContainsBadTokens(npSpan))
@@ -293,6 +294,9 @@ public class NELL {
 			}
 		}
         
+		if (lastNPIndex < 0)
+			return;
+		
 		if ((lastNPIndex > 0) && (
 				(lastNPIndex < tokenCount - 1
 					&& document.getToken(sentenceIndex, lastNPIndex + 1).equals(".")

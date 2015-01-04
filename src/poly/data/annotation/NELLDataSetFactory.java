@@ -78,7 +78,7 @@ public class NELLDataSetFactory {
 		Random r = this.dataTools.getGlobalRandom();
 		int id = 0;
 		for (File documentFile : documentFiles) {
-			if (r.nextDouble() < dataFraction)
+			if (r.nextDouble() >= dataFraction)
 				continue;
 			
 			Document document = this.documentCache.getDocument(documentFile.getName());

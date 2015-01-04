@@ -157,9 +157,14 @@ public class NELL {
 	public Set<String> getCategoryMutualExclusions(String category) {
 		Set<String> mutexes = new HashSet<String>();
 		Set<String> generalizations = getCategoryGeneralizations(category);
+		if (generalizations == null)
+			return mutexes;
 		
-		for (String generalization : generalizations)
-			mutexes.addAll(this.categoryMutex.getIds(generalization));
+		for (String generalization : generalizations) {
+			List<String> ids = this.categoryMutex.getIds(generalization);
+			if (ids != null)
+				mutexes.addAll(ids);
+		}
 		
 		return mutexes;
 	}

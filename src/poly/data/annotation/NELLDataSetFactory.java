@@ -40,7 +40,7 @@ public class NELLDataSetFactory {
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(double nellConfidenceThreshold, double dataFraction, boolean nonPolysemous) {
-		File file = new File(this.dataFileDirPath, "NELLData_c" + (int)(nellConfidenceThreshold) + "_f" + (int)(dataFraction * 100));
+		File file = new File(this.dataFileDirPath, "NELLData_c" + (int)(nellConfidenceThreshold * 100) + "_f" + (int)(dataFraction * 100));
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = null;
 		
 		if (file.exists()) {

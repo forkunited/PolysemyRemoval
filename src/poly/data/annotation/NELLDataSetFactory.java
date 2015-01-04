@@ -78,12 +78,12 @@ public class NELLDataSetFactory {
 		Random r = this.dataTools.getGlobalRandom();
 		int id = 0;
 		for (File documentFile : documentFiles) {
+			if (r.nextDouble() < dataFraction)
+				continue;
+			
 			Document document = this.documentCache.getDocument(documentFile.getName());
 			List<TokenSpanCached> nps = nell.extractNounPhrases(document);
 			for (TokenSpanCached np : nps) {
-				if (r.nextDouble() < dataFraction)
-					continue;
-				
 				String npStr = np.toString();
 				List<Pair<String, Double>> categories = nell.getNounPhraseNELLWeightedCategories(npStr);
 				if (categories.size() == 0)

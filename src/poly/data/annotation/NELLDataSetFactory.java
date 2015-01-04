@@ -40,7 +40,7 @@ public class NELLDataSetFactory {
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(double nellConfidenceThreshold, double dataFraction, boolean nonPolysemous) {
-		File file = new File(this.dataFileDirPath, "NELLData_" + (int)(dataFraction * 100));
+		File file = new File(this.dataFileDirPath, "NELLData_c" + (int)(nellConfidenceThreshold) + "_f" + (int)(dataFraction * 100));
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = null;
 		
 		if (file.exists()) {
@@ -52,7 +52,7 @@ public class NELLDataSetFactory {
 				return null;
 			}
 		} else {
-			data = constructDataSet(nellConfidenceThreshold);
+			data = constructDataSet(nellConfidenceThreshold, dataFraction);
 			try {
 				if (!data.serialize(new FileWriter(file)))
 					return null;
@@ -62,25 +62,28 @@ public class NELLDataSetFactory {
 		}
 	
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> retData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
-		Random r = this.dataTools.getGlobalRandom();
 		for (TokenSpansDatum<LabelsList> datum : data) {
-			if (r.nextDouble() < dataFraction && (!nonPolysemous || datum.isPolysemous()))
+			if (!nonPolysemous || datum.isPolysemous())
 				retData.add(datum);
 		}
 		
 		return retData;
 	}
 	
-	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(double nellConfidenceThreshold) {
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(double nellConfidenceThreshold, double dataFraction) {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 		NELL nell = new NELL(this.dataTools, nellConfidenceThreshold);
 		File documentDir = new File(this.documentDirPath);
 		File[] documentFiles = documentDir.listFiles();
+		Random r = this.dataTools.getGlobalRandom();
 		int id = 0;
 		for (File documentFile : documentFiles) {
 			Document document = this.documentCache.getDocument(documentFile.getName());
 			List<TokenSpanCached> nps = nell.extractNounPhrases(document);
 			for (TokenSpanCached np : nps) {
+				if (r.nextDouble() < dataFraction)
+					continue;
+				
 				String npStr = np.toString();
 				List<Pair<String, Double>> categories = nell.getNounPhraseNELLWeightedCategories(npStr);
 				if (categories.size() == 0)

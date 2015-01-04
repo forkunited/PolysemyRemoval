@@ -13,6 +13,7 @@ import poly.data.PolyDataTools;
 import poly.data.annotation.DocumentCache;
 import poly.data.annotation.HazyFACC1Document;
 import poly.data.annotation.LabelsList;
+import poly.data.annotation.NELLDataSetFactory;
 import poly.data.annotation.PolysemousDataSetFactory;
 import poly.data.annotation.DocumentCache.DocumentLoader;
 import poly.util.PolyProperties;
@@ -44,40 +45,7 @@ public class ExperimentGSTNELL {
 		dataTools.setRandomSeed(randomSeed);
 		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
-		NELL nell = new NELL(dataTools, nellConfidenceThreshold);
-		
-		DocumentCache documentCache = 
-				new DocumentCache(
-						new DocumentLoader() {
-							@Override
-							public Document load(String documentName) {
-								return new HazyFACC1Document(documentName, properties.getHazyFacc1DataDirPath(), null, false);
-							} 
-						}
-				, 1000000);
-		File documentDir = new File(properties.getHazyFacc1DataDirPath());
-		File[] documentFiles = documentDir.listFiles();
-		double totalNps = 0;
-		double nellNps = 0;
-		double documentCount = 0;
-		for (File documentFile : documentFiles) {
-			Document document = documentCache.getDocument(documentFile.getName());
-			List<TokenSpan> nps = nell.extractNounPhrases(document);
-			for (TokenSpan np : nps) {
-				String npStr = np.toString();
-				List<String> categories = nell.getNounPhraseNELLCategories(npStr);
-				/*System.out.print(npStr + "\t");
-				for (String category : categories)
-					System.out.print(category);
-				System.out.println();*/
-				
-				totalNps++;
-				if (categories.size() > 0)
-					nellNps++;
-			}	
-			documentCount++;
-		}
-	
-		System.out.println("nps: " + totalNps + " nell-nps: " + nellNps + " documents: " + documentCount);
+		NELLDataSetFactory dataFactory = new NELLDataSetFactory(properties.getNELLDataFileDirPath(), properties.getHazyFacc1DataDirPath(), 1000000, dataTools);
+		dataFactory.loadDataSet(0.9, 1, true);
 	}
 }

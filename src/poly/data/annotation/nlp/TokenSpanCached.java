@@ -23,6 +23,23 @@ public class TokenSpanCached extends TokenSpan {
 		return this.cache.getDocument(this.documentName);
 	}
 	
+	@Override
+	public JSONObject toJSON() {
+		return toJSON(true);
+	}
+	
+	@Override
+	public JSONObject toJSON(boolean includeSentence) {
+		JSONObject json = super.toJSON(includeSentence);
+		try {
+			json.put("document", this.documentName);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		return json;
+	}
+	
 	public static TokenSpanCached fromJSON(JSONObject json, DocumentCache documentCache) {
 		return TokenSpanCached.fromJSON(json, documentCache, -1);
 	}

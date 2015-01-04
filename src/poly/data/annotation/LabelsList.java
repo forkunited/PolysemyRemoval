@@ -2,15 +2,40 @@ package poly.data.annotation;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import ark.util.Pair;
 
 public class LabelsList {
 	private String[] labels;
+	private double[] labelWeights;
+	
+	public LabelsList(List<Pair<String, Double>> weightedLabels) {
+		this.labels = new String[weightedLabels.size()];
+		this.labelWeights = new double[weightedLabels.size()];
+		
+		for (int i = 0; i < weightedLabels.size(); i++) {
+			this.labels[i] = weightedLabels.get(i).getFirst();
+			this.labelWeights[i] = weightedLabels.get(i).getSecond();
+		}
+	}
+	
+	public LabelsList(String[] labels, double[] labelWeights, int startIndex) {
+		this.labels = new String[labels.length - startIndex];
+		if (labelWeights != null)
+			this.labelWeights = new double[labels.length - startIndex];
+		
+		for (int i = startIndex; i < labels.length; i++) {
+			this.labels[i - startIndex] = labels[i];
+			if (labelWeights != null) 
+				this.labelWeights[i - startIndex] = labelWeights[i];
+		}
+		
+	}
 	
 	public LabelsList(String[] labels, int startIndex) {
-		this.labels = new String[labels.length - startIndex];
-		for (int i = startIndex; i < labels.length; i++)
-			this.labels[i - startIndex] = labels[i];
+		this(labels, null, startIndex);
 	}
 	
 	public LabelsList(LabelsList list1, LabelsList list2) {
@@ -46,8 +71,12 @@ public class LabelsList {
 	
 	public String toString() {
 		StringBuilder str = new StringBuilder();
-		for (int i = 0; i < this.labels.length; i++)
-			str.append(this.labels[i]).append(",");
+		for (int i = 0; i < this.labels.length; i++) {
+			str.append(this.labels[i]);
+			if (this.labelWeights != null)
+				str.append(":").append(this.labelWeights[i]);
+			str.append(",");
+		}
 		str.delete(str.length() - 1, str.length());
 		return str.toString();
 	}
@@ -76,6 +105,17 @@ public class LabelsList {
 	
 	public static LabelsList fromString(String str) {
 		String[] strParts = str.split(",");
-		return new LabelsList(strParts, 0);
+		if (strParts.length == 0 || !strParts[0].contains(":"))
+			return new LabelsList(strParts, 0);	
+		
+		String[] labels = new String[strParts.length];
+		double[] labelWeights = new double[strParts.length];
+		for (int i = 0; i < strParts.length; i++) {
+			String[] labelParts = strParts[i].split(":");
+			labels[i] = labelParts[0];
+			labelWeights[i] = Double.parseDouble(labelParts[1]);
+		}
+		
+		return new LabelsList(labels, labelWeights, 0);
 	}
 }

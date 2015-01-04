@@ -8,6 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import poly.data.PolyDataTools;
+import poly.data.annotation.nlp.TokenSpanCached;
 import poly.data.feature.FeatureNer;
 import poly.model.evaluation.metric.SupervisedModelEvaluationPolyAccuracy;
 import poly.model.evaluation.metric.SupervisedModelEvaluationPolyF;
@@ -22,22 +28,22 @@ import ark.data.annotation.nlp.PoSTagClass;
 import ark.data.annotation.nlp.TokenSpan;
 
 public class TokenSpansDatum<L> extends Datum<L> {
-	private TokenSpan[] tokenSpans;
+	private TokenSpanCached[] tokenSpans;
 	private boolean polysemous;
 	
-	public TokenSpansDatum(int id, TokenSpan[] tokenSpans, L label, boolean polysemous) {
+	public TokenSpansDatum(int id, TokenSpanCached[] tokenSpans, L label, boolean polysemous) {
 		this.id = id;
 		this.tokenSpans = tokenSpans;
 		this.label = label;
 		this.polysemous = polysemous;
 	}
 	
-	public TokenSpansDatum(int id, List<TokenSpan> tokenSpans, L label, boolean polysemous) {
-		this(id, tokenSpans.toArray(new TokenSpan[] {}), label, polysemous);
+	public TokenSpansDatum(int id, List<TokenSpanCached> tokenSpans, L label, boolean polysemous) {
+		this(id, tokenSpans.toArray(new TokenSpanCached[] {}), label, polysemous);
 	}
 	
-	public TokenSpansDatum(int id, TokenSpan tokenSpan, L label, boolean polysemous) {
-		this(id, new TokenSpan[] { tokenSpan }, label, polysemous);
+	public TokenSpansDatum(int id, TokenSpanCached tokenSpan, L label, boolean polysemous) {
+		this(id, new TokenSpanCached[] { tokenSpan }, label, polysemous);
 	}
 	
 	public <S> TokenSpansDatum(TokenSpansDatum<S> datum, L label, boolean polysemous) {
@@ -47,7 +53,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 	public TokenSpansDatum(int id, TokenSpansDatum<L> datum1, TokenSpansDatum<L> datum2, L label, boolean polysemous) {
 		this.id = id;
 		
-		this.tokenSpans = new TokenSpan[datum1.tokenSpans.length + datum2.tokenSpans.length];
+		this.tokenSpans = new TokenSpanCached[datum1.tokenSpans.length + datum2.tokenSpans.length];
 		for (int i = 0; i < datum1.tokenSpans.length; i++)
 			this.tokenSpans[i] = datum1.tokenSpans[i];
 		for (int i = 0; i < datum2.tokenSpans.length; i++)
@@ -64,10 +70,10 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		for (TokenSpansDatum<L> datum : datums)
 			numTokenSpans += datum.getTokenSpans().length;
 		
-		this.tokenSpans = new TokenSpan[numTokenSpans];
+		this.tokenSpans = new TokenSpanCached[numTokenSpans];
 		int i = 0;
 		for (TokenSpansDatum<L> datum : datums) {
-			for (TokenSpan tokenSpan : datum.tokenSpans) {
+			for (TokenSpanCached tokenSpan : datum.tokenSpans) {
 				this.tokenSpans[i] = tokenSpan;
 				i++;
 			}
@@ -77,7 +83,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		this.polysemous = polysemous;
 	}
 	
-	public TokenSpan[] getTokenSpans() {
+	public TokenSpanCached[] getTokenSpans() {
 		return this.tokenSpans;
 	}
 	
@@ -228,6 +234,47 @@ public class TokenSpansDatum<L> extends Datum<L> {
 					return new TokenSpan[] { tokenSpansDatum.tokenSpans[tokenSpansDatum.tokenSpans.length - 1] };
 				}
 			});
+		}
+		
+		@Override
+		public TokenSpansDatum<L> datumFromJSON(JSONObject json) {
+			try {
+				int id = json.getInt("id");
+				boolean polysemous = json.getBoolean("polysemous");
+				L label = labelFromString(json.getString("label"));
+				JSONArray jsonTokenSpans = json.getJSONArray("tokenSpans");
+				List<TokenSpanCached> tokenSpans = new ArrayList<TokenSpanCached>();
+				for (int i = 0; i < jsonTokenSpans.length(); i++) {
+					tokenSpans.add(TokenSpanCached.fromJSON(jsonTokenSpans.getJSONObject(i), ((PolyDataTools)this.dataTools).getDocumentCache()));
+				}
+				
+				return new TokenSpansDatum<L>(id, tokenSpans, label, polysemous);
+			} catch (JSONException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+		
+		@Override
+		public JSONObject datumToJSON(TokenSpansDatum<L> datum) {
+			JSONObject json = new JSONObject();
+			
+			try {
+				json.put("id", datum.id);
+				json.put("polysemous", datum.polysemous);
+				json.put("label", datum.label.toString());
+				
+				JSONArray tokenSpans = new JSONArray();
+				for (TokenSpanCached tokenSpan : datum.tokenSpans) {
+					tokenSpans.put(tokenSpan.toJSON(true));
+				}
+				
+				json.put("tokenSpans", tokenSpans);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			
+			return json;
 		}
 		
 		private class StringExtractorNGramPoSTag implements StringExtractor<TokenSpansDatum<L>, L> {

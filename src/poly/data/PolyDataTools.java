@@ -3,6 +3,7 @@ package poly.data;
 import java.io.File;
 import java.util.Map.Entry;
 
+import poly.data.annotation.DocumentCache;
 import poly.util.PolyProperties;
 
 import ark.cluster.ClustererAffix;
@@ -13,9 +14,10 @@ import ark.util.Stemmer;
 
 public class PolyDataTools extends DataTools {
 	private PolyProperties properties;
+	private DocumentCache documentCache;
 	
 	public PolyDataTools(OutputWriter outputWriter, PolyDataTools dataTools) {
-		this(outputWriter, dataTools.properties);
+		this(outputWriter, dataTools.properties, dataTools.getDocumentCache());
 		
 		for (Entry<String, Gazetteer> entry : dataTools.gazetteers.entrySet())
 			this.gazetteers.put(entry.getKey(), entry.getValue());
@@ -25,9 +27,14 @@ public class PolyDataTools extends DataTools {
 	}
 	
 	public PolyDataTools(OutputWriter outputWriter, PolyProperties properties) {
+		this(outputWriter, properties, null);
+	}
+	
+	public PolyDataTools(OutputWriter outputWriter, PolyProperties properties, DocumentCache documentCache) {
 		super(outputWriter);
 		
 		this.properties = properties;
+		this.documentCache = documentCache;
 		this.addPath("CregCmd", new Path("CregCmd", properties.getCregCommandPath()));
 	
 		// For cleaning strings, and replacing all white space with "_"
@@ -203,5 +210,18 @@ public class PolyDataTools extends DataTools {
 		}
 		
 		return this.gazetteers.get(name);
+	}
+	
+	public PolyProperties getProperties() {
+		return this.properties;
+	}
+	
+	public DocumentCache getDocumentCache() {
+		return this.documentCache;
+	}
+	
+	public boolean setDocumentCache(DocumentCache documentCache) {
+		this.documentCache = documentCache;
+		return true;
 	}
 }

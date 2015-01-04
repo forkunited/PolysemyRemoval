@@ -18,7 +18,6 @@ import ark.data.Gazetteer;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum.Tools;
 import ark.data.annotation.Document;
-import ark.data.annotation.nlp.TokenSpan;
 import ark.util.FileUtil;
 import ark.util.MathUtil;
 import ark.util.Pair;
@@ -72,7 +71,7 @@ public class PolysemousDataSetFactory {
 					continue;
 				
 				JSONArray jsonTokenSpans = new JSONArray(lineParts[1]);
-				TokenSpan[] tokenSpans = new TokenSpanCached[jsonTokenSpans.length()];
+				TokenSpanCached[] tokenSpans = new TokenSpanCached[jsonTokenSpans.length()];
 				for (int i = 0; i < tokenSpans.length; i++)
 					tokenSpans[i] = TokenSpanCached.fromJSON(jsonTokenSpans.getJSONObject(i), this.documentCache);
 			
@@ -80,7 +79,7 @@ public class PolysemousDataSetFactory {
 					this.data.put(phrase, new ArrayList<TokenSpansDatum<LabelsList>>());
 				
 				if (singleMentionDatums) {
-					for (TokenSpan tokenSpan : tokenSpans) {
+					for (TokenSpanCached tokenSpan : tokenSpans) {
 						this.data.get(phrase).add(new TokenSpansDatum<LabelsList>(this.datumCount, tokenSpan, labels, false));
 						this.datumCount++;
 					}

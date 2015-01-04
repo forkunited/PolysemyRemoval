@@ -28,6 +28,7 @@ public class PolyProperties extends Properties {
 	private String NELLNounPhrasePhraseDictionaryGazetteerPath;
 	private String NELLNounPhraseFnWordGazetteerPath;
 	private String NELLNounPhraseStopWordGazetteerPath;
+	private String NELLDataFileDirPath;
 	
 	public PolyProperties() {
 		this(null);
@@ -61,6 +62,7 @@ public class PolyProperties extends Properties {
 		this.NELLNounPhrasePhraseDictionaryGazetteerPath = loadProperty("NELLNounPhrasePhraseDictionaryGazetteerPath");
 		this.NELLNounPhraseFnWordGazetteerPath = loadProperty("NELLNounPhraseFnWordGazetteerPath");
 		this.NELLNounPhraseStopWordGazetteerPath = loadProperty("NELLNounPhraseStopWordGazetteerPath");
+		this.NELLDataFileDirPath = loadProperty("NELLDataFileDirPath");
 	}
 	
 	public String getGoogleApiKey() {
@@ -161,5 +163,9 @@ public class PolyProperties extends Properties {
 	
 	public String getNELLNounPhraseStopWordGazetteerPath() {
 		return this.NELLNounPhraseStopWordGazetteerPath;
+	}
+	
+	public String getNELLDataFileDirPath() {
+		return this.NELLDataFileDirPath;
 	}
 }

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
+import poly.data.annotation.nlp.TokenSpanCached;
+
 import ark.data.Gazetteer;
 import ark.data.annotation.Document;
 import ark.data.annotation.nlp.PoSTag;
@@ -14,6 +16,8 @@ import ark.data.annotation.nlp.TokenSpan;
 import ark.util.Pair;
 
 public class NELL {
+	private PolyDataTools dataTools;
+	
 	private Gazetteer nounPhraseCategory;
 	private Gazetteer categoryGeneralization;
 	private Gazetteer categoryMutex;
@@ -30,6 +34,8 @@ public class NELL {
 	private double confidenceThreshold;
 	
 	public NELL(PolyDataTools dataTools, double confidenceThreshold) {
+		this.dataTools = dataTools;
+		
 		this.nounPhraseCategory = dataTools.getGazetteer("NounPhraseNELLCategory");
 		this.categoryGeneralization = dataTools.getGazetteer("NELLCategoryGeneralization");
 		this.categoryMutex = dataTools.getGazetteer("NELLCategoryMutex");
@@ -59,10 +65,27 @@ public class NELL {
 		return categories;
 	}
 	
-	public boolean isNounPhrasePolysemous(String nounPhrase) {
-		List<String> categories = getNounPhraseNELLCategories(nounPhrase);
-		Set<String> doneCategories = new HashSet<String>();
+	public List<Pair<String, Double>> getNounPhraseNELLWeightedCategories(String nounPhrase) {
+		List<Pair<String, Double>> weightedCategories = this.nounPhraseCategory.getWeightedIds(nounPhrase);
+		List<Pair<String, Double>> retCategories = new ArrayList<Pair<String, Double>>();
+		if (weightedCategories == null)
+			return retCategories;
 		
+		for (Pair<String, Double> weightedCategory : weightedCategories)
+			if (weightedCategory.getSecond() >= this.confidenceThreshold)
+				retCategories.add(weightedCategory);
+		
+		return retCategories;
+	}
+	
+	public boolean isNounPhrasePolysemous(String nounPhrase) {
+		return areCategoriesMutuallyExclusive(
+				getNounPhraseNELLCategories(nounPhrase)
+				);
+	}
+	
+	public boolean areCategoriesMutuallyExclusive(List<String> categories) {
+		Set<String> doneCategories = new HashSet<String>();
 		for (String c1 : categories) {
 			doneCategories.add(c1);
 			for (String c2 : categories) {
@@ -76,7 +99,7 @@ public class NELL {
 		
 		return false;
 	}
-	
+
 	public boolean areCategoriesMutuallyExclusive(String category1, String category2) { 
 		// FIXME: This can be done much more efficiently if the mutex gazetteer
 		// is correctly constructed, but 
@@ -145,11 +168,11 @@ public class NELL {
 	// edu.cmu.ml.rtw.mapred.cbl.ExtractorBase in the OntologyLearner NELL Java 
 	// project.  It's kind of a mess, and it would be nice to fix it up
 	// into a more easily readable form at some point.
-	public List<TokenSpan> extractNounPhrases(Document document) {
-		List<TokenSpan> npSpans = new ArrayList<TokenSpan>();
+	public List<TokenSpanCached> extractNounPhrases(Document document) {
+		List<TokenSpanCached> npSpans = new ArrayList<TokenSpanCached>();
 		int sentenceCount = document.getSentenceCount();
 		for (int i = 0; i < sentenceCount; i++) {
-			Set<TokenSpan> spans = new HashSet<TokenSpan>();
+			Set<TokenSpanCached> spans = new HashSet<TokenSpanCached>();
 			int tokenCount = document.getSentenceTokenCount(i);
 			
 			for (int j = 0; j < tokenCount; j++) {
@@ -163,16 +186,16 @@ public class NELL {
 		return npSpans;
 	}
 	
-	private void extractNounPhrasesEndingAt(Document document, int sentenceIndex, int endIndex, Set<TokenSpan> spans) {
+	private void extractNounPhrasesEndingAt(Document document, int sentenceIndex, int endIndex, Set<TokenSpanCached> spans) {
 		int tokenCount = document.getSentenceTokenCount(sentenceIndex);
 	
 		// Add single numbers
 		if (document.getPoSTag(sentenceIndex, endIndex) == PoSTag.CD) {
-			TokenSpan numberSpan = new TokenSpan(document, sentenceIndex, endIndex, endIndex + 1);
+			TokenSpanCached numberSpan = new TokenSpanCached(document.getName(), this.dataTools.getDocumentCache(), sentenceIndex, endIndex, endIndex + 1);
 			if (!spanContainsBadTokens(numberSpan)) {
 				// Add the partial match (consume DT if its there).
 				if (endIndex - 1 >= 0 && document.getPoSTag(sentenceIndex, endIndex - 1) == PoSTag.DT) {
-					spans.add(new TokenSpan(document, sentenceIndex, endIndex - 1, endIndex + 1));
+					spans.add(new TokenSpanCached(document.getName(), this.dataTools.getDocumentCache(), sentenceIndex, endIndex - 1, endIndex + 1));
 				} else {
 					spans.add(numberSpan);
 				}
@@ -183,13 +206,13 @@ public class NELL {
 
 		// look backward for DT? (CD|JJ|NN)* NN
 		if (PoSTagClass.classContains(PoSTagClass.NN, document.getPoSTag(sentenceIndex, i))) {
-			TokenSpan nnSpan = new TokenSpan(document, sentenceIndex, i, i + 1);
+			TokenSpanCached nnSpan = new TokenSpanCached(document.getName(), this.dataTools.getDocumentCache(), sentenceIndex, i, i + 1);
 			i--;
 			
 			if (!spanContainsBadTokens(nnSpan)) {
 				// Add the partial match (consume DT if its there).
 				if (i >= 0 && document.getPoSTag(sentenceIndex, i) == PoSTag.DT) {
-					spans.add(new TokenSpan(document, sentenceIndex, i, nnSpan.getEndTokenIndex()));
+					spans.add(new TokenSpanCached(document.getName(), this.dataTools.getDocumentCache(), sentenceIndex, i, nnSpan.getEndTokenIndex()));
 				} else {
 					spans.add(nnSpan);
 				}
@@ -198,9 +221,9 @@ public class NELL {
 			while (i >= 0 && isTokenInNonNNPNounPhrasePoSTagClass(document, sentenceIndex, i)) {
 				i--;
 				if (i >= 0 && document.getPoSTag(sentenceIndex, i) == PoSTag.DT) {
-					spans.add(new TokenSpan(document, sentenceIndex, i, nnSpan.getEndTokenIndex()));
+					spans.add(new TokenSpanCached(document.getName(), this.dataTools.getDocumentCache(), sentenceIndex, i, nnSpan.getEndTokenIndex()));
 				} else {
-					spans.add(new TokenSpan(document, sentenceIndex, i + 1, nnSpan.getEndTokenIndex()));
+					spans.add(new TokenSpanCached(document.getName(), this.dataTools.getDocumentCache(), sentenceIndex, i + 1, nnSpan.getEndTokenIndex()));
 				}
 			}
 		}
@@ -236,7 +259,7 @@ public class NELL {
 		if (firstNPIndex < 0)
 			return;
 		
-		TokenSpan npSpan = new TokenSpan(document, sentenceIndex, firstNPIndex, endIndex + 1);
+		TokenSpanCached npSpan = new TokenSpanCached(document.getName(), this.dataTools.getDocumentCache(), sentenceIndex, firstNPIndex, endIndex + 1);
 		if (spanContainsBadTokens(npSpan))
 			return;
 		
@@ -254,11 +277,11 @@ public class NELL {
 				if (Character.isUpperCase(document.getToken(npSpan.getSentenceIndex(), newStartTokenIndex).charAt(0)))
 					break;
 		
-			npSpan = new TokenSpan(npSpan.getDocument(), npSpan.getSentenceIndex(), newStartTokenIndex, npSpan.getEndTokenIndex());
+			npSpan = new TokenSpanCached(npSpan.getDocument().getName(), this.dataTools.getDocumentCache(), npSpan.getSentenceIndex(), newStartTokenIndex, npSpan.getEndTokenIndex());
 		}
 	    
 	    if (npSpan.getStartTokenIndex() > 0 && document.getPoSTag(npSpan.getSentenceIndex(), npSpan.getStartTokenIndex() - 1) == PoSTag.DT)
-	    	npSpan = new TokenSpan(npSpan.getDocument(), npSpan.getSentenceIndex(), npSpan.getStartTokenIndex()-1, npSpan.getEndTokenIndex());
+	    	npSpan = new TokenSpanCached(npSpan.getDocument().getName(), this.dataTools.getDocumentCache(), npSpan.getSentenceIndex(), npSpan.getStartTokenIndex()-1, npSpan.getEndTokenIndex());
 	    
 	    if (PoSTagClass.classContains(PoSTagClass.JJ, document.getPoSTag(npSpan.getSentenceIndex(), npSpan.getEndTokenIndex() - 1)))
 	    	return;
@@ -266,7 +289,7 @@ public class NELL {
 		spans.add(npSpan);
 	}
 	
-	private void extractNounPhrasesStartingAt(Document document, int sentenceIndex, int startIndex, Set<TokenSpan> spans) {
+	private void extractNounPhrasesStartingAt(Document document, int sentenceIndex, int startIndex, Set<TokenSpanCached> spans) {
 		int tokenCount = document.getSentenceTokenCount(sentenceIndex);
 		
 		if (startIndex > tokenCount - 2)
@@ -320,7 +343,7 @@ public class NELL {
 			return;
 		}
 		
-		TokenSpan npSpan = new TokenSpan(document, sentenceIndex, startIndex, lastNPIndex + 1);
+		TokenSpanCached npSpan = new TokenSpanCached(document.getName(), this.dataTools.getDocumentCache(), sentenceIndex, startIndex, lastNPIndex + 1);
 		if (spanContainsBadTokens(npSpan))
 			return;
 		
@@ -338,11 +361,11 @@ public class NELL {
 				if (Character.isUpperCase(document.getToken(npSpan.getSentenceIndex(), newEndTokenIndex - 1).charAt(0)))
 					break;	
 		
-			npSpan = new TokenSpan(npSpan.getDocument(), npSpan.getSentenceIndex(), npSpan.getStartTokenIndex(), newEndTokenIndex);
+			npSpan = new TokenSpanCached(npSpan.getDocument().getName(), this.dataTools.getDocumentCache(), npSpan.getSentenceIndex(), npSpan.getStartTokenIndex(), newEndTokenIndex);
 		}
 	    
 	    if (npSpan.getStartTokenIndex() > 0 && document.getPoSTag(npSpan.getSentenceIndex(), npSpan.getStartTokenIndex() - 1) == PoSTag.DT)
-	    	npSpan = new TokenSpan(npSpan.getDocument(), npSpan.getSentenceIndex(), npSpan.getStartTokenIndex()-1, npSpan.getEndTokenIndex());
+	    	npSpan = new TokenSpanCached(npSpan.getDocument().getName(), this.dataTools.getDocumentCache(), npSpan.getSentenceIndex(), npSpan.getStartTokenIndex()-1, npSpan.getEndTokenIndex());
 	    
 	    if (PoSTagClass.classContains(PoSTagClass.JJ, document.getPoSTag(npSpan.getSentenceIndex(), npSpan.getEndTokenIndex() - 1)))
 	    	return;

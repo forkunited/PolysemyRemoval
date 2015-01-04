@@ -46,6 +46,6 @@ public class ExperimentGSTNELL {
 		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
 		NELLDataSetFactory dataFactory = new NELLDataSetFactory(properties.getNELLDataFileDirPath(), properties.getHazyFacc1DataDirPath(), 1000000, dataTools);
-		dataFactory.loadDataSet(0.9, 1, true);
+		dataFactory.loadDataSet(nellConfidenceThreshold, 1, true);
 	}
 }

@@ -85,7 +85,7 @@ public class NELLDataSetFactory {
 				List<Pair<String, Double>> categories = nell.getNounPhraseNELLWeightedCategories(npStr);
 				if (categories.size() == 0)
 					continue;
-				
+				System.out.println("Added np " + npStr);
 				LabelsList labels = new LabelsList(categories);
 				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, labels, nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())));
 				data.add(datum);

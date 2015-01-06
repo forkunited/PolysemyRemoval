@@ -47,14 +47,13 @@ public class TokenSpanCached extends TokenSpan {
 	public static TokenSpanCached fromJSON(JSONObject json, DocumentCache documentCache, int sentenceIndex) {
 		try {
 			String documentName = json.getString("document");
-			JSONObject tokenSpanJson = json.getJSONObject("tokenSpan");
 			
 			return new TokenSpanCached(
 				documentName,
 				documentCache,
-				(sentenceIndex < 0) ? tokenSpanJson.getInt("sentenceIndex") : sentenceIndex,
-				tokenSpanJson.getInt("startTokenIndex"),
-				tokenSpanJson.getInt("endTokenIndex")
+				(sentenceIndex < 0) ? json.getInt("sentenceIndex") : sentenceIndex,
+				json.getInt("startTokenIndex"),
+				json.getInt("endTokenIndex")
 			);
 		} catch (JSONException e) {
 			e.printStackTrace();

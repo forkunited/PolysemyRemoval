@@ -3,6 +3,7 @@ maxThreads=20
 trainOnDev=false
 errorExampleExtractor=FirstTokenSpan
 
+evaluation=Accuracy(computeBaseline=true)
 evaluation=Accuracy()
 evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1)
 evaluation=Precision(weighted=false, filterLabel=true)

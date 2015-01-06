@@ -302,7 +302,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			PolyDataTools dataTools = new PolyDataTools(output, (PolyDataTools)this.dataTools);
 			dataTools.setRandomSeed(this.dataTools.getGlobalRandom().nextLong());
 			dataTools.addToParameterEnvironment("LABEL_INDICATOR", labelIndicator.toString());
-			return (Datum.Tools<T, Boolean>)TokenSpansDatum.getBooleanTools(null);
+			return (Datum.Tools<T, Boolean>)TokenSpansDatum.getBooleanTools(dataTools);
 		}
 		
 		private class StringExtractorNGramPoSTag implements StringExtractor<TokenSpansDatum<L>, L> {

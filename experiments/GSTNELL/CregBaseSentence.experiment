@@ -36,5 +36,5 @@ feature_gnps3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtracto
 
 model=Creg(cmdPath=CregCmd, modelPath=CregModel/${DATA_SET}/GSTNELL/CregBaseSentencel1_${l1}.l2_${l2}.${LABEL_INDICATOR}, l1=0, l2=0, warmRestart=false)
 {
-	validLabels=
+	validLabels=None
 }

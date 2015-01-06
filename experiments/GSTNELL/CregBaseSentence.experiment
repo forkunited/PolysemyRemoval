@@ -29,11 +29,6 @@ feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
 feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
 feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
 
-feature_gnp=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=FirstTokenSpan, includeIds=true, includeWeights=true, weightThreshold=0.90)
-feature_gnps1=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceUnigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
-feature_gnps2=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceBigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
-feature_gnps3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllSentenceTrigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
-
 model=Creg(cmdPath=CregCmd, modelPath=CregModel/--DATA_SET--/GSTNELL/CregBaseSentencel1_--l1--.l2_--l2--.--LABEL_INDICATOR--, l1=0, l2=0, warmRestart=false)
 {
 	validLabels=None

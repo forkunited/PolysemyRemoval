@@ -10,6 +10,7 @@ import java.util.Random;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Document;
 import ark.util.FileUtil;
+import ark.util.OutputWriter;
 import ark.util.Pair;
 import poly.data.NELL;
 import poly.data.PolyDataTools;
@@ -42,8 +43,9 @@ public class NELLDataSetFactory {
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(double nellConfidenceThreshold, double dataFraction, boolean nonPolysemous) {
 		File file = new File(this.dataFileDirPath, "NELLData_c" + (int)(nellConfidenceThreshold * 100) + "_f" + (int)(dataFraction * 100));
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = null;
-		
+		OutputWriter output = this.dataTools.getOutputWriter();
 		if (file.exists()) {
+			output.debugWriteln("Loading data set...");
 			data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 			try {
 				if (!data.deserialize(FileUtil.getFileReader(file.getAbsolutePath())))
@@ -51,7 +53,9 @@ public class NELLDataSetFactory {
 			} catch (Exception e) {
 				return null;
 			}
+			output.debugWriteln("Finished loading data set.");
 		} else {
+			output.debugWriteln("Constructing data set...");
 			data = constructDataSet(nellConfidenceThreshold, dataFraction);
 			try {
 				if (!data.serialize(new FileWriter(file)))
@@ -59,6 +63,7 @@ public class NELLDataSetFactory {
 			} catch (IOException e) {
 				return null;
 			}
+			output.debugWriteln("Finished constructing data set.");
 		}
 	
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> retData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);

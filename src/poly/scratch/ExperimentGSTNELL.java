@@ -17,12 +17,12 @@ public class ExperimentGSTNELL {
 	
 	public static void main(String[] args) {
 		String experimentName = "GSTNELL/" + args[0];
-		String dataSetName = args[1];
-		LabelsList labels = LabelsList.fromString(args[2]);
-		int randomSeed = Integer.valueOf(args[3]);
-		double nellConfidenceThreshold = Double.valueOf(args[4]);
-		double dataFraction = Double.valueOf(args[5]);
-	
+		LabelsList labels = LabelsList.fromString(args[1]);
+		int randomSeed = Integer.valueOf(args[2]);
+		double nellConfidenceThreshold = Double.valueOf(args[3]);
+		double dataFraction = Double.valueOf(args[4]);
+		String dataSetName = "NELLData_c" + (int)(nellConfidenceThreshold * 100) + "_f" + (int)(dataFraction * 100);
+		
 		String experimentOutputName = dataSetName + "/" + experimentName;
 
 		final PolyProperties properties = new PolyProperties();

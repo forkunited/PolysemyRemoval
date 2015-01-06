@@ -1,5 +1,6 @@
 package poly.data.annotation;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import ark.data.annotation.Document;
 import ark.data.annotation.nlp.PoSTag;
 import ark.data.annotation.nlp.PoSTagClass;
 import ark.data.annotation.nlp.TokenSpan;
+import ark.util.OutputWriter;
 
 public class TokenSpansDatum<L> extends Datum<L> {
 	private TokenSpanCached[] tokenSpans;
@@ -275,6 +277,32 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			}
 			
 			return json;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public <T extends Datum<Boolean>> T makeBinaryDatum(
+				TokenSpansDatum<L> datum,
+				LabelIndicator<L> labelIndicator) {
+			return (T)(new TokenSpansDatum<Boolean>(datum.getId(), datum.getTokenSpans(), labelIndicator.indicator(datum.getLabel()), datum.isPolysemous()));
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public <T extends Datum<Boolean>> Datum.Tools<T, Boolean> makeBinaryDatumTools(
+				LabelIndicator<L> labelIndicator) {
+			this.dataTools.getOutputWriter().getDebugFilePath();
+			OutputWriter output = new OutputWriter(
+					new File(this.dataTools.getOutputWriter().getDebugFilePath() + "." + labelIndicator.toString()),
+					new File(this.dataTools.getOutputWriter().getResultsFilePath() + "." + labelIndicator.toString()),
+					new File(this.dataTools.getOutputWriter().getDataFilePath() + "." + labelIndicator.toString()),
+					new File(this.dataTools.getOutputWriter().getModelFilePath() + "." + labelIndicator.toString())
+				);
+			
+			PolyDataTools dataTools = new PolyDataTools(output, (PolyDataTools)this.dataTools);
+			dataTools.setRandomSeed(this.dataTools.getGlobalRandom().nextLong());
+			dataTools.addToParameterEnvironment("LABEL_INDICATOR", labelIndicator.toString());
+			return (Datum.Tools<T, Boolean>)TokenSpansDatum.getBooleanTools(null);
 		}
 		
 		private class StringExtractorNGramPoSTag implements StringExtractor<TokenSpansDatum<L>, L> {

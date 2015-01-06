@@ -1,5 +1,6 @@
 package poly.scratch;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,9 +34,12 @@ public class Scratch {
 		x.append("f").append("y");
 		System.out.println(x.toString());*/
 		
-		Scratch x = new Scratch();
-		String beforePattern1 = x.convertPattern("((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*", null);
-		System.out.println(beforePattern1);
+		ArrayList<String> x = new ArrayList<String>();
+		System.out.println(x.getClass().getName());
+		
+		//Scratch x = new Scratch();
+		//String beforePattern1 = x.convertPattern("((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*", null);
+		//System.out.println(beforePattern1);
 	}
 	
 	protected Pattern posTagClassPattern = Pattern.compile("<p:([^>]*)>");

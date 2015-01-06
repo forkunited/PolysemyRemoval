@@ -1,5 +1,8 @@
 package poly.data.feature;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -143,5 +146,27 @@ public class FeatureNer<D extends Datum<L>, L> extends Feature<D, L> {
 	@Override
 	protected Feature<D, L> makeInstance() {
 		return new FeatureNer<D, L>();
+	}
+
+	@Override
+	protected <D1 extends Datum<L1>, L1> boolean cloneHelper(
+			Feature<D1, L1> clone, boolean newObjects) {
+		if (!newObjects) {
+			FeatureNer<D1,L1> cloneFeature = (FeatureNer<D1, L1>)clone;
+			cloneFeature.vocabulary = this.vocabulary;
+		}
+		
+		return true;
+	}
+
+	@Override
+	protected boolean serializeHelper(Writer writer) throws IOException {
+		return true;
+	}
+
+	@Override
+	protected boolean deserializeHelper(BufferedReader writer)
+			throws IOException {
+		return true;
 	}
 }

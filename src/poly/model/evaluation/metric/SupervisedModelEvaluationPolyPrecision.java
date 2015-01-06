@@ -29,7 +29,7 @@ public class SupervisedModelEvaluationPolyPrecision<L> extends SupervisedModelEv
 
 
 	@Override
-	protected SupervisedModelEvaluation<TokenSpansDatum<L>, L> makeInstance() {
+	public SupervisedModelEvaluation<TokenSpansDatum<L>, L> makeInstance() {
 		return new SupervisedModelEvaluationPolyPrecision<L>();
 	}
 }

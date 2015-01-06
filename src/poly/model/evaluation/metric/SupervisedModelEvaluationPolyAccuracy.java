@@ -28,7 +28,7 @@ public class SupervisedModelEvaluationPolyAccuracy<L> extends SupervisedModelEva
 	}
 
 	@Override
-	protected SupervisedModelEvaluation<TokenSpansDatum<L>, L> makeInstance() {
+	public SupervisedModelEvaluation<TokenSpansDatum<L>, L> makeInstance() {
 		return new SupervisedModelEvaluationPolyAccuracy<L>();
 	}
 }

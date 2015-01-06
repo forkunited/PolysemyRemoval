@@ -30,7 +30,7 @@ public class SupervisedModelEvaluationPolyF<L> extends SupervisedModelEvaluation
 
 
 	@Override
-	protected SupervisedModelEvaluation<TokenSpansDatum<L>, L> makeInstance() {
+	public SupervisedModelEvaluation<TokenSpansDatum<L>, L> makeInstance() {
 		return new SupervisedModelEvaluationPolyF<L>();
 	}
 }

@@ -144,7 +144,7 @@ public class FeatureNer<D extends Datum<L>, L> extends Feature<D, L> {
 	}
 
 	@Override
-	protected Feature<D, L> makeInstance() {
+	public Feature<D, L> makeInstance() {
 		return new FeatureNer<D, L>();
 	}
 

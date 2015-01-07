@@ -69,7 +69,7 @@ public class UseSupervisedModelNELL {
 		final List<Feature<TokenSpansDatum<Boolean>, Boolean>> features = new ArrayList<Feature<TokenSpansDatum<Boolean>, Boolean>>();
 		try {
 			while ((feature = Feature.deserialize(reader, true, datumTools)) != null) {
-				dataTools.getOutputWriter().debugWriteln("Deserialized " + feature.toString(false) + " with vocabulary size " + feature.getVocabularySize());
+				dataTools.getOutputWriter().debugWriteln("Deserialized " + feature.toString(false) + " (" + feature.getVocabularySize() + ")");
 				features.add(feature.clone(binaryTools, dataTools.getParameterEnvironment(), false));
 			}
 

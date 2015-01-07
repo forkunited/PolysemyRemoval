@@ -31,9 +31,7 @@ public class NELL {
 	private Gazetteer nounPhraseFnWord;
 	private Gazetteer nounPhraseStopWord;
 	
-	private double confidenceThreshold;
-	
-	public NELL(PolyDataTools dataTools, double confidenceThreshold) {
+	public NELL(PolyDataTools dataTools) {
 		this.dataTools = dataTools;
 		
 		this.nounPhraseCategory = dataTools.getGazetteer("NounPhraseNELLCategory");
@@ -48,39 +46,37 @@ public class NELL {
 		this.nounPhrasePhraseDictionary = dataTools.getGazetteer("NELLNounPhrasePhraseDictionary");
 		this.nounPhraseFnWord = dataTools.getGazetteer("NELLNounPhraseFnWord");
 		this.nounPhraseStopWord = dataTools.getGazetteer("NELLNounPhraseStopWord");
-		
-		this.confidenceThreshold = confidenceThreshold;
 	}
 	
-	public List<String> getNounPhraseNELLCategories(String nounPhrase) {
+	public List<String> getNounPhraseNELLCategories(String nounPhrase, double confidenceThreshold) {
 		List<Pair<String, Double>> weightedCategories = this.nounPhraseCategory.getWeightedIds(nounPhrase);
 		List<String> categories = new ArrayList<String>();
 		if (weightedCategories == null)
 			return categories;
 		
 		for (Pair<String, Double> weightedCategory : weightedCategories)
-			if (weightedCategory.getSecond() >= this.confidenceThreshold)
+			if (weightedCategory.getSecond() >= confidenceThreshold)
 				categories.add(weightedCategory.getFirst());
 		
 		return categories;
 	}
 	
-	public List<Pair<String, Double>> getNounPhraseNELLWeightedCategories(String nounPhrase) {
+	public List<Pair<String, Double>> getNounPhraseNELLWeightedCategories(String nounPhrase, double confidenceThreshold) {
 		List<Pair<String, Double>> weightedCategories = this.nounPhraseCategory.getWeightedIds(nounPhrase);
 		List<Pair<String, Double>> retCategories = new ArrayList<Pair<String, Double>>();
 		if (weightedCategories == null)
 			return retCategories;
 		
 		for (Pair<String, Double> weightedCategory : weightedCategories)
-			if (weightedCategory.getSecond() >= this.confidenceThreshold)
+			if (weightedCategory.getSecond() >= confidenceThreshold)
 				retCategories.add(weightedCategory);
 		
 		return retCategories;
 	}
 	
-	public boolean isNounPhrasePolysemous(String nounPhrase) {
+	public boolean isNounPhrasePolysemous(String nounPhrase, double confidenceThreshold) {
 		return areCategoriesMutuallyExclusive(
-				getNounPhraseNELLCategories(nounPhrase)
+				getNounPhraseNELLCategories(nounPhrase, confidenceThreshold)
 				);
 	}
 	

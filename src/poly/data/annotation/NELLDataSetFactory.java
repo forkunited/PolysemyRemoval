@@ -19,15 +19,45 @@ import poly.data.annotation.nlp.TokenSpanCached;
 
 public class NELLDataSetFactory {
 	private PolyDataTools dataTools;
-	private DocumentCache documentCache;
-	private String dataFileDirPath;
-	private String documentDirPath;
+	private NELL nell;
 	
-	public NELLDataSetFactory(String dataFileDirPath, final String documentDirPath, int documentCacheSize, final PolyDataTools dataTools) {
+	public NELLDataSetFactory(PolyDataTools dataTools) {
 		this.dataTools = dataTools;
-		this.dataFileDirPath = dataFileDirPath;
-		this.documentDirPath = documentDirPath;
-		this.documentCache = 
+		this.nell = new NELL(this.dataTools);
+	}
+	
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document) {
+		return constructDataSet(document, false, 0.0);
+	}
+	
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document, boolean labeled, double nellConfidenceThreshold) {
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
+		
+		int id = 0;
+		List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
+		for (TokenSpanCached np : nps) {
+			TokenSpansDatum<LabelsList> datum = null;
+			String npStr = np.toString();
+			List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, nellConfidenceThreshold);
+			if (categories.size() == 0)
+				continue;
+			
+			if (labeled) {
+				LabelsList labels = new LabelsList(categories);
+				datum = new TokenSpansDatum<LabelsList>(id, np, labels, this.nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())));
+			} else {
+				datum = new TokenSpansDatum<LabelsList>(id, np, null, false);
+			}
+			
+			data.add(datum);
+			id++;
+		}
+		
+		return data;
+	}
+	
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(String dataFileDirPath, final String documentDirPath, int documentCacheSize, double nellConfidenceThreshold, double dataFraction, boolean nonPolysemous) {
+		DocumentCache documentCache = 
 				new DocumentCache(
 						new DocumentLoader() {
 							@Override
@@ -37,11 +67,9 @@ public class NELLDataSetFactory {
 						}
 				, documentCacheSize);
 		
-		this.dataTools.setDocumentCache(this.documentCache);
-	}
-	
-	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(double nellConfidenceThreshold, double dataFraction, boolean nonPolysemous) {
-		File file = new File(this.dataFileDirPath, "NELLData_c" + (int)(nellConfidenceThreshold * 100) + "_f" + (int)(dataFraction * 100));
+		this.dataTools.setDocumentCache(documentCache);
+		
+		File file = new File(dataFileDirPath, "NELLData_c" + (int)(nellConfidenceThreshold * 100) + "_f" + (int)(dataFraction * 100));
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = null;
 		OutputWriter output = this.dataTools.getOutputWriter();
 		if (file.exists()) {
@@ -56,7 +84,7 @@ public class NELLDataSetFactory {
 			output.debugWriteln("Finished loading data set.");
 		} else {
 			output.debugWriteln("Constructing data set...");
-			data = constructDataSet(nellConfidenceThreshold, dataFraction);
+			data = constructDataSet(documentDirPath, nellConfidenceThreshold, dataFraction);
 			try {
 				if (!data.serialize(new FileWriter(file)))
 					return null;
@@ -75,10 +103,9 @@ public class NELLDataSetFactory {
 		return retData;
 	}
 	
-	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(double nellConfidenceThreshold, double dataFraction) {
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(String documentDirPath, double nellConfidenceThreshold, double dataFraction) {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
-		NELL nell = new NELL(this.dataTools, nellConfidenceThreshold);
-		File documentDir = new File(this.documentDirPath);
+		File documentDir = new File(documentDirPath);
 		File[] documentFiles = documentDir.listFiles();
 		Random r = this.dataTools.getGlobalRandom();
 		int id = 0;
@@ -86,15 +113,15 @@ public class NELLDataSetFactory {
 			if (r.nextDouble() >= dataFraction)
 				continue;
 			
-			Document document = this.documentCache.getDocument(documentFile.getName());
-			List<TokenSpanCached> nps = nell.extractNounPhrases(document);
+			Document document = this.dataTools.getDocumentCache().getDocument(documentFile.getName());
+			List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
 			for (TokenSpanCached np : nps) {
 				String npStr = np.toString();
-				List<Pair<String, Double>> categories = nell.getNounPhraseNELLWeightedCategories(npStr);
+				List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, nellConfidenceThreshold);
 				if (categories.size() == 0)
 					continue;
 				LabelsList labels = new LabelsList(categories);
-				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, labels, nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())));
+				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, labels, this.nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())));
 				data.add(datum);
 				id++;
 			}

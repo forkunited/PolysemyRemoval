@@ -18,6 +18,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import ark.data.annotation.DocumentInMemory;
 import ark.data.annotation.Language;
 import ark.data.annotation.nlp.ConstituencyParse;
 import ark.data.annotation.nlp.DependencyParse;
@@ -26,7 +27,8 @@ import ark.data.annotation.nlp.TokenSpan;
 import ark.util.FileUtil;
 import ark.util.Pair;
 
-public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC1Annotation> {
+// FIXME This can extend PolyDocument...
+public class HazyFACC1Document extends DocumentInMemory {
 	public static class FACC1Annotation {
 		private String phrase;
 		private int startByte; // Phrase start byte in clueweb
@@ -405,7 +407,6 @@ public class HazyFACC1Document extends TokenSpansDocument<HazyFACC1Document.FACC
 		return true;
 	}
 	
-	@Override
 	public List<Pair<TokenSpan, FACC1Annotation>> getTokenSpanLabels() {
 		if (!loadFACC1MetaData())
 			return null;

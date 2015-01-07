@@ -69,13 +69,23 @@ public class UseSupervisedModelNELL {
 		final List<Feature<TokenSpansDatum<Boolean>, Boolean>> features = new ArrayList<Feature<TokenSpansDatum<Boolean>, Boolean>>();
 		try {
 			while ((feature = Feature.deserialize(reader, true, datumTools)) != null) {
+				dataTools.getOutputWriter().debugWriteln("Deserialized " + feature.toString(false) + " with vocabulary size " + feature.getVocabularySize());
 				features.add(feature.clone(binaryTools, dataTools.getParameterEnvironment(), false));
 			}
 
+			dataTools.getOutputWriter().debugWriteln("Finished deserializing " + features.size() + " features.");
+			
 			for (final String label : labels.getLabels()) {
 				File modelFile = new File(modelFilePathPrefix + label);
+				dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath());
+				
 				BufferedReader modelReader = FileUtil.getFileReader(modelFile.getAbsolutePath());
 				models.put(label, SupervisedModel.deserialize(modelReader, true, binaryTools));
+				if (models.get(label) == null) {
+					dataTools.getOutputWriter().debugWriteln("ERROR: Failed to deserialize " + label + "model.");	
+					return;
+				}
+				
 				datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
 					public String toString() {
 						return label;
@@ -88,8 +98,10 @@ public class UseSupervisedModelNELL {
 				});
 			
 			}
+			dataTools.getOutputWriter().debugWriteln("Finished deserializing models.");
 		} catch (IOException e) {
 			e.printStackTrace();
+			return;
 		}
 		
 		final NELLDataSetFactory nellDataFactory = new NELLDataSetFactory(dataTools);

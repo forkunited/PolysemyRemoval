@@ -19,6 +19,10 @@ import ark.util.Pair;
 public class PolyDocument extends DocumentInMemory {
 	protected Map<Integer, List<Pair<String, TokenSpan>>> sentencesToNerAndTokenSpans;
 	
+	public PolyDocument() {
+		
+	}
+	
 	public PolyDocument(String name, String text, Language language, NLPAnnotatorStanford annotator) {
 		this.name = name;
 		this.language = language;

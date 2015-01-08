@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import poly.data.annotation.HazyFACC1Document;
+import poly.data.annotation.PolyDocument;
 
 import ark.data.annotation.Datum;
 import ark.data.annotation.nlp.TokenSpan;
@@ -52,7 +52,7 @@ public class FeatureNer<D extends Datum<L>, L> extends Feature<D, L> {
 		TokenSpan[] tokenSpans = this.tokenExtractor.extract(datum);
 		
 		for (TokenSpan span : tokenSpans) {
-			HazyFACC1Document document = (HazyFACC1Document)(span.getDocument());
+			PolyDocument document = (PolyDocument)(span.getDocument());
 			for (int i = span.getStartTokenIndex(); i < span.getEndTokenIndex(); i++) {
 				String type = document.getNerType(span.getSentenceIndex(), i);
 				if (type != null)
@@ -67,7 +67,7 @@ public class FeatureNer<D extends Datum<L>, L> extends Feature<D, L> {
 		TokenSpan[] tokenSpans = this.tokenExtractor.extract(datum);
 		
 		for (TokenSpan span : tokenSpans) {
-			HazyFACC1Document document = (HazyFACC1Document)(span.getDocument());
+			PolyDocument document = (PolyDocument)(span.getDocument());
 			for (int i = span.getStartTokenIndex(); i < span.getEndTokenIndex(); i++) {
 				String type = document.getNerType(span.getSentenceIndex(), i);
 				if (type != null)

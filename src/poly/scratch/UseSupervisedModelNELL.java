@@ -153,6 +153,8 @@ public class UseSupervisedModelNELL {
 					labeledData.add(new TokenSpansDatum<LabelsList>(data.getDatumById(entry.getKey()), new LabelsList(entry.getValue()), false));
 				}
 				
+				dataTools.getDocumentCache().removeDocument(document.getName());
+				
 				return labeledData;
 			}
 		});

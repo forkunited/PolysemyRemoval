@@ -73,8 +73,6 @@ public class NELLDataSetFactory {
 			id++;
 		}
 		
-		this.documentCache.removeDocument(document.getName());
-		
 		return data;
 	}
 	

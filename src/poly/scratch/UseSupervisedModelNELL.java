@@ -82,9 +82,12 @@ public class UseSupervisedModelNELL {
 				BufferedReader modelReader = FileUtil.getFileReader(modelFile.getAbsolutePath());
 				models.put(label, SupervisedModel.deserialize(modelReader, true, binaryTools));
 				if (models.get(label) == null) {
-					dataTools.getOutputWriter().debugWriteln("ERROR: Failed to deserialize " + label + "model.");	
+					dataTools.getOutputWriter().debugWriteln("ERROR: Failed to deserialize " + label + " model.");	
 					return;
 				}
+				modelReader.close();
+				
+				System.out.println("LABELS " + models.get("country").getValidLabels());
 				
 				datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
 					@Override

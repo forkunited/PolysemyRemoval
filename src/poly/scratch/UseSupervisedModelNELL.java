@@ -1,6 +1,7 @@
 package poly.scratch;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -10,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.json.JSONObject;
 
 import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
@@ -108,13 +111,15 @@ public class UseSupervisedModelNELL {
 			return;
 		}
 		
+		dataTools.getOutputWriter().debugWriteln("Loading NELL data and running models...");
+		
 		final NELLDataSetFactory nellDataFactory = new NELLDataSetFactory(dataTools);
 		final File finalOutputDocumentDir = outputDocumentDir;
 		final NLPAnnotatorStanford annotator = new NLPAnnotatorStanford();
 		annotator.enableNer();
 		annotator.initializePipeline();
-		ThreadMapper<File, DataSet<TokenSpansDatum<LabelsList>, LabelsList>> threads = new ThreadMapper<File, DataSet<TokenSpansDatum<LabelsList>, LabelsList>>(new Fn<File, DataSet<TokenSpansDatum<LabelsList>, LabelsList>>() {
-			public DataSet<TokenSpansDatum<LabelsList>, LabelsList> apply(File file) {
+		ThreadMapper<File, List<JSONObject>> threads = new ThreadMapper<File, List<JSONObject>>(new Fn<File, List<JSONObject>>() {
+			public List<JSONObject> apply(File file) {
 				PolyDocument document = null;
 				if (inputType == InputType.PLAIN_TEXT) {
 					NLPAnnotatorStanford threadAnnotator = new NLPAnnotatorStanford(annotator);
@@ -154,28 +159,38 @@ public class UseSupervisedModelNELL {
 					labeledData.add(new TokenSpansDatum<LabelsList>(data.getDatumById(entry.getKey()), new LabelsList(entry.getValue()), false));
 				}
 				
+				List<JSONObject> jsonLabeledData = new ArrayList<JSONObject>();
+				for (TokenSpansDatum<LabelsList> datum : labeledData)
+					jsonLabeledData.add(datumTools.datumToJSON(datum));
+				
 				dataTools.getDocumentCache().removeDocument(document.getName());
 				
-				return labeledData;
+				return jsonLabeledData;
 			}
 		});
 		
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> outputData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(datumTools, null);
-		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> threadResults = threads.run(inputFiles, maxThreads);
-		for (DataSet<TokenSpansDatum<LabelsList>, LabelsList> threadResult : threadResults) {
-			if (threadResult == null) {
-				dataTools.getOutputWriter().debugWriteln("ERROR: Thread failed.");
-				return;
-			}
-			
-			outputData.addAll(threadResult);
-		}
+		dataTools.getOutputWriter().debugWriteln("Finished running models. Outputting results...");
 		
 		try {
-			if (!outputData.serialize(new FileWriter(outputDataFile)))
-				dataTools.getOutputWriter().debugWriteln("ERROR: Failed to output data.");
+			BufferedWriter writer = new BufferedWriter(new FileWriter(outputDataFile));
+			List<List<JSONObject>> threadResults = threads.run(inputFiles, maxThreads);
+			for (List<JSONObject> threadResult : threadResults) {
+				if (threadResult == null) {
+					dataTools.getOutputWriter().debugWriteln("ERROR: Thread failed.");
+					writer.close();
+					return;
+				}
+
+				for (JSONObject datum : threadResult)
+					writer.write(datum.toString() + "\n");
+			}
+			
+			writer.close();
 		} catch (IOException e) {
+			dataTools.getOutputWriter().debugWriteln("ERROR: Failed to output results.");
 			e.printStackTrace();
+			return;
 		}
+		dataTools.getOutputWriter().debugWriteln("Finished outputting results.");
 	}
 }

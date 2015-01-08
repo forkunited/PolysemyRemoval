@@ -1,6 +1,9 @@
 package poly.data.annotation;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -71,13 +74,39 @@ public class LabelsList {
 	
 	public String toString() {
 		StringBuilder str = new StringBuilder();
-		for (int i = 0; i < this.labels.length; i++) {
-			str.append(this.labels[i]);
-			if (this.labelWeights != null)
-				str.append(":").append(this.labelWeights[i]);
-			str.append(",");
+		if (this.labelWeights != null) {
+			List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(this.labels.length);
+			
+			for (int i = 0; i < this.labels.length; i++)
+				weightedLabels.add(new Pair<String, Double>(this.labels[i], this.labelWeights[i]));
+			
+			Collections.sort(weightedLabels, new Comparator<Pair<String, Double>>() {
+				@Override
+				public int compare(Pair<String, Double> l1,
+						Pair<String, Double> l2) {
+					if (l1.getSecond() > l2.getSecond())
+						return -1;
+					else if (l1.getSecond() < l2.getSecond())
+						return 1;
+					else
+					return 0;
+				}
+				
+			});
+			
+			for (Pair<String, Double> weightedLabel : weightedLabels)
+				str.append(weightedLabel.getFirst())
+					.append(":")
+					.append(weightedLabel.getSecond())
+					.append(",");
+		} else {
+			for (int i = 0; i < this.labels.length; i++) {
+				str.append(this.labels[i]);
+				str.append(",");
+			}
 		}
-		str.delete(str.length() - 1, str.length());
+		if (str.length() > 0)
+			str.delete(str.length() - 1, str.length());
 		return str.toString();
 	}
 	

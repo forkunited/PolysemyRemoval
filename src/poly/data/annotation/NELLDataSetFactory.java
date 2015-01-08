@@ -24,7 +24,7 @@ public class NELLDataSetFactory {
 	private String documentDirPath;
 	
 	public NELLDataSetFactory(PolyDataTools dataTools) {
-		this(dataTools, null, Integer.MAX_VALUE);
+		this(dataTools, null, 10000000);
 	}
 	
 	public NELLDataSetFactory(PolyDataTools dataTools, final String documentDirPath, int documentCacheSize) {

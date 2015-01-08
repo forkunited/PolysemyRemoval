@@ -87,7 +87,7 @@ public class UseSupervisedModelNELL {
 				}
 				modelReader.close();
 				
-				System.out.println("LABELS " + models.get(label).getValidLabels());
+				System.out.println(models.get(label).mapValidLabel(true));
 				
 				datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
 					@Override

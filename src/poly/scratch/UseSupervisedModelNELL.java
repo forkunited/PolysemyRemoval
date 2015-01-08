@@ -93,6 +93,8 @@ public class UseSupervisedModelNELL {
 					
 					@Override
 					public boolean indicator(LabelsList labels) {
+						if (labels == null)
+							return true;
 						return labels.contains(label);
 					}	
 				});

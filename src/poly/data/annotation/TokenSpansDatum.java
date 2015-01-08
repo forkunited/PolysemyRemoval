@@ -273,7 +273,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 				
 				json.put("tokenSpans", tokenSpans);
 				if (tokenSpans.length() > 0)
-				json.put("str", tokenSpans.get(0).toString());
+				json.put("str", datum.tokenSpans[0].toString());
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}

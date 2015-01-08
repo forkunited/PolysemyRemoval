@@ -30,6 +30,21 @@ public class DocumentCache {
 		this.documentLoader = documentLoader;
 	}
 	
+	public boolean addDocument(Document document) {
+		synchronized (this.locks) {
+			this.documents.put(document.getName(), document);
+			return true;
+		}
+	}
+	
+	public Document removeDocument(String documentName) {
+		synchronized (this.locks) {
+			if (!this.documents.containsKey(documentName))
+				return null;
+			return this.documents.remove(documentName);
+		}
+	}
+	
 	public Document getDocument(String documentName) {
 		Object documentLock = getLock(documentName);
 		

@@ -40,8 +40,8 @@ public class ExperimentGSTNELL {
 		dataTools.setRandomSeed(randomSeed);
 		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
-		NELLDataSetFactory dataFactory = new NELLDataSetFactory(dataTools);
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = dataFactory.loadDataSet(properties.getNELLDataFileDirPath(), properties.getHazyFacc1DataDirPath(), 1000000, nellConfidenceThreshold, dataFraction, true);
+		NELLDataSetFactory dataFactory = new NELLDataSetFactory(dataTools, properties.getHazyFacc1DataDirPath(), 1000000);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = dataFactory.loadDataSet(properties.getNELLDataFileDirPath(), nellConfidenceThreshold, dataFraction, true);
 
 		for (final String label : labels.getLabels())
 			data.getDatumTools().addLabelIndicator(new LabelIndicator<LabelsList>() {

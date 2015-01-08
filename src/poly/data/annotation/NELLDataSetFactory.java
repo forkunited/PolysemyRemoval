@@ -20,10 +20,28 @@ import poly.data.annotation.nlp.TokenSpanCached;
 public class NELLDataSetFactory {
 	private PolyDataTools dataTools;
 	private NELL nell;
+	private DocumentCache documentCache;
+	private String documentDirPath;
 	
 	public NELLDataSetFactory(PolyDataTools dataTools) {
+		this(dataTools, null, Integer.MAX_VALUE);
+	}
+	
+	public NELLDataSetFactory(PolyDataTools dataTools, final String documentDirPath, int documentCacheSize) {
 		this.dataTools = dataTools;
 		this.nell = new NELL(this.dataTools);
+		this.documentCache = 
+				new DocumentCache(
+						new DocumentLoader() {
+							@Override
+							public Document load(String documentName) {
+								return new HazyFACC1Document(documentName, documentDirPath, null, false);
+							} 
+						}
+				, documentCacheSize);
+		
+		this.dataTools.setDocumentCache(this.documentCache);
+		this.documentDirPath = documentDirPath;
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document) {
@@ -31,8 +49,9 @@ public class NELLDataSetFactory {
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document, boolean labeled, double nellConfidenceThreshold) {
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
+		this.documentCache.addDocument(document);
 		
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 		int id = 0;
 		List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
 		for (TokenSpanCached np : nps) {
@@ -53,22 +72,12 @@ public class NELLDataSetFactory {
 			id++;
 		}
 		
+		this.documentCache.removeDocument(document.getName());
+		
 		return data;
 	}
 	
-	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(String dataFileDirPath, final String documentDirPath, int documentCacheSize, double nellConfidenceThreshold, double dataFraction, boolean nonPolysemous) {
-		DocumentCache documentCache = 
-				new DocumentCache(
-						new DocumentLoader() {
-							@Override
-							public Document load(String documentName) {
-								return new HazyFACC1Document(documentName, documentDirPath, null, false);
-							} 
-						}
-				, documentCacheSize);
-		
-		this.dataTools.setDocumentCache(documentCache);
-		
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(String dataFileDirPath, double nellConfidenceThreshold, double dataFraction, boolean nonPolysemous) {
 		File file = new File(dataFileDirPath, "NELLData_c" + (int)(nellConfidenceThreshold * 100) + "_f" + (int)(dataFraction * 100));
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = null;
 		OutputWriter output = this.dataTools.getOutputWriter();
@@ -84,7 +93,7 @@ public class NELLDataSetFactory {
 			output.debugWriteln("Finished loading data set.");
 		} else {
 			output.debugWriteln("Constructing data set...");
-			data = constructDataSet(documentDirPath, nellConfidenceThreshold, dataFraction);
+			data = constructDataSet(nellConfidenceThreshold, dataFraction);
 			try {
 				if (!data.serialize(new FileWriter(file)))
 					return null;
@@ -103,9 +112,9 @@ public class NELLDataSetFactory {
 		return retData;
 	}
 	
-	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(String documentDirPath, double nellConfidenceThreshold, double dataFraction) {
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(double nellConfidenceThreshold, double dataFraction) {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
-		File documentDir = new File(documentDirPath);
+		File documentDir = new File(this.documentDirPath);
 		File[] documentFiles = documentDir.listFiles();
 		Random r = this.dataTools.getGlobalRandom();
 		int id = 0;

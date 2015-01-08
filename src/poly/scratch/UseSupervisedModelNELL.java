@@ -143,7 +143,7 @@ public class UseSupervisedModelNELL {
 					for (Entry<TokenSpansDatum<Boolean>, Map<Boolean, Double>> pEntry : p.entrySet()) {
 						if (!weightedLabels.containsKey(pEntry.getKey().getId()))
 							weightedLabels.put(pEntry.getKey().getId(), new ArrayList<Pair<String, Double>>());
-						System.out.println(entry.getKey() + " " + pEntry.getKey().getId() + " " + pEntry.getValue().get(true) + " " + pEntry.getValue());
+
 						weightedLabels.get(pEntry.getKey().getId()).add(new Pair<String, Double>(entry.getKey(), pEntry.getValue().get(true)));
 					}
 				}

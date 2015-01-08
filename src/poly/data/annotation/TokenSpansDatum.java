@@ -284,8 +284,6 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		public <T extends Datum<Boolean>> T makeBinaryDatum(
 				TokenSpansDatum<L> datum,
 				LabelIndicator<L> labelIndicator) {
-			if (labelIndicator == null)
-			System.out.println("LABEL INDICATOR NULL!");
 			return (T)(new TokenSpansDatum<Boolean>(datum.getId(), datum.getTokenSpans(), labelIndicator.indicator(datum.getLabel()), datum.isPolysemous()));
 		}
 

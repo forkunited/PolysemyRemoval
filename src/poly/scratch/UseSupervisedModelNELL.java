@@ -87,6 +87,7 @@ public class UseSupervisedModelNELL {
 				}
 				
 				datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
+					@Override
 					public String toString() {
 						return label;
 					}
@@ -125,7 +126,7 @@ public class UseSupervisedModelNELL {
 					document = new PolyDocument(FileUtil.readJSONFile(file));
 				}
 		
-				DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = nellDataFactory.constructDataSet(document);
+				DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = nellDataFactory.constructDataSet(document, datumTools);
 				Map<Integer, List<Pair<String, Double>>> weightedLabels = new HashMap<Integer, List<Pair<String, Double>>>();
 				for (Entry<String, SupervisedModel<TokenSpansDatum<Boolean>, Boolean>> entry : models.entrySet()) {
 					DataSet<TokenSpansDatum<Boolean>, Boolean> binaryData = data.makeBinaryDataSet(entry.getKey(), binaryTools);

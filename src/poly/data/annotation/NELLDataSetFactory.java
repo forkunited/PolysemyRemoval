@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 import ark.data.annotation.DataSet;
+import ark.data.annotation.Datum;
 import ark.data.annotation.Document;
 import ark.util.FileUtil;
 import ark.util.OutputWriter;
@@ -44,14 +45,14 @@ public class NELLDataSetFactory {
 		this.documentDirPath = documentDirPath;
 	}
 	
-	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document) {
-		return constructDataSet(document, false, 0.0);
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document, Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools) {
+		return constructDataSet(document, datumTools, false, 0.0);
 	}
 	
-	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document, boolean labeled, double nellConfidenceThreshold) {
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document, Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools, boolean labeled, double nellConfidenceThreshold) {
 		this.documentCache.addDocument(document);
 		
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(datumTools, null);
 		int id = 0;
 		List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
 		for (TokenSpanCached np : nps) {

@@ -87,8 +87,6 @@ public class UseSupervisedModelNELL {
 				}
 				modelReader.close();
 				
-				System.out.println(models.get(label).mapValidLabel(true));
-				
 				datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
 					@Override
 					public String toString() {
@@ -141,8 +139,7 @@ public class UseSupervisedModelNELL {
 																				null);
 					featurizedData.addAll(binaryData);
 					
-					SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = entry.getValue().clone(binaryTools, dataTools.getParameterEnvironment(), false);
-					Map<TokenSpansDatum<Boolean>, Map<Boolean, Double>> p = binaryModel.posterior(featurizedData);
+					Map<TokenSpansDatum<Boolean>, Map<Boolean, Double>> p = entry.getValue().posterior(featurizedData);
 					for (Entry<TokenSpansDatum<Boolean>, Map<Boolean, Double>> pEntry : p.entrySet()) {
 						if (!weightedLabels.containsKey(pEntry.getKey().getId()))
 							weightedLabels.put(pEntry.getKey().getId(), new ArrayList<Pair<String, Double>>());

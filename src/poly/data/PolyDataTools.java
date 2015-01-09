@@ -38,7 +38,6 @@ public class PolyDataTools extends DataTools {
 		this.addPath("CregCmd", new Path("CregCmd", properties.getCregCommandPath()));
 	
 		// For cleaning strings, and replacing all white space with "_"
-		// Especially useful for features to clean unigrams
 		this.addCleanFn(new DataTools.StringTransform() {
 			public String toString() {
 				return "PolyDefaultCleanFn";
@@ -46,30 +45,18 @@ public class PolyDataTools extends DataTools {
 			
 			@Override
 			public String transform(String str) {
-				str = str.trim();
-				str = str.replaceAll("[\\W&&[^\\s]]+", " ") // replaces all non-alpha-numeric (differs from http://qwone.com/~jason/writing/loocv.pdf)
-						 .replaceAll("\\d+", "[D]") 
-						 .replaceAll("_", " ")
-						 .trim()
-						 .toLowerCase();
-				
-				String[] parts = str.split("\\s+");
-				StringBuilder retStr = new StringBuilder();
-				for (int i = 0; i < parts.length; i++) {
-					if (parts[i].length() < 3 || parts[i].length() > 25) // remove short and long tokens
-						continue;
-					
-					parts[i] = Stemmer.stem(parts[i]);
-					retStr = retStr.append(parts[i]).append("_");
-				}
-				
-				if (retStr.length() > 0)
-					retStr.delete(retStr.length() - 1, retStr.length());
+				return PolyDataTools.cleanString(str, false, false);
+			}
+		});
+		
+		this.addCleanFn(new DataTools.StringTransform() {
+			public String toString() {
+				return "PolyStemCleanFn";
+			}
 			
-				if (retStr.length() == 0)
-					return str;
-				else
-					return retStr.toString().trim();
+			@Override
+			public String transform(String str) {
+				return PolyDataTools.cleanString(str, true, true);
 			}
 		});
 		
@@ -94,6 +81,36 @@ public class PolyDataTools extends DataTools {
 		});
 		
 		this.addStringClusterer(new ClustererAffix("AffixMaxLength5", 5));
+	}
+	
+	public static String cleanString(String str, boolean stem, boolean toLower) {
+		str = str.trim();
+		str = str.replaceAll("[\\W&&[^\\s]]+", " ") // replaces all non-alpha-numeric (differs from http://qwone.com/~jason/writing/loocv.pdf)
+				 .replaceAll("\\d+", "[D]") 
+				 .replaceAll("_", " ")
+				 .trim();
+		
+		if (toLower)
+			str = str.toLowerCase();
+		
+		String[] parts = str.split("\\s+");
+		StringBuilder retStr = new StringBuilder();
+		for (int i = 0; i < parts.length; i++) {
+			if (parts[i].length() > 30) // remove long tokens
+				continue;
+			
+			if (stem)
+				parts[i] = Stemmer.stem(parts[i]);
+			retStr = retStr.append(parts[i]).append("_");
+		}
+		
+		if (retStr.length() > 0)
+			retStr.delete(retStr.length() - 1, retStr.length());
+	
+		if (retStr.length() == 0)
+			return str;
+		else
+			return retStr.toString().trim();
 	}
 	
 	/**
@@ -142,7 +159,7 @@ public class PolyDataTools extends DataTools {
 			this.addGazetteer(
 					new Gazetteer(name,
 					this.properties.getNounPhraseNELLCategoryGazetteerPath(),
-					this.getCleanFn("PolyDefaultCleanFn"),
+					this.getCleanFn("Trim"),
 					true)
 				);
 		} else if (name.equals("NELLCategoryGeneralization")) {

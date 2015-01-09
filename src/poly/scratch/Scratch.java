@@ -5,13 +5,16 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
 import poly.data.annotation.TokenSpansDatum;
+import poly.util.PolyProperties;
 
 import ark.data.Gazetteer;
 import ark.data.annotation.Datum;
 import ark.data.annotation.nlp.PoSTag;
 import ark.data.annotation.nlp.PoSTagClass;
+import ark.util.OutputWriter;
 
 public class Scratch {
 	public static void main(String[] args) {
@@ -34,12 +37,15 @@ public class Scratch {
 		x.append("f").append("y");
 		System.out.println(x.toString());*/
 		
-		ArrayList<String> x = new ArrayList<String>();
-		System.out.println(x.getClass().getName());
+		//ArrayList<String> x = new ArrayList<String>();
+		//System.out.println(x.getClass().getName());
 		
 		//Scratch x = new Scratch();
 		//String beforePattern1 = x.convertPattern("((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*", null);
 		//System.out.println(beforePattern1);
+		PolyDataTools tools = new PolyDataTools(new OutputWriter(), new PolyProperties());
+		System.out.println(tools.getGazetteer("NounPhraseNELLCategory").getIds("wedding"));
+		//System.out.println(tools.getCleanFn("PolyDefaultCleanFn").transform("Wedding"));
 	}
 	
 	protected Pattern posTagClassPattern = Pattern.compile("<p:([^>]*)>");

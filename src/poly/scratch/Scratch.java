@@ -44,7 +44,7 @@ public class Scratch {
 		//String beforePattern1 = x.convertPattern("((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*", null);
 		//System.out.println(beforePattern1);
 		PolyDataTools tools = new PolyDataTools(new OutputWriter(), new PolyProperties());
-		System.out.println(tools.getGazetteer("NounPhraseNELLCategory").getIds("wedding"));
+		System.out.println(tools.getGazetteer("NounPhraseNELLCategory").getIds("Wedding"));
 		//System.out.println(tools.getCleanFn("PolyDefaultCleanFn").transform("Wedding"));
 	}
 	

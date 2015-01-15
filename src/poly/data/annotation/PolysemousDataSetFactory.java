@@ -16,12 +16,12 @@ import org.json.JSONArray;
 import ark.data.DataTools;
 import ark.data.Gazetteer;
 import ark.data.annotation.DataSet;
+import ark.data.annotation.Datum;
 import ark.data.annotation.Datum.Tools;
 import ark.data.annotation.Document;
 import ark.util.FileUtil;
 import ark.util.MathUtil;
 import ark.util.Pair;
-
 import poly.data.PolyDataTools;
 import poly.data.annotation.DocumentCache.DocumentLoader;
 import poly.data.annotation.nlp.TokenSpanCached;
@@ -160,7 +160,14 @@ public class PolysemousDataSetFactory {
 				dataSet.add(datum);
 		}
 		
-		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> partition = dataSet.makePartition(distribution, this.datumTools.getDataTools().getGlobalRandom());
+		Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String> documentClusterer = 
+				new Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String>() {
+					public String getCluster(TokenSpansDatum<LabelsList> datum) {
+						return datum.getTokenSpans()[0].getDocument().getName();
+					}
+				};
+		
+		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> partition = dataSet.makePartition(distribution, documentClusterer, this.datumTools.getDataTools().getGlobalRandom());
 		
 		this.partitionSize = distribution.length;
 		this.partitionMap = new HashMap<Integer, Integer>();

@@ -24,6 +24,11 @@ public class TokenSpanCached extends TokenSpan {
 	}
 	
 	@Override
+	public TokenSpan getSubspan(int startIndex, int endIndex) {
+		return new TokenSpanCached(this.documentName, this.cache, getSentenceIndex(), getStartTokenIndex() + startIndex, getStartTokenIndex() + endIndex);
+	}
+	
+	@Override
 	public JSONObject toJSON() {
 		return toJSON(true);
 	}

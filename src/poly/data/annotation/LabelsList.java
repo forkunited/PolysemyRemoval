@@ -72,6 +72,16 @@ public class LabelsList {
 		return this.labels;
 	}
 	
+	public double getLabelWeight(String label) {
+		for (int i = 0; i < this.labels.length; i++) {
+			if (this.labels[i].equals(label)) {
+				return this.labelWeights[i];
+			}
+		}
+		
+		return 0.0;
+	}
+	
 	public String toString() {
 		StringBuilder str = new StringBuilder();
 		if (this.labelWeights != null) {

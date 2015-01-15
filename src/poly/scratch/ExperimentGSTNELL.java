@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 
 import ark.data.annotation.DataSet;
+import ark.data.annotation.Datum;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.experiment.ExperimentGSTBinary;
 import ark.util.OutputWriter;
@@ -53,10 +54,21 @@ public class ExperimentGSTNELL {
 				public boolean indicator(LabelsList labelList) {
 					return labelList.contains(label);
 				}
+				
+				@Override
+				public double weight(LabelsList labelList) {
+					return labelList.getLabelWeight(label);
+				}
 			});
 		
+		Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String> documentClusterer = 
+				new Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String>() {
+					public String getCluster(TokenSpansDatum<LabelsList> datum) {
+						return datum.getTokenSpans()[0].getDocument().getName();
+					}
+				};
 		
-		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> dataPartition = data.makePartition(new double[] { .8, .1, .1 }, dataTools.getGlobalRandom());
+		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> dataPartition = data.makePartition(new double[] { .8, .1, .1 }, documentClusterer, dataTools.getGlobalRandom());
 		
 		ExperimentGSTBinary<TokenSpansDatum<Boolean>,TokenSpansDatum<LabelsList>, LabelsList> experiment = 
 				new ExperimentGSTBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(

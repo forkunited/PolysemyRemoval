@@ -32,6 +32,8 @@ feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
 
 feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
 feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
+feature_phrh1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
+feature_affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 
 model=Creg(cmdPath=CregCmd, modelPath=CregModel/--DATA_SET--/GSTNELL/CregBasel1_--l1--.l2_--l2--.--LABEL_INDICATOR--, l1=0, l2=0, warmRestart=false)
 {

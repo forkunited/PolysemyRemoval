@@ -236,6 +236,21 @@ public class TokenSpansDatum<L> extends Datum<L> {
 					return new TokenSpan[] { tokenSpansDatum.tokenSpans[tokenSpansDatum.tokenSpans.length - 1] };
 				}
 			});
+			
+			this.addTokenSpanExtractor(new TokenSpanExtractor<TokenSpansDatum<L>, L>() {
+				@Override
+				public String toString() {
+					return "FirstTokenSpanLastToken";
+				}
+				
+				@Override
+				public TokenSpan[] extract(TokenSpansDatum<L> tokenSpansDatum) {
+					if (tokenSpansDatum.tokenSpans.length == 0)
+						return null;
+					TokenSpan tokenSpan = tokenSpansDatum.tokenSpans[tokenSpansDatum.tokenSpans.length - 1];
+					return new TokenSpan[] { tokenSpan.getSubspan(tokenSpan.getLength()-1, tokenSpan.getLength()) };
+				}
+			});
 		}
 		
 		@Override
@@ -286,7 +301,12 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		public <T extends Datum<Boolean>> T makeBinaryDatum(
 				TokenSpansDatum<L> datum,
 				LabelIndicator<L> labelIndicator) {
-			return (T)(new TokenSpansDatum<Boolean>(datum.getId(), datum.getTokenSpans(), labelIndicator.indicator(datum.getLabel()), datum.isPolysemous()));
+			TokenSpansDatum<Boolean> binaryDatum = new TokenSpansDatum<Boolean>(datum.getId(), datum.getTokenSpans(), labelIndicator.indicator(datum.getLabel()), datum.isPolysemous());
+			double labelWeight = labelIndicator.weight(datum.getLabel());
+			binaryDatum.setLabelWeight(true, labelWeight);
+			binaryDatum.setLabelWeight(false, 1-labelWeight);
+			
+			return (T)(binaryDatum);
 		}
 
 		@SuppressWarnings("unchecked")

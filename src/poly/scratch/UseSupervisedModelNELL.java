@@ -101,6 +101,11 @@ public class UseSupervisedModelNELL {
 						if (labels == null)
 							return true;
 						return labels.contains(label);
+					}
+
+					@Override
+					public double weight(LabelsList labels) {
+						return labels.getLabelWeight(label);
 					}	
 				});
 			

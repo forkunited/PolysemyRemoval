@@ -3,13 +3,13 @@ maxThreads=32
 trainOnDev=false
 errorExampleExtractor=FirstTokenSpan
 
-evaluation=Accuracy()
-evaluation=Accuracy(computeBaseline=true)
 evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1)
 evaluation=Precision(weighted=false, filterLabel=true)
 evaluation=Recall(weighted=false, filterLabel=true)
+evaluation=Accuracy()
+evaluation=Accuracy(computeBaseline=true)
 
-gridSearchParameterValues=l1(1,5,10,50)
+gridSearchParameterValues=l1(0.5,1,5,10)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
 feature_cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*")
@@ -34,7 +34,7 @@ feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWin
 feature_phrh1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 feature_affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 
-model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maximumIterations=301, evaluationIterations=100)
+model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maximumIterations=4000, evaluationIterations=100)
 {
 	validLabels=None
 }

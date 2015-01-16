@@ -304,7 +304,6 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			TokenSpansDatum<Boolean> binaryDatum = new TokenSpansDatum<Boolean>(datum.getId(), datum.getTokenSpans(), labelIndicator.indicator(datum.getLabel()), datum.isPolysemous());
 			double labelWeight = labelIndicator.weight(datum.getLabel());
 			binaryDatum.setLabelWeight(true, labelWeight);
-			binaryDatum.setLabelWeight(false, 1-labelWeight);
 			
 			return (T)(binaryDatum);
 		}

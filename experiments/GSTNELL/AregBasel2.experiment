@@ -1,0 +1,41 @@
+randomSeed=1
+maxThreads=32
+trainOnDev=false
+errorExampleExtractor=FirstTokenSpan
+
+evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1)
+evaluation=Precision(weighted=false, filterLabel=true)
+evaluation=Recall(weighted=false, filterLabel=true)
+evaluation=Accuracy()
+evaluation=Accuracy(computeBaseline=true)
+
+gridSearchParameterValues=l2(0,.1,.01,.001,.0001,1e-5)
+
+feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
+feature_cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*")
+feature_cpnb1=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*")
+feature_cpnb2=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN,JJ,PRP> ((<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*)")
+feature_cpnb3=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*")
+feature_cpnb4=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN> ((<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*)")
+feature_cpnb5=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NN,JJ,NNP>)+(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*")
+feature_cpnb6=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN,JJ> ((<p:NN,JJ,NNP>)+(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*)")
+
+feature_cpb1=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".* (IN|TO|JJ)")
+feature_cpa1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((<p:RB,VB>)*<p:VB>).*")
+
+feature_dep=NGramDep(scale=INDICATOR, mode=ParentsAndChildren, useRelationTypes=true, minFeatureOccurrence=2, n=1, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans)
+feature_sent1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans)
+feature_sent2=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans)
+feature_doc1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyStemCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
+
+feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
+
+feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
+feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
+feature_phrh1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
+feature_affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
+
+model=Areg(l1=0, l2=0, convergenceEpsilon=-1, dataSetRuns=1, batchSize=10, evaluationIterations=500)
+{
+	validLabels=None
+}

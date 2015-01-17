@@ -9,7 +9,7 @@ evaluation=Recall(weighted=false, filterLabel=true)
 evaluation=Accuracy()
 evaluation=Accuracy(computeBaseline=true)
 
-gridSearchParameterValues=l1(0,1e-9,1e-8)
+gridSearchParameterValues=l1(0,1e-15,1e-14,1e-13,1e-12)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
 feature_cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*")

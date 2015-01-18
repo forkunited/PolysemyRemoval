@@ -26,7 +26,6 @@ feature_cpa1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOcc
 feature_dep=NGramDep(scale=INDICATOR, mode=ParentsAndChildren, useRelationTypes=true, minFeatureOccurrence=2, n=1, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans)
 feature_sent1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans)
 feature_sent2=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans)
-feature_doc1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyStemCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
 
 feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
 

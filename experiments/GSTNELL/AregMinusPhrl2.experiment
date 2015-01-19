@@ -34,7 +34,7 @@ feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWin
 feature_phrh1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 feature_affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 
-model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maxDataSetRuns=3, batchSize=10, evaluationIterations=500, maxEvaluationConstantIterations=2000)
+model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maxDataSetRuns=1, batchSize=10, evaluationIterations=500, maxEvaluationConstantIterations=1500)
 {
 	validLabels=None
 }

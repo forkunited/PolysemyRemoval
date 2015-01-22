@@ -37,5 +37,5 @@ feature_affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWi
 
 model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maxDataSetRuns=3, batchSize=10, evaluationIterations=500, maxEvaluationConstantIterations=2000)
 {
-	validLabels=None
+	validLabels=true, false
 }

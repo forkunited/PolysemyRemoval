@@ -53,13 +53,21 @@ public class TokenSpanCached extends TokenSpan {
 		try {
 			String documentName = json.getString("document");
 			
+			if (json.has("tokenSpan")) {
+				// Blahh... this is to support the old way of storing token spans in JSON. 
+				// This should be taken out, but it's left in for now because we don't
+				// have time to reconstruct the old data
+				json = json.getJSONObject("tokenSpan");
+				
+			}
+			
 			return new TokenSpanCached(
-				documentName,
-				documentCache,
-				(sentenceIndex < 0) ? json.getInt("sentenceIndex") : sentenceIndex,
-				json.getInt("startTokenIndex"),
-				json.getInt("endTokenIndex")
-			);
+					documentName,
+					documentCache,
+					(sentenceIndex < 0) ? json.getInt("sentenceIndex") : sentenceIndex,
+					json.getInt("startTokenIndex"),
+					json.getInt("endTokenIndex")
+				);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}

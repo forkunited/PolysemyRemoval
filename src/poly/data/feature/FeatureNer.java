@@ -118,12 +118,12 @@ public class FeatureNer<D extends Datum<L>, L> extends Feature<D, L> {
 	}
 
 	@Override
-	protected String[] getParameterNames() {
+	public String[] getParameterNames() {
 		return this.parameterNames;
 	}
 
 	@Override
-	protected String getParameterValue(String parameter) {
+	public String getParameterValue(String parameter) {
 		if (parameter.equals("tokenExtractor"))
 			return (this.tokenExtractor == null) ? null : this.tokenExtractor.toString();
 		else if (parameter.equals("useTypes"))
@@ -133,7 +133,7 @@ public class FeatureNer<D extends Datum<L>, L> extends Feature<D, L> {
 	
 	
 	@Override
-	protected boolean setParameterValue(String parameter, String parameterValue, Datum.Tools<D, L> datumTools) {
+	public boolean setParameterValue(String parameter, String parameterValue, Datum.Tools<D, L> datumTools) {
 		if (parameter.equals("tokenExtractor"))
 			this.tokenExtractor = datumTools.getTokenSpanExtractor(parameterValue);
 		else if (parameter.equals("useTypes"))

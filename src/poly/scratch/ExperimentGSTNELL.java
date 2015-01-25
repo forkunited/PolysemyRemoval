@@ -6,7 +6,7 @@ import java.util.List;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
-import ark.experiment.ExperimentGSTBinary;
+import ark.model.evaluation.ValidationGSTBinary;
 import ark.util.OutputWriter;
 import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
@@ -70,15 +70,15 @@ public class ExperimentGSTNELL {
 		
 		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> dataPartition = data.makePartition(new double[] { .8, .1, .1 }, documentClusterer, dataTools.getGlobalRandom());
 		
-		ExperimentGSTBinary<TokenSpansDatum<Boolean>,TokenSpansDatum<LabelsList>, LabelsList> experiment = 
-				new ExperimentGSTBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(
+		ValidationGSTBinary<TokenSpansDatum<Boolean>,TokenSpansDatum<LabelsList>, LabelsList> validation = 
+				new ValidationGSTBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(
 						experimentName, 
-						experimentInputPath, 
+						data.getDatumTools(),
 						dataPartition.get(0), 
 						dataPartition.get(1), 
 						dataPartition.get(2));
 		
-		if (!experiment.run())
+		if (!validation.runAndOutput(experimentInputPath))
 			output.debugWriteln("ERROR: Failed to run experiment.");
 	}
 }

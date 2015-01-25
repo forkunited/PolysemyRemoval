@@ -17,7 +17,7 @@ import poly.data.annotation.PolysemousDataSetFactory;
 import poly.data.annotation.TokenSpansDatum;
 import poly.util.PolyProperties;
 import ark.data.annotation.DataSet;
-import ark.experiment.ExperimentGST;
+import ark.model.evaluation.ValidationGST;
 import ark.model.evaluation.metric.SupervisedModelEvaluation;
 import ark.util.OutputWriter;
 import ark.util.Pair;
@@ -278,21 +278,21 @@ public class ExperimentGSTSeqPolysemy {
 				partitionedData.get(2).size() + " with baseline label=" + majorityLabel.getFirst() + " (" + majorityBaseline + ")"
 			);
 			
-			ExperimentGST<TokenSpansDatum<Boolean>, Boolean> experiment = 
-					new ExperimentGST<TokenSpansDatum<Boolean>, Boolean>(experimentName, 
-																		 experimentInputPath, 
+			ValidationGST<TokenSpansDatum<Boolean>, Boolean> validation = 
+					new ValidationGST<TokenSpansDatum<Boolean>, Boolean>(experimentName, 
+																		 partitionedData.get(0).getDatumTools(),
 																		 partitionedData.get(0), 
 																		 partitionedData.get(1), 
 																		 partitionedData.get(2));
-			experiment.run();
-			double performance = experiment.getEvaluationValues().get(0);
+			validation.runAndOutput(experimentInputPath);
+			double performance = validation.getEvaluationValues().get(0);
 			double normPerformance = (performance-majorityBaseline)/(1.0-majorityBaseline);
 			this.labelData.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Finished running for label " + this.label 
 					+ " with polysemy=" + this.polysemy + ", "
-					+ experiment.getEvaluations().get(0).toString() + "=" + performance + ", " +
-					"norm-" + experiment.getEvaluations().get(0).toString() + "=" + normPerformance);
+					+ validation.getEvaluations().get(0).toString() + "=" + performance + ", " +
+					"norm-" + validation.getEvaluations().get(0).toString() + "=" + normPerformance);
 		
-			LabelExperimentResult result = new LabelExperimentResult(majorityBaseline, this.polysemy, experiment.getEvaluations(), experiment.getEvaluationValues(), normPerformance);
+			LabelExperimentResult result = new LabelExperimentResult(majorityBaseline, this.polysemy, validation.getEvaluations(), validation.getEvaluationValues(), normPerformance);
 			result.setLabel(this.label);
 			return result;
 		}

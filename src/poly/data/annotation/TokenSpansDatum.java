@@ -301,9 +301,13 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		public <T extends Datum<Boolean>> T makeBinaryDatum(
 				TokenSpansDatum<L> datum,
 				LabelIndicator<L> labelIndicator) {
-			TokenSpansDatum<Boolean> binaryDatum = new TokenSpansDatum<Boolean>(datum.getId(), datum.getTokenSpans(), labelIndicator.indicator(datum.getLabel()), datum.isPolysemous());
-			double labelWeight = labelIndicator.weight(datum.getLabel());
-			binaryDatum.setLabelWeight(true, labelWeight);
+			
+			TokenSpansDatum<Boolean> binaryDatum = new TokenSpansDatum<Boolean>(datum.getId(), datum.getTokenSpans(), (labelIndicator == null || datum.getLabel() == null) ? null : labelIndicator.indicator(datum.getLabel()), datum.isPolysemous());
+			
+			if (labelIndicator != null && datum.getLabel() != null) {
+				double labelWeight = labelIndicator.weight(datum.getLabel());
+				binaryDatum.setLabelWeight(true, labelWeight);
+			}
 			
 			return (T)(binaryDatum);
 		}

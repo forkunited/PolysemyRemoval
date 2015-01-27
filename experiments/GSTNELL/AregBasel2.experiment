@@ -9,11 +9,6 @@ evaluation=Recall(weighted=false, filterLabel=true)
 evaluation=Accuracy()
 evaluation=Accuracy(computeBaseline=true)
 
-evaluation=LabelsListFreebase(computeNELLBaseline=false, confidenceThreshold=0.9, evaluationType=F1)
-evaluation=LabelsListFreebase(computeNELLBaseline=true, confidenceThreshold=0.9, evaluationType=F1)
-evaluation=Polysemy(computeNELLBaseline=false, confidenceThreshold=0.9)
-evaluation=Polysemy(computeNELLBaseline=true, confidenceThreshold=0.9)
-
 gridSearchParameterValues=l2(0,.1,.01,.001)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")

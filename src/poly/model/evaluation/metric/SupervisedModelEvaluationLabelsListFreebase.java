@@ -30,7 +30,7 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 	
 	private double confidenceThreshold;
 	private boolean computeNELLBaseline;
-	private EvaluationType evaluationType;
+	private EvaluationType evaluationType = EvaluationType.F1;
 	
 	private String[] parameterNames = { "computeNELLBaseline", "confidenceThreshold", "evaluationType" };
 	

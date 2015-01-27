@@ -42,7 +42,7 @@ public class ExperimentGSTNELL {
 		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
 		NELLDataSetFactory dataFactory = new NELLDataSetFactory(dataTools, properties.getHazyFacc1DataDirPath(), 1000000);
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = dataFactory.loadDataSet(properties.getNELLDataFileDirPath(), nellConfidenceThreshold, dataFraction, NELLDataSetFactory.PolysemyMode.NON_POLYSEMOUS , false);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = dataFactory.loadDataSet(properties.getNELLDataFileDirPath(), nellConfidenceThreshold, dataFraction, NELLDataSetFactory.PolysemyMode.LABELED_POLYSEMOUS , false);
 
 		for (final String label : labels.getLabels())
 			data.getDatumTools().addLabelIndicator(new LabelIndicator<LabelsList>() {

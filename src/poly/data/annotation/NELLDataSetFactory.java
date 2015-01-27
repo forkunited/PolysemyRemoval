@@ -121,7 +121,7 @@ public class NELLDataSetFactory {
 				label = new LabelsList(datum.getLabel().getLabels(), labelWeights, 0);
 			}	
 			
-			if (datum.isPolysemous() || polysemyMode == PolysemyMode.LABELED_POLYSEMOUS) {
+			if (!datum.isPolysemous() || polysemyMode == PolysemyMode.LABELED_POLYSEMOUS) {
 				retData.add(new TokenSpansDatum<LabelsList>(datum.getId(), datum.getTokenSpans()[0], label, datum.isPolysemous()));
 			} else if (polysemyMode == PolysemyMode.UNLABELED_POLYSEMOUS) {
 				retData.add(new TokenSpansDatum<LabelsList>(datum.getId(), datum.getTokenSpans()[0], null, datum.isPolysemous()));

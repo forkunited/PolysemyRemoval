@@ -19,6 +19,12 @@ import poly.data.annotation.DocumentCache.DocumentLoader;
 import poly.data.annotation.nlp.TokenSpanCached;
 
 public class NELLDataSetFactory {
+	public enum PolysemyMode {
+		NON_POLYSEMOUS,
+		UNLABELED_POLYSEMOUS,
+		LABELED_POLYSEMOUS
+	}
+	
 	private PolyDataTools dataTools;
 	private NELL nell;
 	private DocumentCache documentCache;
@@ -76,7 +82,11 @@ public class NELLDataSetFactory {
 		return data;
 	}
 	
-	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(String dataFileDirPath, double nellConfidenceThreshold, double dataFraction, boolean nonPolysemous) {
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(String dataFileDirPath, 
+																	double nellConfidenceThreshold, 
+																	double dataFraction, 
+																	PolysemyMode polysemyMode,
+																	boolean includeLabelWeights) {
 		File file = new File(dataFileDirPath, "NELLData_c" + (int)(nellConfidenceThreshold * 100) + "_f" + (int)(dataFraction * 100));
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = null;
 		OutputWriter output = this.dataTools.getOutputWriter();
@@ -104,8 +114,18 @@ public class NELLDataSetFactory {
 	
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> retData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 		for (TokenSpansDatum<LabelsList> datum : data) {
-			if (!nonPolysemous || datum.isPolysemous())
-				retData.add(datum);
+			LabelsList label = datum.getLabel();
+			if (!includeLabelWeights) {
+				double[] labelWeights = new double[datum.getLabel().getLabels().length];
+				Arrays.fill(labelWeights, 1.0);
+				label = new LabelsList(datum.getLabel().getLabels(), labelWeights, 0);
+			}	
+			
+			if (!datum.isPolysemous() || polysemyMode == PolysemyMode.LABELED_POLYSEMOUS) {
+				retData.add(new TokenSpansDatum<LabelsList>(datum.getId(), datum.getTokenSpans()[0], label, datum.isPolysemous()));
+			} else if (polysemyMode == PolysemyMode.UNLABELED_POLYSEMOUS) {
+				retData.add(new TokenSpansDatum<LabelsList>(datum.getId(), datum.getTokenSpans()[0], null, datum.isPolysemous()));
+			}
 		}
 		
 		return retData;

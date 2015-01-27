@@ -16,11 +16,12 @@ import org.json.JSONObject;
 import poly.data.PolyDataTools;
 import poly.data.annotation.nlp.TokenSpanCached;
 import poly.data.feature.FeatureNer;
+import poly.model.evaluation.metric.SupervisedModelEvaluationLabelsListFreebase;
 import poly.model.evaluation.metric.SupervisedModelEvaluationPolyAccuracy;
 import poly.model.evaluation.metric.SupervisedModelEvaluationPolyF;
 import poly.model.evaluation.metric.SupervisedModelEvaluationPolyPrecision;
 import poly.model.evaluation.metric.SupervisedModelEvaluationPolyRecall;
-
+import poly.model.evaluation.metric.SupervisedModelEvaluationPolysemy;
 import ark.data.DataTools;
 import ark.data.annotation.Datum;
 import ark.data.annotation.Document;
@@ -123,6 +124,9 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			}
 		};
 	
+		tools.addGenericEvaluation(new SupervisedModelEvaluationPolysemy());
+		tools.addGenericEvaluation(new SupervisedModelEvaluationLabelsListFreebase());
+		
 		return tools;
 	}
 	

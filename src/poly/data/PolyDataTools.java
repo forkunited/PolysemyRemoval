@@ -19,6 +19,8 @@ public class PolyDataTools extends DataTools {
 	public PolyDataTools(OutputWriter outputWriter, PolyDataTools dataTools) {
 		this(outputWriter, dataTools.properties, dataTools.getDocumentCache());
 		
+		this.timer = dataTools.timer;
+		
 		for (Entry<String, Gazetteer> entry : dataTools.gazetteers.entrySet())
 			this.gazetteers.put(entry.getKey(), entry.getValue());
 		

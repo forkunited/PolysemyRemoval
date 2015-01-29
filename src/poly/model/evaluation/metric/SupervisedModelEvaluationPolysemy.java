@@ -34,7 +34,7 @@ public class SupervisedModelEvaluationPolysemy extends SupervisedModelEvaluation
 			FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList> data,
 			Map<TokenSpansDatum<LabelsList>, LabelsList> predictions) {
 		Map<String, Double> classificationThresholds = getAregIndicatorClassificationThresholds(model, predictions.entrySet().iterator().next().getValue());
-		NELL nell = (this.computeNELLBaseline) ? new NELL((PolyDataTools)data.getDatumTools().getDataTools()) : null;
+		NELL nell = new NELL((PolyDataTools)data.getDatumTools().getDataTools());
 		double polysemous = 0.0;
 		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : predictions.entrySet()) {
 			String np = entry.getKey().getTokenSpans()[0].toString();

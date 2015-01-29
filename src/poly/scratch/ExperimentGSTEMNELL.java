@@ -22,7 +22,7 @@ public class ExperimentGSTEMNELL {
 		int randomSeed = Integer.valueOf(args[2]);
 		double nellConfidenceThreshold = Double.valueOf(args[3]);
 		double dataFraction = Double.valueOf(args[4]);
-		String dataSetName = "NELLData_c" + (int)(nellConfidenceThreshold * 100) + "_f" + (int)(dataFraction * 100);
+		String dataSetName = "NELLData_f" + (int)(dataFraction * 100);
 		
 		String experimentOutputName = dataSetName + "/" + experimentName;
 

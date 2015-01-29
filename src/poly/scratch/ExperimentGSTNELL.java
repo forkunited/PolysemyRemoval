@@ -1,13 +1,17 @@
 package poly.scratch;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.model.evaluation.ValidationGSTBinary;
 import ark.util.OutputWriter;
+import ark.util.Pair;
 import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
 import poly.data.annotation.NELLDataSetFactory;
@@ -60,6 +64,21 @@ public class ExperimentGSTNELL {
 					return labelList.getLabelWeight(label);
 				}
 			});
+		
+		data.getDatumTools().addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
+			public String toString() {
+				return "Weighted";
+			}
+			
+			@Override
+			public LabelsList label(Map<String, Double> indicatorWeights) {
+				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(indicatorWeights.size());
+				for (Entry<String, Double> entry : indicatorWeights.entrySet()) {
+					weightedLabels.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));
+				}
+				return new LabelsList(weightedLabels);
+			}
+		});
 		
 		Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String> documentClusterer = 
 				new Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String>() {

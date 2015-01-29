@@ -118,9 +118,6 @@ public class NELLDataSetFactory {
 				}
 			}
 			
-			if (labels.size() == 0)
-				continue;
-			
 			boolean polysemous = this.nell.areCategoriesMutuallyExclusive(labels);
 			LabelsList filteredLabel = new LabelsList(labelWeights);
 				

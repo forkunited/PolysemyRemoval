@@ -3,12 +3,17 @@ maxThreads=32
 trainOnDev=false
 errorExampleExtractor=FirstTokenSpan
 
+evaluation=Accuracy()
+evaluation=Accuracy(computeBaseline=true)
 evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=0.5)
 evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1)
 evaluation=Precision(weighted=false, filterLabel=true)
 evaluation=Recall(weighted=false, filterLabel=true)
-evaluation=Accuracy()
-evaluation=Accuracy(computeBaseline=true)
+
+compositeEvaluation=LabelsListFreebase(evaluationType=F1)
+compositeEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=F1)
+compositeEvaluation=Polysemy()
+compositeEvaluation=Polysemy(computeNELLBaseline=true, NELLConfidenceThreshold=0.9)
 
 gridDimension=l2(values="0,.1,.01,.001", training=true)
 gridDimension=classificationThreshold(values=".001,.01,.1,.2,.3,.4,.5", training=false)

@@ -3,6 +3,7 @@ package poly.data.annotation;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -82,12 +83,82 @@ public class NELLDataSetFactory {
 		return data;
 	}
 	
-	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(String dataFileDirPath, 
-																	double nellConfidenceThreshold, 
+	/**
+	 * 
+	 * @param dataFileDirPath
+	 * @param nellConfidenceThreshold
+	 * @param dataFraction
+	 * @param polysemyMode
+	 * @param includeLabelWeights
+	 * @return a labeled data set with labels determined by NELL with confidence greater than nellConfidenceThreshold.
+	 * Note that both "loadSupervisedDataSet" and "loadUnsupervisedDataSet" both return labeled data, but "loadUnsupervisedDataSet"
+	 * always returns all labels suggested given by NELL, without any threshold, for use in the unsupervised setting.
+	 */
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadSupervisedDataSet(String dataFileDirPath,
 																	double dataFraction, 
+																	double nellConfidenceThreshold, 
 																	PolysemyMode polysemyMode,
 																	boolean includeLabelWeights) {
-		File file = new File(dataFileDirPath, "NELLData_c" + (int)(nellConfidenceThreshold * 100) + "_f" + (int)(dataFraction * 100));
+		
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = loadDataSet(dataFileDirPath, dataFraction);
+		if (data == null)
+			return null;
+		
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> retData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
+		for (TokenSpansDatum<LabelsList> datum : data) {
+			LabelsList fullLabel = datum.getLabel();
+			List<Pair<String, Double>> labelWeights = new ArrayList<Pair<String, Double>>();
+			List<String> labels = new ArrayList<String>();
+			
+			for (String label : fullLabel.getLabels()) {
+				double weight = fullLabel.getLabelWeight(label);
+				if (weight >= nellConfidenceThreshold) {
+					labelWeights.add(new Pair<String, Double>(label, (includeLabelWeights) ? weight : 1.0));
+					labels.add(label);
+				}
+			}
+			
+			if (labels.size() == 0)
+				continue;
+			
+			boolean polysemous = this.nell.areCategoriesMutuallyExclusive(labels);
+			LabelsList filteredLabel = new LabelsList(labelWeights);
+				
+			if (!polysemous || polysemyMode == PolysemyMode.LABELED_POLYSEMOUS) {
+				retData.add(new TokenSpansDatum<LabelsList>(datum.getId(), datum.getTokenSpans()[0], filteredLabel, polysemous));
+			} else if (polysemyMode == PolysemyMode.UNLABELED_POLYSEMOUS) {
+				retData.add(new TokenSpansDatum<LabelsList>(datum.getId(), datum.getTokenSpans()[0], null, polysemous));
+			}
+		}
+		
+		return retData;
+	}
+	
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadUnsupervisedDataSet(String dataFileDirPath,
+			double dataFraction, 
+			boolean includeLabelWeights) {
+
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = loadDataSet(dataFileDirPath, dataFraction);
+		if (includeLabelWeights)
+			return data;
+		if (data == null)
+			return null;
+	
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> retData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
+		for (TokenSpansDatum<LabelsList> datum : data) {
+			LabelsList weightedLabel = datum.getLabel();
+			double[] ones = new double[weightedLabel.getLabels().length];
+			Arrays.fill(ones, 1.0);
+			LabelsList unweightedLabel = new LabelsList(weightedLabel.getLabels(), ones, 0);
+			datum.setLabel(unweightedLabel);
+			retData.add(datum);
+		}
+
+		return retData;
+	}	
+	
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(String dataFileDirPath, double dataFraction) {
+		File file = new File(dataFileDirPath, "NELLData_f" + (int)(dataFraction * 100));
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = null;
 		OutputWriter output = this.dataTools.getOutputWriter();
 		if (file.exists()) {
@@ -102,7 +173,7 @@ public class NELLDataSetFactory {
 			output.debugWriteln("Finished loading data set.");
 		} else {
 			output.debugWriteln("Constructing data set...");
-			data = constructDataSet(nellConfidenceThreshold, dataFraction);
+			data = constructDataSet(dataFraction);
 			try {
 				if (!data.serialize(new FileWriter(file)))
 					return null;
@@ -111,27 +182,11 @@ public class NELLDataSetFactory {
 			}
 			output.debugWriteln("Finished constructing data set.");
 		}
-	
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> retData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
-		for (TokenSpansDatum<LabelsList> datum : data) {
-			LabelsList label = datum.getLabel();
-			if (!includeLabelWeights) {
-				double[] labelWeights = new double[datum.getLabel().getLabels().length];
-				Arrays.fill(labelWeights, 1.0);
-				label = new LabelsList(datum.getLabel().getLabels(), labelWeights, 0);
-			}	
-			
-			if (!datum.isPolysemous() || polysemyMode == PolysemyMode.LABELED_POLYSEMOUS) {
-				retData.add(new TokenSpansDatum<LabelsList>(datum.getId(), datum.getTokenSpans()[0], label, datum.isPolysemous()));
-			} else if (polysemyMode == PolysemyMode.UNLABELED_POLYSEMOUS) {
-				retData.add(new TokenSpansDatum<LabelsList>(datum.getId(), datum.getTokenSpans()[0], null, datum.isPolysemous()));
-			}
-		}
 		
-		return retData;
+		return data;
 	}
 	
-	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(double nellConfidenceThreshold, double dataFraction) {
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(double dataFraction) {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 		File documentDir = new File(this.documentDirPath);
 		File[] documentFiles = documentDir.listFiles();
@@ -145,7 +200,7 @@ public class NELLDataSetFactory {
 			List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
 			for (TokenSpanCached np : nps) {
 				String npStr = np.toString();
-				List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, nellConfidenceThreshold);
+				List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, 0.0);
 				if (categories.size() == 0)
 					continue;
 				LabelsList labels = new LabelsList(categories);

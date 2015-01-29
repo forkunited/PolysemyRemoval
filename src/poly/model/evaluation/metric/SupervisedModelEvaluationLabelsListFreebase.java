@@ -1,5 +1,6 @@
 package poly.model.evaluation.metric;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,8 @@ import ark.data.annotation.Datum.Tools;
 import ark.data.annotation.nlp.TokenSpan;
 import ark.data.feature.FeaturizedDataSet;
 import ark.model.SupervisedModel;
+import ark.model.SupervisedModelAreg;
+import ark.model.SupervisedModelCompositeBinary;
 import ark.model.evaluation.metric.SupervisedModelEvaluation;
 import ark.util.Pair;
 
@@ -28,11 +31,11 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 		Accuracy
 	}
 	
-	private double confidenceThreshold;
+	private double NELLConfidenceThreshold;
 	private boolean computeNELLBaseline;
 	private EvaluationType evaluationType = EvaluationType.F1;
 	
-	private String[] parameterNames = { "computeNELLBaseline", "confidenceThreshold", "evaluationType" };
+	private String[] parameterNames = { "computeNELLBaseline", "NELLConfidenceThreshold", "evaluationType" };
 	
 	@Override
 	public String getGenericName() {
@@ -50,6 +53,7 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 		double tn = 0.0;
 		double fn = 0.0;
 		
+		Map<String, Double> classificationThresholds = getAregIndicatorClassificationThresholds(model, predictions.entrySet().iterator().next().getValue());
 		NELL nell = (this.computeNELLBaseline) ? new NELL((PolyDataTools)data.getDatumTools().getDataTools()) : null;
 		Gazetteer freebaseNELLCategoryGazetteer = data.getDatumTools().getDataTools().getGazetteer("FreebaseNELLCategory");
 		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : predictions.entrySet()) {
@@ -68,9 +72,9 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 						
 						for (String nellCategory : entry.getValue().getLabels()) {
 							boolean predictedTrue = 
-									(this.computeNELLBaseline && nell.getNounPhraseNELLCategories(datumTokenSpans[i].toString(), this.confidenceThreshold).contains(nellCategory))
+									(this.computeNELLBaseline && nell.getNounPhraseNELLCategories(datumTokenSpans[i].toString(), this.NELLConfidenceThreshold).contains(nellCategory))
 									||
-									(!this.computeNELLBaseline && entry.getValue().getLabelWeight(nellCategory) >= this.confidenceThreshold);
+									(!this.computeNELLBaseline && entry.getValue().getLabelWeight(nellCategory) >= classificationThresholds.get(nellCategory));
 							boolean actualTrue = actualFreebaseNELLCategories.contains(nellCategory);
 							if (predictedTrue && actualTrue)
 								tp++;
@@ -100,6 +104,19 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 		}
 	}
 	
+	private Map<String, Double> getAregIndicatorClassificationThresholds(SupervisedModel<TokenSpansDatum<LabelsList>, LabelsList> model, LabelsList indicatorLabels) {
+		@SuppressWarnings("unchecked")
+		SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList> compositeModel = (SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>)model;
+		Map<String, Double> classificationThresholds = new HashMap<String, Double>();
+		
+		for (String indicatorLabel : indicatorLabels.getLabels()) {
+			SupervisedModelAreg<TokenSpansDatum<Boolean>, Boolean> aregModel = (SupervisedModelAreg<TokenSpansDatum<Boolean>, Boolean>)compositeModel.getModelForIndicator(indicatorLabel);
+			classificationThresholds.put(indicatorLabel, Double.valueOf(aregModel.getParameterValue("classificationThreshold")));
+		}
+		
+		return classificationThresholds;
+	}
+	
 	@Override
 	public String[] getParameterNames() {
 		return this.parameterNames;
@@ -107,8 +124,8 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 
 	@Override
 	public String getParameterValue(String parameter) {
-		if (parameter.equals("confidenceThreshold"))
-			return String.valueOf(this.confidenceThreshold);
+		if (parameter.equals("NELLConfidenceThreshold"))
+			return String.valueOf(this.NELLConfidenceThreshold);
 		else if (parameter.equals("computeNELLBaseline"))
 			return String.valueOf(this.computeNELLBaseline);
 		else if (parameter.equals("evaluationType"))
@@ -120,8 +137,8 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 	@Override
 	public boolean setParameterValue(String parameter, String parameterValue,
 			Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools) {
-		if (parameter.equals("confidenceThreshold"))
-			this.confidenceThreshold = Double.valueOf(parameterValue);
+		if (parameter.equals("NELLConfidenceThreshold"))
+			this.NELLConfidenceThreshold = Double.valueOf(parameterValue);
 		else if (parameter.equals("computeNELLBaseline"))
 			this.computeNELLBaseline = Boolean.valueOf(parameterValue);
 		else if (parameter.equals("evaluationType"))

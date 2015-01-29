@@ -1,7 +1,10 @@
 package poly.scratch;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
@@ -11,17 +14,18 @@ import poly.util.PolyProperties;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
-import ark.model.evaluation.ValidationGST;
+import ark.model.evaluation.ValidationEMGST;
 import ark.model.evaluation.ValidationGSTBinary;
 import ark.util.OutputWriter;
+import ark.util.Pair;
 
 public class ExperimentGSTEMNELL {
 	public static void main(String[] args) {
 		String experimentName = "GSTEMNELL/" + args[0];
 		LabelsList labels = LabelsList.fromString(args[1]);
 		int randomSeed = Integer.valueOf(args[2]);
-		double nellConfidenceThreshold = Double.valueOf(args[3]);
-		double dataFraction = Double.valueOf(args[4]);
+		double dataFraction = Double.valueOf(args[3]);
+		
 		String dataSetName = "NELLData_f" + (int)(dataFraction * 100);
 		
 		String experimentOutputName = dataSetName + "/" + experimentName;
@@ -61,6 +65,21 @@ public class ExperimentGSTEMNELL {
 				}
 			});
 		
+		data.getDatumTools().addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
+			public String toString() {
+				return "Weighted";
+			}
+			
+			@Override
+			public LabelsList label(Map<String, Double> indicatorWeights) {
+				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(indicatorWeights.size());
+				for (Entry<String, Double> entry : indicatorWeights.entrySet()) {
+					weightedLabels.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));
+				}
+				return new LabelsList(weightedLabels);
+			}
+		});
+		
 		Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String> documentClusterer = 
 				new Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String>() {
 					public String getCluster(TokenSpansDatum<LabelsList> datum) {
@@ -71,19 +90,16 @@ public class ExperimentGSTEMNELL {
 		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> dataPartition = data.makePartition(new double[] { .8, .1, .1 }, documentClusterer, dataTools.getGlobalRandom());
 		
 		ValidationGSTBinary<TokenSpansDatum<Boolean>,TokenSpansDatum<LabelsList>, LabelsList> validation = 
-				new ValidationGSTBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(
-						experimentName, 
-						data.getDatumTools(),
+				new ValidationGSTBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(experimentName, data.getDatumTools());
+		
+		ValidationEMGST<TokenSpansDatum<LabelsList>, LabelsList> emValidation = 
+				new ValidationEMGST<TokenSpansDatum<LabelsList>, LabelsList>(
+						validation,
 						dataPartition.get(0), 
 						dataPartition.get(1), 
 						dataPartition.get(2));
 		
-		/*ValidationEMGST(ValidationGST<D, L> validationGST,
-				DataSet<D, L> trainData, 
-				DataSet<D, L> devData,
-				DataSet<D, L> testData) {
-		
-		if (!validation.runAndOutput(experimentInputPath))
-			output.debugWriteln("ERROR: Failed to run experiment.");*/
+		if (!emValidation.runAndOutput(experimentInputPath))
+			output.debugWriteln("ERROR: Failed to run experiment.");
 	}
 }

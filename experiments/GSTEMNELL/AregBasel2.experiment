@@ -1,0 +1,54 @@
+randomSeed=1
+maxThreads=32
+trainOnDev=false
+errorExampleExtractor=FirstTokenSpan
+
+iterations=5
+firstIterationOnlyLabeled=false
+
+inverseLabelIndicator=Weighted
+
+
+evaluation=Accuracy()
+evaluation=Accuracy(computeBaseline=true)
+evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=0.5)
+evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1)
+evaluation=Precision(weighted=false, filterLabel=true)
+evaluation=Recall(weighted=false, filterLabel=true)
+
+unlabeledEvaluation=LabelsListFreebase(evaluationType=F1)
+unlabeledEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=F1)
+unlabeledEvaluation=Polysemy()
+unlabeledEvaluation=Polysemy(computeNELLBaseline=true, NELLConfidenceThreshold=0.9)
+
+gridDimension=l2(values="0,.1,.01,.001", training=true)
+gridDimension=classificationThreshold(values=".001,.01,.1,.2,.3,.4,.5", training=false)
+
+feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
+feature_cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*")
+feature_cpnb1=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*")
+feature_cpnb2=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN,JJ,PRP> ((<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*)")
+feature_cpnb3=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*")
+feature_cpnb4=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN> ((<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*)")
+feature_cpnb5=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NN,JJ,NNP>)+(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*")
+feature_cpnb6=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN,JJ> ((<p:NN,JJ,NNP>)+(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*)")
+
+feature_cpb1=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".* (IN|TO|JJ)")
+feature_cpa1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((<p:RB,VB>)*<p:VB>).*")
+
+feature_dep=NGramDep(scale=INDICATOR, mode=ParentsAndChildren, useRelationTypes=true, minFeatureOccurrence=2, n=1, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans)
+feature_sent1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans)
+feature_sent2=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans)
+feature_doc1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyStemCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
+
+feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
+
+feature_phr1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
+feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpan)
+feature_phrh1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
+feature_affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
+
+model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maxDataSetRuns=0.2, batchSize=10, evaluationIterations=500, maxEvaluationConstantIterations=6000, weightedLabels=true)
+{
+	validLabels=None
+}

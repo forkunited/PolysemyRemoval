@@ -19,7 +19,7 @@ compositeEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceT
 compositeEvaluation=Polysemy()
 compositeEvaluation=Polysemy(computeNELLBaseline=true, NELLConfidenceThreshold=0.9)
 
-gridDimension=l1(values="0,.1,.01,.001", training=true)
+gridDimension=l1(values=".0001,.001,.01,.1", training=true)
 gridDimension=classificationThreshold(values=".1,.2,.3,.4,.5,.6,.7,.8,.9", training=false)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")

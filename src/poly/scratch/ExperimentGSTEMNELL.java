@@ -24,7 +24,8 @@ public class ExperimentGSTEMNELL {
 		String experimentName = "GSTEMNELL/" + args[0];
 		LabelsList labels = LabelsList.fromString(args[1]);
 		int randomSeed = Integer.valueOf(args[2]);
-		double dataFraction = Double.valueOf(args[3]);
+		double nellConfidenceThreshold = Double.valueOf(args[3]);
+		double dataFraction = Double.valueOf(args[4]);
 		
 		String dataSetName = "NELLData_f" + (int)(dataFraction * 100);
 		
@@ -46,8 +47,10 @@ public class ExperimentGSTEMNELL {
 		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
 		NELLDataSetFactory dataFactory = new NELLDataSetFactory(dataTools, properties.getHazyFacc1DataDirPath(), 1000000);
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = dataFactory.loadUnsupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, true);
-
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, nellConfidenceThreshold, NELLDataSetFactory.PolysemyMode.NON_POLYSEMOUS , false);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> unlabeledData = dataFactory.loadUnsupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, false, false);
+		data.addAll(unlabeledData);
+		
 		for (final String label : labels.getLabels())
 			data.getDatumTools().addLabelIndicator(new LabelIndicator<LabelsList>() {
 				public String toString() {

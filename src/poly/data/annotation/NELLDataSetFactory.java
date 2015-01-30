@@ -133,21 +133,26 @@ public class NELLDataSetFactory {
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadUnsupervisedDataSet(String dataFileDirPath,
 			double dataFraction, 
+			boolean includeLabels,
 			boolean includeLabelWeights) {
 
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = loadDataSet(dataFileDirPath, dataFraction);
-		if (includeLabelWeights)
+		if (includeLabelWeights && includeLabels)
 			return data;
 		if (data == null)
 			return null;
 	
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> retData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 		for (TokenSpansDatum<LabelsList> datum : data) {
-			LabelsList weightedLabel = datum.getLabel();
-			double[] ones = new double[weightedLabel.getLabels().length];
-			Arrays.fill(ones, 1.0);
-			LabelsList unweightedLabel = new LabelsList(weightedLabel.getLabels(), ones, 0);
-			datum.setLabel(unweightedLabel);
+			if (!includeLabels) {
+				datum.setLabel(null);
+			} else if (!includeLabelWeights) {
+				LabelsList weightedLabel = datum.getLabel();
+				double[] ones = new double[weightedLabel.getLabels().length];
+				Arrays.fill(ones, 1.0);
+				LabelsList unweightedLabel = new LabelsList(weightedLabel.getLabels(), ones, 0);
+				datum.setLabel(unweightedLabel);
+			}
 			retData.add(datum);
 		}
 

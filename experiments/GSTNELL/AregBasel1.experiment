@@ -3,13 +3,24 @@ maxThreads=32
 trainOnDev=false
 errorExampleExtractor=FirstTokenSpan
 
+inverseLabelIndicator=Weighted
+
+evaluation=Accuracy()
+evaluation=Accuracy(computeBaseline=true)
+evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=0.5)
 evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1)
 evaluation=Precision(weighted=false, filterLabel=true)
 evaluation=Recall(weighted=false, filterLabel=true)
-evaluation=Accuracy()
-evaluation=Accuracy(computeBaseline=true)
 
-gridSearchParameterValues=l1(0,10,1,.1,.01,.001)
+compositeEvaluation=LabelsListFreebase(evaluationType=Accuracy)
+compositeEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Accuracy)
+compositeEvaluation=LabelsListFreebase(evaluationType=F1)
+compositeEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=F1)
+compositeEvaluation=Polysemy()
+compositeEvaluation=Polysemy(computeNELLBaseline=true, NELLConfidenceThreshold=0.9)
+
+gridDimension=l1(values="0,.1,.01,.001", training=true)
+gridDimension=classificationThreshold(values=".1,.2,.3,.4,.5,.6,.7,.8,.9", training=false)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
 feature_cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*")
@@ -35,7 +46,7 @@ feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWin
 feature_phrh1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 feature_affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 
-model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maxDataSetRuns=5, batchSize=10, evaluationIterations=500, maxEvaluationConstantIterations=2000)
+model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maxTrainingExamples=100000, batchSize=10, evaluationIterations=500, maxEvaluationConstantIterations=6000)
 {
 	validLabels=None
 }

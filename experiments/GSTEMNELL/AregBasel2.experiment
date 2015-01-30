@@ -4,7 +4,7 @@ trainOnDev=false
 errorExampleExtractor=FirstTokenSpan
 
 iterations=2
-firstIterationOnlyLabeled=false
+firstIterationOnlyLabeled=true
 relabelLabeledData=false
 
 inverseLabelIndicator=Weighted

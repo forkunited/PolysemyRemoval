@@ -50,6 +50,9 @@ public class ExperimentGSTEMNELL {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, nellConfidenceThreshold, NELLDataSetFactory.PolysemyMode.NON_POLYSEMOUS , false);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> unlabeledData = dataFactory.loadUnsupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, false, false);
 		data.addAll(unlabeledData);
+		System.out.println(data.size() + " " + unlabeledData.size());
+		System.exit(0);
+		
 		
 		for (final String label : labels.getLabels())
 			data.getDatumTools().addLabelIndicator(new LabelIndicator<LabelsList>() {

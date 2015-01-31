@@ -1,5 +1,6 @@
 package poly.model.evaluation.metric;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,6 +16,7 @@ import poly.data.annotation.LabelsList;
 import poly.data.annotation.TokenSpansDatum;
 import ark.data.Gazetteer;
 import ark.data.annotation.Datum.Tools;
+import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.data.annotation.nlp.TokenSpan;
 import ark.data.feature.FeaturizedDataSet;
 import ark.model.SupervisedModel;
@@ -53,7 +55,11 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 		double tn = 0.0;
 		double fn = 0.0;
 		
-		Map<String, Double> classificationThresholds = getAregIndicatorClassificationThresholds(model, predictions.entrySet().iterator().next().getValue());
+		List<String> indicatorLabels = new ArrayList<String>();
+		for (LabelIndicator<LabelsList> indicator : data.getDatumTools().getLabelIndicators())
+			indicatorLabels.add(indicator.toString());
+		
+		Map<String, Double> classificationThresholds = getAregIndicatorClassificationThresholds(model, indicatorLabels);
 		NELL nell = (this.computeNELLBaseline) ? new NELL((PolyDataTools)data.getDatumTools().getDataTools()) : null;
 		Gazetteer freebaseNELLCategoryGazetteer = data.getDatumTools().getDataTools().getGazetteer("FreebaseNELLCategory");
 		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : predictions.entrySet()) {
@@ -70,11 +76,11 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 								actualFreebaseNELLCategories.addAll(freebaseNELLCategoryGazetteer.getIds(freebaseType));
 						}
 						
-						for (String nellCategory : entry.getValue().getLabels()) {
+						for (String nellCategory : indicatorLabels) {
 							boolean predictedTrue = 
 									(this.computeNELLBaseline && nell.getNounPhraseNELLCategories(datumTokenSpans[i].toString(), this.NELLConfidenceThreshold).contains(nellCategory))
 									||
-									(!this.computeNELLBaseline && entry.getValue().getLabelWeight(nellCategory) >= classificationThresholds.get(nellCategory));
+									(!this.computeNELLBaseline && entry.getValue().contains(nellCategory) && entry.getValue().getLabelWeight(nellCategory) >= classificationThresholds.get(nellCategory));
 							boolean actualTrue = actualFreebaseNELLCategories.contains(nellCategory);
 							if (predictedTrue && actualTrue)
 								tp++;
@@ -104,14 +110,17 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 		}
 	}
 	
-	private Map<String, Double> getAregIndicatorClassificationThresholds(SupervisedModel<TokenSpansDatum<LabelsList>, LabelsList> model, LabelsList indicatorLabels) {
+	private Map<String, Double> getAregIndicatorClassificationThresholds(SupervisedModel<TokenSpansDatum<LabelsList>, LabelsList> model, List<String> indicatorLabels) {
 		@SuppressWarnings("unchecked")
 		SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList> compositeModel = (SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>)model;
 		Map<String, Double> classificationThresholds = new HashMap<String, Double>();
 		
-		for (String indicatorLabel : indicatorLabels.getLabels()) {
+		for (String indicatorLabel : indicatorLabels) {
 			SupervisedModelAreg<TokenSpansDatum<Boolean>, Boolean> aregModel = (SupervisedModelAreg<TokenSpansDatum<Boolean>, Boolean>)compositeModel.getModelForIndicator(indicatorLabel);
-			classificationThresholds.put(indicatorLabel, Double.valueOf(aregModel.getParameterValue("classificationThreshold")));
+			if (aregModel != null)
+				classificationThresholds.put(indicatorLabel, Double.valueOf(aregModel.getParameterValue("classificationThreshold")));
+			else 
+				classificationThresholds.put(indicatorLabel, 1.0);
 		}
 		
 		return classificationThresholds;

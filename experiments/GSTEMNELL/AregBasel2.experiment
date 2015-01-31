@@ -7,7 +7,7 @@ iterations=2
 firstIterationOnlyLabeled=true
 relabelLabeledData=false
 
-inverseLabelIndicator=Weighted
+inverseLabelIndicator=Unweighted
 
 evaluation=Accuracy()
 evaluation=Accuracy(computeBaseline=true)
@@ -16,6 +16,12 @@ evaluation=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1)
 evaluation=Precision(weighted=false, filterLabel=true)
 evaluation=Recall(weighted=false, filterLabel=true)
 
+unlabeledEvaluation=LabelsListFreebase(evaluationType=Precision)
+unlabeledEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Precision)
+unlabeledEvaluation=LabelsListFreebase(evaluationType=Recall)
+unlabeledEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Recall)
+unlabeledEvaluation=LabelsListFreebase(evaluationType=Accuracy)
+unlabeledEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Accuracy)
 unlabeledEvaluation=LabelsListFreebase(evaluationType=F1)
 unlabeledEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=F1)
 unlabeledEvaluation=Polysemy()

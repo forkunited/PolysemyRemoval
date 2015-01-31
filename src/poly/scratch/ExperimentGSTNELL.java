@@ -71,7 +71,7 @@ public class ExperimentGSTNELL {
 			}
 			
 			@Override
-			public LabelsList label(Map<String, Double> indicatorWeights) {
+			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
 				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(indicatorWeights.size());
 				for (Entry<String, Double> entry : indicatorWeights.entrySet()) {
 					weightedLabels.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));

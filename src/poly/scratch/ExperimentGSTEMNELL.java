@@ -74,10 +74,25 @@ public class ExperimentGSTEMNELL {
 			}
 			
 			@Override
-			public LabelsList label(Map<String, Double> indicatorWeights) {
+			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
 				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(indicatorWeights.size());
 				for (Entry<String, Double> entry : indicatorWeights.entrySet()) {
 					weightedLabels.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));
+				}
+				return new LabelsList(weightedLabels);
+			}
+		});
+		
+		data.getDatumTools().addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
+			public String toString() {
+				return "Unweighted";
+			}
+			
+			@Override
+			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
+				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(indicatorWeights.size());
+				for (String positiveIndicator : positiveIndicators) {
+					weightedLabels.add(new Pair<String, Double>(positiveIndicator, 1.0));
 				}
 				return new LabelsList(weightedLabels);
 			}

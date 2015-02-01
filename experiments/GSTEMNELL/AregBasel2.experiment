@@ -27,7 +27,7 @@ unlabeledEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceT
 unlabeledEvaluation=Polysemy()
 unlabeledEvaluation=Polysemy(computeNELLBaseline=true, NELLConfidenceThreshold=0.9)
 
-gridDimension=l2(values=".00001,.0001,.001", training=true)
+gridDimension=l2(values=".000001,.00001,.0001,.001", training=true)
 gridDimension=classificationThreshold(values=".1,.2,.3,.4,.5,.6,.7,.8,.9", training=false)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")

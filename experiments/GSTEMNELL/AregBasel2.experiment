@@ -1,9 +1,9 @@
 randomSeed=1
-maxThreads=32
+maxThreads=33
 trainOnDev=false
 errorExampleExtractor=FirstTokenSpan
 
-iterations=2
+iterations=5
 firstIterationOnlyLabeled=true
 relabelLabeledData=false
 
@@ -27,7 +27,7 @@ unlabeledEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceT
 unlabeledEvaluation=Polysemy()
 unlabeledEvaluation=Polysemy(computeNELLBaseline=true, NELLConfidenceThreshold=0.9)
 
-gridDimension=l2(values=".0001", training=true)
+gridDimension=l2(values=".00001,.0001,.001", training=true)
 gridDimension=classificationThreshold(values=".1,.2,.3,.4,.5,.6,.7,.8,.9", training=false)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
@@ -54,7 +54,7 @@ feature_aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWin
 feature_phrh1=NGramContext(scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 feature_affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, contextWindowSize=0, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 
-model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maxTrainingExamples=11000, batchSize=10, evaluationIterations=500, maxEvaluationConstantIterations=6000, weightedLabels=false)
+model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maxTrainingExamples=100000, batchSize=10, evaluationIterations=500, maxEvaluationConstantIterations=5000, weightedLabels=false)
 {
 	validLabels=None
 }

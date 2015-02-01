@@ -66,7 +66,10 @@ public class SupervisedModelEvaluationPolysemy extends SupervisedModelEvaluation
 		
 		for (String indicatorLabel : indicatorLabels) {
 			SupervisedModelAreg<TokenSpansDatum<Boolean>, Boolean> aregModel = (SupervisedModelAreg<TokenSpansDatum<Boolean>, Boolean>)compositeModel.getModelForIndicator(indicatorLabel);
-			classificationThresholds.put(indicatorLabel, Double.valueOf(aregModel.getParameterValue("classificationThreshold")));
+			if (aregModel != null)
+				classificationThresholds.put(indicatorLabel, Double.valueOf(aregModel.getParameterValue("classificationThreshold")));
+			else 
+				classificationThresholds.put(indicatorLabel, 1.0);
 		}
 		
 		return classificationThresholds;

@@ -368,7 +368,10 @@ public class TokenSpansDatum<L> extends Datum<L> {
 						documents.add(document.getName());
 						
 						if (this.strCache.containsKey(document.getName())) {
-							strs.addAll(this.strCache.get(document.getName()));
+							Set<String> cachedStrs = this.strCache.get(document.getName());
+							synchronized (cachedStrs) {
+								strs.addAll(cachedStrs);
+							}
 						} else {	
 							for (int sentenceIndex = 0; sentenceIndex < document.getSentenceCount(); sentenceIndex++) {
 								extractForSentence(document, sentenceIndex, strs);
@@ -397,7 +400,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 					if (this.fullDocument) {
 						synchronized (this.strCache) {
 							if (!this.strCache.containsKey(document.getName()))
-								this.strCache.put(document.getName(), new HashSet<String>());
+								this.strCache.put(document.getName(), new ConcurrentHashSet<String>());
 							this.strCache.get(document.getName()).add(ngramStr);
 						}
 					}

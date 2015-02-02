@@ -395,9 +395,11 @@ public class TokenSpansDatum<L> extends Datum<L> {
 					String ngramStr = ngram.toString().trim();
 					
 					if (this.fullDocument) {
-						if (!this.strCache.containsKey(document.getName()))
-							this.strCache.put(document.getName(), new HashSet<String>());
-						this.strCache.get(document.getName()).add(ngramStr);
+						synchronized (this.strCache) {
+							if (!this.strCache.containsKey(document.getName()))
+								this.strCache.put(document.getName(), new HashSet<String>());
+							this.strCache.get(document.getName()).add(ngramStr);
+						}
 					}
 					
 					strs.add(ngramStr);

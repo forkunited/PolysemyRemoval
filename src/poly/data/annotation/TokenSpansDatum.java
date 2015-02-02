@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -347,7 +348,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 				this.posTags = posTags;
 				this.fullDocument = fullDocument;
 				this.n = n;
-				this.strCache = new HashMap<String, Set<String>>();
+				this.strCache = new ConcurrentHashMap<String, Set<String>>();
 			}
 			
 			@Override

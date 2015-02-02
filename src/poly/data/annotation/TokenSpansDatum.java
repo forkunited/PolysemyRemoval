@@ -369,7 +369,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 						
 						if (this.strCache.containsKey(document.getName())) {
 							Set<String> cachedStrs = this.strCache.get(document.getName());
-							synchronized (cachedStrs) {
+							synchronized (this.strCache) {
 								strs.addAll(cachedStrs);
 							}
 						} else {	

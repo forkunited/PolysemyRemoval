@@ -117,7 +117,7 @@ public class ExperimentGSTEMNELL {
 						dataPartition.get(1), 
 						dataPartition.get(2));
 		
-		if (!emValidation.runAndOutput(experimentInputPath))
+		if (!emValidation.deserialize(experimentInputPath) || emValidation.run() == null)
 			output.debugWriteln("ERROR: Failed to run experiment.");
 	}
 }

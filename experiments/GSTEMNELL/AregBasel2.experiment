@@ -3,7 +3,7 @@ maxThreads=33
 trainOnDev=false
 errorExampleExtractor=FirstTokenSpan
 
-iterations=5
+iterations=10
 firstIterationOnlyLabeled=true
 relabelLabeledData=false
 

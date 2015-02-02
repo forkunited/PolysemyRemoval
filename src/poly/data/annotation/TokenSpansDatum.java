@@ -400,7 +400,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 					if (this.fullDocument) {
 						synchronized (this.strCache) {
 							if (!this.strCache.containsKey(document.getName()))
-								this.strCache.put(document.getName(), new ConcurrentHashSet<String>());
+								this.strCache.put(document.getName(), new HashSet<String>());
 							this.strCache.get(document.getName()).add(ngramStr);
 						}
 					}

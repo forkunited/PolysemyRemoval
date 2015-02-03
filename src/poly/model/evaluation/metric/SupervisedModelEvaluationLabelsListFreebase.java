@@ -88,7 +88,7 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 								tn++;
 						
 							if (this.computeNELLBaseline && ((!predictedTrue && actualTrue) || (predictedTrue && !actualTrue))) {
-								System.out.println("NELL Incorrect \n" + facc1Annotation.getFirst().toJSON().toString() + "\n" + nellCategory + "\nActual True: " + actualTrue + "\nPredicted true:" + predictedTrue);
+								System.out.println("NELL Incorrect \n" + datumTokenSpans[i].toString() + "\n" + document.getName() + "\n" + facc1Annotation.getFirst().toJSON(true).toString() + "\n" + nellCategory + "\nActual True: " + actualTrue + "\nPredicted true:" + predictedTrue);
 							}
 						}
 					}

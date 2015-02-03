@@ -25,7 +25,7 @@ public class ExperimentGSTEMNELL {
 		boolean semiSupervised = Boolean.valueOf(args[5]);
 		
 		String dataSetName = "NELLData_f" + (int)(dataFraction * 100);
-		String experimentOutputName = dataSetName + "_c" + (int)(nellConfidenceThreshold * 100) + "_" + ((semiSupervised) ? "SS" : "US") + "/" + experimentName;
+		String experimentOutputName = dataSetName + "/GSTEMNELL_c" + (int)(nellConfidenceThreshold * 100) + "_" + ((semiSupervised) ? "SS" : "US") + "/" + args[0];
 
 		final PolyProperties properties = new PolyProperties();
 		String experimentInputPath = new File(properties.getExperimentInputDirPath(), experimentName + ".experiment").getAbsolutePath();

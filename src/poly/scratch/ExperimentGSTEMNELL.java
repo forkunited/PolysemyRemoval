@@ -1,11 +1,7 @@
 package poly.scratch;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
 import poly.data.annotation.NELLDataSetFactory;
@@ -13,11 +9,11 @@ import poly.data.annotation.TokenSpansDatum;
 import poly.util.PolyProperties;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
+import ark.data.annotation.Datum.Tools.InverseLabelIndicator;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.model.evaluation.ValidationEMGST;
 import ark.model.evaluation.ValidationGSTBinary;
 import ark.util.OutputWriter;
-import ark.util.Pair;
 
 public class ExperimentGSTEMNELL {
 	public static void main(String[] args) {
@@ -26,10 +22,10 @@ public class ExperimentGSTEMNELL {
 		int randomSeed = Integer.valueOf(args[2]);
 		double nellConfidenceThreshold = Double.valueOf(args[3]);
 		double dataFraction = Double.valueOf(args[4]);
+		boolean semiSupervised = Boolean.valueOf(args[5]);
 		
 		String dataSetName = "NELLData_f" + (int)(dataFraction * 100);
-		
-		String experimentOutputName = dataSetName + "/" + experimentName;
+		String experimentOutputName = dataSetName + "/" + experimentName + "_c" + (int)(nellConfidenceThreshold * 100) + "_" + ((semiSupervised) ? "SS" : "US");
 
 		final PolyProperties properties = new PolyProperties();
 		String experimentInputPath = new File(properties.getExperimentInputDirPath(), experimentName + ".experiment").getAbsolutePath();
@@ -46,10 +42,20 @@ public class ExperimentGSTEMNELL {
 		dataTools.setRandomSeed(randomSeed);
 		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
+		TokenSpansDatum.Tools<LabelsList> datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
 		NELLDataSetFactory dataFactory = new NELLDataSetFactory(dataTools, properties.getHazyFacc1DataDirPath(), 1000000);
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, nellConfidenceThreshold, NELLDataSetFactory.PolysemyMode.NON_POLYSEMOUS , false);
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> unlabeledData = dataFactory.loadUnsupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, false, false);
-		data.addAll(unlabeledData);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = null;
+		InverseLabelIndicator<LabelsList> inverseLabelIndicator = null;
+		
+		if (semiSupervised) {
+			inverseLabelIndicator = datumTools.getInverseLabelIndicator("Unweighted");
+			data = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, nellConfidenceThreshold, NELLDataSetFactory.PolysemyMode.NON_POLYSEMOUS, inverseLabelIndicator);
+			DataSet<TokenSpansDatum<LabelsList>, LabelsList> unlabeledData = dataFactory.loadUnsupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, false, false);
+			data.addAll(unlabeledData);
+		} else {
+			inverseLabelIndicator = datumTools.getInverseLabelIndicator("UnweightedConstrained");
+			data = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, nellConfidenceThreshold, NELLDataSetFactory.PolysemyMode.NON_POLYSEMOUS, inverseLabelIndicator);
+		}
 		
 		for (final String label : labels.getLabels())
 			data.getDatumTools().addLabelIndicator(new LabelIndicator<LabelsList>() {
@@ -68,36 +74,6 @@ public class ExperimentGSTEMNELL {
 				}
 			});
 		
-		data.getDatumTools().addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
-			public String toString() {
-				return "Weighted";
-			}
-			
-			@Override
-			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
-				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(indicatorWeights.size());
-				for (Entry<String, Double> entry : indicatorWeights.entrySet()) {
-					weightedLabels.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));
-				}
-				return new LabelsList(weightedLabels);
-			}
-		});
-		
-		data.getDatumTools().addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
-			public String toString() {
-				return "Unweighted";
-			}
-			
-			@Override
-			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
-				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(indicatorWeights.size());
-				for (String positiveIndicator : positiveIndicators) {
-					weightedLabels.add(new Pair<String, Double>(positiveIndicator, 1.0));
-				}
-				return new LabelsList(weightedLabels);
-			}
-		});
-		
 		Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String> documentClusterer = 
 				new Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String>() {
 					public String getCluster(TokenSpansDatum<LabelsList> datum) {
@@ -108,14 +84,18 @@ public class ExperimentGSTEMNELL {
 		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> dataPartition = data.makePartition(new double[] { .8, .1, .1 }, documentClusterer, dataTools.getGlobalRandom());
 		
 		ValidationGSTBinary<TokenSpansDatum<Boolean>,TokenSpansDatum<LabelsList>, LabelsList> validation = 
-				new ValidationGSTBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(experimentName, data.getDatumTools());
+				new ValidationGSTBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(
+						experimentName, 
+						data.getDatumTools(),
+						inverseLabelIndicator);
 		
 		ValidationEMGST<TokenSpansDatum<LabelsList>, LabelsList> emValidation = 
 				new ValidationEMGST<TokenSpansDatum<LabelsList>, LabelsList>(
 						validation,
 						dataPartition.get(0), 
 						dataPartition.get(1), 
-						dataPartition.get(2));
+						dataPartition.get(2),
+						!semiSupervised);
 		
 		if (!emValidation.deserialize(experimentInputPath) || emValidation.run() == null)
 			output.debugWriteln("ERROR: Failed to run experiment.");

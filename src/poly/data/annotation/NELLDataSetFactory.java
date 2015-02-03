@@ -5,7 +5,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import ark.data.annotation.DataSet;
@@ -89,7 +91,7 @@ public class NELLDataSetFactory {
 	 * @param nellConfidenceThreshold
 	 * @param dataFraction
 	 * @param polysemyMode
-	 * @param includeLabelWeights
+	 * @param inverseLabelIndicator
 	 * @return a labeled data set with labels determined by NELL with confidence greater than nellConfidenceThreshold.
 	 * Note that both "loadSupervisedDataSet" and "loadUnsupervisedDataSet" both return labeled data, but "loadUnsupervisedDataSet"
 	 * always returns all labels suggested given by NELL, without any threshold, for use in the unsupervised setting.
@@ -98,7 +100,7 @@ public class NELLDataSetFactory {
 																	double dataFraction, 
 																	double nellConfidenceThreshold, 
 																	PolysemyMode polysemyMode,
-																	boolean includeLabelWeights) {
+																	Datum.Tools.InverseLabelIndicator<LabelsList> inverseLabelIndicator) {
 		
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = loadDataSet(dataFileDirPath, dataFraction);
 		if (data == null)
@@ -107,20 +109,27 @@ public class NELLDataSetFactory {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> retData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 		for (TokenSpansDatum<LabelsList> datum : data) {
 			LabelsList fullLabel = datum.getLabel();
-			List<Pair<String, Double>> labelWeights = new ArrayList<Pair<String, Double>>();
-			List<String> labels = new ArrayList<String>();
+			Map<String, Double> weights = new HashMap<String, Double>();
+			List<String> positiveIndicators = new ArrayList<String>();
 			
 			for (String label : fullLabel.getLabels()) {
+				weights.put(label, fullLabel.getLabelWeight(label));
+				
 				double weight = fullLabel.getLabelWeight(label);
 				if (weight >= nellConfidenceThreshold) {
-					labelWeights.add(new Pair<String, Double>(label, (includeLabelWeights) ? weight : 1.0));
-					labels.add(label);
+					positiveIndicators.add(label);
 				}
 			}
 			
-			boolean polysemous = this.nell.areCategoriesMutuallyExclusive(labels);
-			LabelsList filteredLabel = new LabelsList(labelWeights);
-				
+			LabelsList filteredLabel = inverseLabelIndicator.label(weights, positiveIndicators);
+			positiveIndicators = new ArrayList<String>();
+			for (String label : filteredLabel.getLabels()) {
+				if (filteredLabel.getLabelWeight(label) >= nellConfidenceThreshold)
+					positiveIndicators.add(label);
+			}
+			
+			boolean polysemous = this.nell.areCategoriesMutuallyExclusive(positiveIndicators);
+			
 			if (!polysemous || polysemyMode == PolysemyMode.LABELED_POLYSEMOUS) {
 				retData.add(new TokenSpansDatum<LabelsList>(datum.getId(), datum.getTokenSpans()[0], filteredLabel, polysemous));
 			} else if (polysemyMode == PolysemyMode.UNLABELED_POLYSEMOUS) {

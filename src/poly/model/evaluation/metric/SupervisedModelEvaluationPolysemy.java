@@ -1,7 +1,6 @@
 package poly.model.evaluation.metric;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -14,8 +13,6 @@ import ark.data.annotation.Datum.Tools;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.data.feature.FeaturizedDataSet;
 import ark.model.SupervisedModel;
-import ark.model.SupervisedModelAreg;
-import ark.model.SupervisedModelCompositeBinary;
 import ark.model.evaluation.metric.SupervisedModelEvaluation;
 
 public class SupervisedModelEvaluationPolysemy extends SupervisedModelEvaluation<TokenSpansDatum<LabelsList>, LabelsList> {
@@ -37,8 +34,7 @@ public class SupervisedModelEvaluationPolysemy extends SupervisedModelEvaluation
 		List<String> indicatorLabels = new ArrayList<String>();
 		for (LabelIndicator<LabelsList> indicator : data.getDatumTools().getLabelIndicators())
 			indicatorLabels.add(indicator.toString());
-		
-		Map<String, Double> classificationThresholds = getAregIndicatorClassificationThresholds(model, indicatorLabels);
+	
 		NELL nell = new NELL((PolyDataTools)data.getDatumTools().getDataTools());
 		double polysemous = 0.0;
 		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : predictions.entrySet()) {
@@ -48,7 +44,7 @@ public class SupervisedModelEvaluationPolysemy extends SupervisedModelEvaluation
 			} else {
 				List<String> labels = new ArrayList<String>();
 				for (String label : entry.getValue().getLabels()) {
-					if (entry.getValue().getLabelWeight(label) >= classificationThresholds.get(label))
+					if (entry.getValue().getLabelWeight(label) >= 0.5)
 						labels.add(label);
 				}
 				polysemous += nell.areCategoriesMutuallyExclusive(labels) ? 1.0 : 0.0;
@@ -57,22 +53,6 @@ public class SupervisedModelEvaluationPolysemy extends SupervisedModelEvaluation
 		
 		
 		return polysemous / predictions.size();
-	}
-	
-	private Map<String, Double> getAregIndicatorClassificationThresholds(SupervisedModel<TokenSpansDatum<LabelsList>, LabelsList> model, List<String> indicatorLabels) {
-		@SuppressWarnings("unchecked")
-		SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList> compositeModel = (SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>)model;
-		Map<String, Double> classificationThresholds = new HashMap<String, Double>();
-		
-		for (String indicatorLabel : indicatorLabels) {
-			SupervisedModelAreg<TokenSpansDatum<Boolean>, Boolean> aregModel = (SupervisedModelAreg<TokenSpansDatum<Boolean>, Boolean>)compositeModel.getModelForIndicator(indicatorLabel);
-			if (aregModel != null)
-				classificationThresholds.put(indicatorLabel, Double.valueOf(aregModel.getParameterValue("classificationThreshold")));
-			else 
-				classificationThresholds.put(indicatorLabel, 1.0);
-		}
-		
-		return classificationThresholds;
 	}
 	
 	@Override

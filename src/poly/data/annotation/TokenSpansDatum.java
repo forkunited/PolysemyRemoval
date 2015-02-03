@@ -3,16 +3,20 @@ package poly.data.annotation;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import poly.data.NELL;
 import poly.data.PolyDataTools;
 import poly.data.annotation.nlp.TokenSpanCached;
 import poly.data.feature.FeatureNer;
@@ -29,6 +33,7 @@ import ark.data.annotation.nlp.PoSTag;
 import ark.data.annotation.nlp.PoSTagClass;
 import ark.data.annotation.nlp.TokenSpan;
 import ark.util.OutputWriter;
+import ark.util.Pair;
 
 public class TokenSpansDatum<L> extends Datum<L> {
 	private TokenSpanCached[] tokenSpans;
@@ -123,9 +128,92 @@ public class TokenSpansDatum<L> extends Datum<L> {
 				return LabelsList.fromString(str);
 			}
 		};
-	
+		final NELL nell = new NELL((PolyDataTools)dataTools);
+		
 		tools.addGenericEvaluation(new SupervisedModelEvaluationPolysemy());
 		tools.addGenericEvaluation(new SupervisedModelEvaluationLabelsListFreebase());
+		
+		tools.addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
+			public String toString() {
+				return "Weighted";
+			}
+			
+			@Override
+			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
+				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(indicatorWeights.size());
+				for (Entry<String, Double> entry : indicatorWeights.entrySet()) {
+					weightedLabels.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));
+				}
+				return new LabelsList(weightedLabels);
+			}
+		});
+		
+		tools.addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
+			public String toString() {
+				return "Unweighted";
+			}
+			
+			@Override
+			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
+				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(indicatorWeights.size());
+				for (String positiveIndicator : positiveIndicators) {
+					weightedLabels.add(new Pair<String, Double>(positiveIndicator, 1.0));
+				}
+				return new LabelsList(weightedLabels);
+			}
+		});
+		
+		tools.addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
+			public String toString() {
+				return "UnweightedConstrained";
+			}
+			
+			@Override
+			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
+				List<String> constrainedIndicators = new ArrayList<String>();
+				List<Pair<String, Double>> sortedWeights = new ArrayList<Pair<String, Double>>();
+				for (Entry<String, Double> entry : indicatorWeights.entrySet())
+					sortedWeights.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));
+				Set<String> positiveIndicatorSet = new HashSet<String>();
+				positiveIndicatorSet.addAll(positiveIndicators);
+				
+				Collections.sort(sortedWeights, new Comparator<Pair<String, Double>>() {
+					@Override
+					public int compare(Pair<String, Double> p0,
+							Pair<String, Double> p1) {
+						if (p0.getSecond() > p1.getSecond())
+							return -1;
+						else if (p0.getSecond() < p1.getSecond())
+							return 1;
+						else 
+							return 0;
+					}
+					
+				});
+				
+				for (Pair<String, Double> weightedIndicator : sortedWeights) {
+					if (!positiveIndicatorSet.contains(weightedIndicator.getFirst())
+						|| constrainedIndicators.contains(weightedIndicator.getFirst()))
+						continue;
+					
+					constrainedIndicators.add(weightedIndicator.getFirst());
+					if (nell.areCategoriesMutuallyExclusive(constrainedIndicators)) {
+						constrainedIndicators.remove(weightedIndicator.getFirst());
+						continue;
+					}
+				
+					constrainedIndicators.addAll(nell.getCategoryGeneralizations(weightedIndicator.getFirst()));
+				}
+				
+				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(constrainedIndicators.size());
+				for (String constrainedIndicator : constrainedIndicators) {
+					weightedLabels.add(new Pair<String, Double>(constrainedIndicator, 1.0));
+				}
+				
+				return new LabelsList(weightedLabels);
+			}
+		});
+		
 		
 		return tools;
 	}
@@ -141,7 +229,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		return tools;
 	}
 	
-	private static abstract class Tools<L> extends Datum.Tools<TokenSpansDatum<L>, L> { 
+	public static abstract class Tools<L> extends Datum.Tools<TokenSpansDatum<L>, L> { 
 		public Tools(DataTools dataTools) {
 			super(dataTools);
 			

@@ -45,8 +45,9 @@ public class ExperimentGSTNELL {
 		dataTools.setRandomSeed(randomSeed);
 		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
+		TokenSpansDatum.Tools<LabelsList> datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
 		NELLDataSetFactory dataFactory = new NELLDataSetFactory(dataTools, properties.getHazyFacc1DataDirPath(), 1000000);
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, nellConfidenceThreshold, NELLDataSetFactory.PolysemyMode.NON_POLYSEMOUS , false);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataFraction, nellConfidenceThreshold, NELLDataSetFactory.PolysemyMode.NON_POLYSEMOUS, datumTools.getInverseLabelIndicator("Unweighted"));
 
 		for (final String label : labels.getLabels())
 			data.getDatumTools().addLabelIndicator(new LabelIndicator<LabelsList>() {
@@ -95,7 +96,8 @@ public class ExperimentGSTNELL {
 						data.getDatumTools(),
 						dataPartition.get(0), 
 						dataPartition.get(1), 
-						dataPartition.get(2));
+						dataPartition.get(2),
+						datumTools.getInverseLabelIndicator("Unweighted"));
 		
 		if (!validation.runAndOutput(experimentInputPath))
 			output.debugWriteln("ERROR: Failed to run experiment.");

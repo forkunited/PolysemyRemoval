@@ -5,9 +5,6 @@ errorExampleExtractor=FirstTokenSpan
 
 iterations=10
 firstIterationOnlyLabeled=true
-relabelLabeledData=false
-
-inverseLabelIndicator=Unweighted
 
 evaluation=Accuracy()
 evaluation=Accuracy(computeBaseline=true)

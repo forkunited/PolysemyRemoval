@@ -544,7 +544,9 @@ public class TokenSpansDatum<L> extends Datum<L> {
 							}
 						} else {	
 							for (int sentenceIndex = 0; sentenceIndex < document.getSentenceCount(); sentenceIndex++) {
-								extractForSentence(document, sentenceIndex, strs);
+								// FIXME: Check to see if equal to any other token spans in datum... and do similar for not-full document.
+								if (sentenceIndex != tokenSpan.getSentenceIndex())
+									extractForSentence(document, sentenceIndex, strs);
 							}
 						}
 					} else {

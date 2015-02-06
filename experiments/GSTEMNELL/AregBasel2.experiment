@@ -70,7 +70,10 @@ feature_sent2=NGramSentence(noTokenSpan=true, scale=NORMALIZED_TFIDF, minFeature
 
 feature_gnp=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=FirstTokenSpan, includeIds=true, includeWeights=true, weightThreshold=0.90)
 feature_gnps=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=SentenceNELLNounPhrases, includeIds=true, includeWeights=true, weightThreshold=0.90)
-feature_gnpd=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=DocumentNELLNounPhrases, includeIds=true, includeWeights=true, weightThreshold=0.90)
+feature_gnpd1=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllDocumentUnigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
+feature_gnpd2=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllDocumentBigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
+feature_gnpd3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllDocumentTrigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
+
 
 model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maxTrainingExamples=100000, batchSize=500, evaluationIterations=500, maxEvaluationConstantIterations=5000, weightedLabels=false)
 {

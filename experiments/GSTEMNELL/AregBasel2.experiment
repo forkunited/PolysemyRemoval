@@ -64,7 +64,7 @@ feature_phrh1=NGramContext(scale=INDICATOR, mode=WITHIN, minFeatureOccurrence=2,
 feature_affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, mode=WITHIN, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 
 feature_doc1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
-feature_doc2=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
+feature_doc2=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=2, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
 feature_sent1=NGramSentence(noTokenSpan=true, scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllTokenSpans)
 feature_sent2=NGramSentence(noTokenSpan=true, scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=2, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllTokenSpans)
 

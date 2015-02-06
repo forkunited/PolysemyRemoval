@@ -43,7 +43,7 @@ feature_ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans)
 feature_tcnt=TokenCount(maxCount=5, tokenExtractor=AllTokenSpans)
 feature_form=StringForm(stringExtractor=FirstTokenSpan, minFeatureOccurrence=2)
 
-feature_pos=GramCluster{scale=INDICATOR, minFeatureOccurrence=2, tokenExtractor=AllTokenSpans, clusterer=PoSTag)
+feature_pos=GramCluster(scale=INDICATOR, minFeatureOccurrence=2, tokenExtractor=AllTokenSpans, clusterer=PoSTag)
 feature_posb1=NGramContext(scale=INDICATOR, maxGramDistance=1, n=1, mode=BEFORE, minFeatureOccurrence=2, clusterer=PoSTag, tokenExtractor=AllTokenSpans)
 feature_posb2=NGramContext(scale=INDICATOR, maxGramDistance=2, n=2, mode=BEFORE, minFeatureOccurrence=2, clusterer=PoSTag, tokenExtractor=AllTokenSpans)
 feature_posb3=NGramContext(scale=INDICATOR, maxGramDistance=3, n=3, mode=BEFORE, minFeatureOccurrence=2, clusterer=PoSTag, tokenExtractor=AllTokenSpans)

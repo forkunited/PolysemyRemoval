@@ -75,7 +75,7 @@ feature_gnpd2=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtracto
 feature_gnpd3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllDocumentTrigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90)
 
 
-model=Areg(l1=0, l2=0, convergenceEpsilon=-1, maxTrainingExamples=100000, batchSize=500, evaluationIterations=20, maxEvaluationConstantIterations=100, weightedLabels=false)
+model=Areg(l1=0, l2=0, convergenceEpsilon=.001, maxTrainingExamples=200000, batchSize=100, evaluationIterations=200, maxEvaluationConstantIterations=500, weightedLabels=false)
 {
 	validLabels=None
 }

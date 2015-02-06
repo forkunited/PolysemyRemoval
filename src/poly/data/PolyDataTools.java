@@ -5,8 +5,8 @@ import java.util.Map.Entry;
 
 import poly.data.annotation.DocumentCache;
 import poly.util.PolyProperties;
-
-import ark.cluster.ClustererAffix;
+import ark.cluster.ClustererStringAffix;
+import ark.cluster.ClustererTokenSpanString;
 import ark.data.DataTools;
 import ark.data.Gazetteer;
 import ark.util.OutputWriter;
@@ -47,7 +47,7 @@ public class PolyDataTools extends DataTools {
 			
 			@Override
 			public String transform(String str) {
-				return PolyDataTools.cleanString(str, false, false);
+				return PolyDataTools.cleanString(str, false, false, false);
 			}
 		});
 		
@@ -58,7 +58,21 @@ public class PolyDataTools extends DataTools {
 			
 			@Override
 			public String transform(String str) {
-				return PolyDataTools.cleanString(str, true, true);
+				return PolyDataTools.cleanString(str, true, true, true);
+			}
+		});
+		
+		this.addCleanFn(new DataTools.StringTransform() {
+			public String toString() {
+				return "PolyBagOfWordsFeatureCleanFn";
+			}
+			
+			@Override
+			public String transform(String str) {
+				Gazetteer stopWords = getGazetteer("BagOfWordsFeatureStopWord");
+				if (stopWords.contains(str))
+					return "";
+				return PolyDataTools.cleanString(str, true, true, true);
 			}
 		});
 		
@@ -82,13 +96,24 @@ public class PolyDataTools extends DataTools {
 			}
 		});
 		
-		this.addStringClusterer(new ClustererAffix("AffixMaxLength5", 5));
+		this.addStringClusterer(new ClustererStringAffix("AffixMaxLength5", 5, this.getCleanFn("PolyDefaultCleanFn")));
+		this.addTokenSpanClusterer(new ClustererTokenSpanString(getStringClusterer("AffixMaxLength5")));
 	}
 	
-	public static String cleanString(String str, boolean stem, boolean toLower) {
+	public static String cleanString(String str, boolean stem, boolean toLower, boolean removeSymbols) {
 		str = str.trim();
-		str = str.replaceAll("[\\W&&[^\\s]]+", " ") // replaces all non-alpha-numeric (differs from http://qwone.com/~jason/writing/loocv.pdf)
-				 .replaceAll("\\d+", "[D]") 
+		
+		if (removeSymbols)
+			str = str.replaceAll("[\\W&&[^\\s]]+", " "); // replaces all non-alpha-numeric (differs from http://qwone.com/~jason/writing/loocv.pdf)
+		else {
+			// Just remove ,()=
+			str = str.replace(',', ' ');
+			str = str.replace('(', ' ');
+			str = str.replace(')', ' ');
+			str = str.replace('=', ' ');
+		}
+				
+		str = str.replaceAll("\\d+", "[D]") 
 				 .replaceAll("_", " ")
 				 .trim();
 		
@@ -222,6 +247,12 @@ public class PolyDataTools extends DataTools {
 			this.addGazetteer(
 					new Gazetteer(name,
 					this.properties.getNELLNounPhraseStopWordGazetteerPath(),
+					this.getCleanFn("TrimToLower"))
+			);
+		} else if (name.equals("BagOfWordsFeatureStopWord")) {
+			this.addGazetteer(
+					new Gazetteer(name,
+					this.properties.getBagOfWordsFeatureStopWordGazetteerPath(),
 					this.getCleanFn("TrimToLower"))
 			);
  		} else {

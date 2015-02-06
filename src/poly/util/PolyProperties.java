@@ -28,6 +28,7 @@ public class PolyProperties extends Properties {
 	private String NELLNounPhrasePhraseDictionaryGazetteerPath;
 	private String NELLNounPhraseFnWordGazetteerPath;
 	private String NELLNounPhraseStopWordGazetteerPath;
+	private String bagOfWordsFeatureStopWordGazetteerPath;
 	private String NELLDataFileDirPath;
 	
 	public PolyProperties() {
@@ -62,6 +63,7 @@ public class PolyProperties extends Properties {
 		this.NELLNounPhrasePhraseDictionaryGazetteerPath = loadProperty("NELLNounPhrasePhraseDictionaryGazetteerPath");
 		this.NELLNounPhraseFnWordGazetteerPath = loadProperty("NELLNounPhraseFnWordGazetteerPath");
 		this.NELLNounPhraseStopWordGazetteerPath = loadProperty("NELLNounPhraseStopWordGazetteerPath");
+		this.bagOfWordsFeatureStopWordGazetteerPath = loadProperty("bagOfWordsFeatureStopWordGazetteerPath");
 		this.NELLDataFileDirPath = loadProperty("NELLDataFileDirPath");
 	}
 	
@@ -163,6 +165,10 @@ public class PolyProperties extends Properties {
 	
 	public String getNELLNounPhraseStopWordGazetteerPath() {
 		return this.NELLNounPhraseStopWordGazetteerPath;
+	}
+	
+	public String getBagOfWordsFeatureStopWordGazetteerPath() {
+		return this.bagOfWordsFeatureStopWordGazetteerPath;
 	}
 	
 	public String getNELLDataFileDirPath() {

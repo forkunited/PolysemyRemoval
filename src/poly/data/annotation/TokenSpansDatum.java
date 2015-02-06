@@ -232,7 +232,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 	public static abstract class Tools<L> extends Datum.Tools<TokenSpansDatum<L>, L> { 
 		public Tools(DataTools dataTools) {
 			super(dataTools);
-			
+			final NELL nell = new NELL((PolyDataTools)dataTools);
 			PoSTag[][] NPTagClass = { PoSTagClass.NNP, PoSTagClass.NN };
 			
 			this.addGenericFeature(new FeatureNer<TokenSpansDatum<L>, L>());
@@ -253,6 +253,73 @@ public class TokenSpansDatum<L> extends Datum<L> {
 					return new String[] { tokenSpansDatum.getTokenSpans()[0].toString() };
 				}
 			});
+			
+			this.addStringExtractor(new StringExtractor<TokenSpansDatum<L>, L>() {
+				@Override
+				public String toString() {
+					return "SentenceNELLNounPhrases";
+				}
+				
+				@Override 
+				public String[] extract(TokenSpansDatum<L> tokenSpansDatum) {
+					TokenSpan[] tokenSpans = tokenSpansDatum.getTokenSpans();
+					Set<String> nps = new HashSet<String>();
+					for (int i = 0; i < tokenSpans.length; i++) {
+						int sentenceIndex = tokenSpans[i].getSentenceIndex();
+						List<TokenSpanCached> npSpans = nell.extractNounPhrases(tokenSpans[i].getDocument(), sentenceIndex);
+						for (TokenSpanCached npSpan : npSpans) {
+							boolean npSpanInDatum = false;
+							
+							for (int j = 0; j < tokenSpans.length; j++) {
+								if (tokenSpans[j].containsToken(sentenceIndex, npSpan.getStartTokenIndex())
+										|| tokenSpans[j].containsToken(sentenceIndex, npSpan.getEndTokenIndex() - 1)
+										|| npSpan.containsToken(tokenSpans[j].getSentenceIndex(), tokenSpans[j].getStartTokenIndex())
+										|| npSpan.containsToken(tokenSpans[j].getSentenceIndex(), tokenSpans[j].getEndTokenIndex() - 1)) {
+									npSpanInDatum = true;
+									break;
+								}
+							}
+							
+							if (!npSpanInDatum)
+								nps.add(npSpan.toString());
+						}
+					}
+					
+					return nps.toArray(new String[0]);
+				}
+			});
+			
+			this.addStringExtractor(new StringExtractor<TokenSpansDatum<L>, L>() {
+				@Override
+				public String toString() {
+					return "DocumentNELLNounPhrases";
+				}
+				
+				@Override 
+				public String[] extract(TokenSpansDatum<L> tokenSpansDatum) {
+					TokenSpan[] tokenSpans = tokenSpansDatum.getTokenSpans();
+					Set<String> nps = new HashSet<String>();
+					for (int i = 0; i < tokenSpans.length; i++) {
+						List<TokenSpanCached> npSpans = nell.extractNounPhrases(tokenSpans[i].getDocument());
+						for (TokenSpanCached npSpan : npSpans) {
+							boolean npSpanInSentence = false;
+							
+							for (int j = 0; j < tokenSpans.length; j++) {
+								if (tokenSpans[j].getSentenceIndex() == npSpan.getSentenceIndex()) {
+									npSpanInSentence = true;
+									break;
+								}
+							}
+							
+							if (!npSpanInSentence)
+								nps.add(npSpan.toString());
+						}
+					}
+					
+					return nps.toArray(new String[0]);
+				}
+			});
+			
 			
 			this.addStringExtractor(new StringExtractorNGramPoSTag("AllSentenceUnigramsNP", NPTagClass, false, 1));
 			this.addStringExtractor(new StringExtractorNGramPoSTag("AllDocumentUnigramsNP", NPTagClass, true, 1));
@@ -278,7 +345,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 						Document document = tokenSpan.getDocument();
 						int sentenceCount = document.getSentenceCount();
 						for (int i = 0; i < sentenceCount; i++) {
-							if (document.getSentenceTokenCount(i) <= 0)
+							if (document.getSentenceTokenCount(i) <= 0 || i == tokenSpan.getSentenceIndex())
 								continue;
 							sentenceInitialTokens.add(new TokenSpan(document, i, 0, 1));
 						}
@@ -341,6 +408,21 @@ public class TokenSpansDatum<L> extends Datum<L> {
 						return null;
 					TokenSpan tokenSpan = tokenSpansDatum.tokenSpans[tokenSpansDatum.tokenSpans.length - 1];
 					return new TokenSpan[] { tokenSpan.getSubspan(tokenSpan.getLength()-1, tokenSpan.getLength()) };
+				}
+			});
+			
+			this.addTokenSpanExtractor(new TokenSpanExtractor<TokenSpansDatum<L>, L>() {
+				@Override
+				public String toString() {
+					return "FirstTokenSpanNotLastToken";
+				}
+				
+				@Override
+				public TokenSpan[] extract(TokenSpansDatum<L> tokenSpansDatum) {
+					if (tokenSpansDatum.tokenSpans.length == 0)
+						return null;
+					TokenSpan tokenSpan = tokenSpansDatum.tokenSpans[tokenSpansDatum.tokenSpans.length - 1];
+					return new TokenSpan[] { tokenSpan.getSubspan(0, tokenSpan.getLength()-1) };
 				}
 			});
 		}

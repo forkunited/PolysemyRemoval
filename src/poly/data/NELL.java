@@ -173,18 +173,22 @@ public class NELL {
 		List<TokenSpanCached> npSpans = new ArrayList<TokenSpanCached>();
 		int sentenceCount = document.getSentenceCount();
 		for (int i = 0; i < sentenceCount; i++) {
-			Set<TokenSpanCached> spans = new HashSet<TokenSpanCached>();
-			int tokenCount = document.getSentenceTokenCount(i);
-			
-			for (int j = 0; j < tokenCount; j++) {
-				extractNounPhrasesEndingAt(document, i, j, spans);
-				extractNounPhrasesStartingAt(document, i, j, spans);
-			}
-			
-			npSpans.addAll(spans);
+			npSpans.addAll(extractNounPhrases(document, i));
 		}
 		
 		return npSpans;
+	}
+	
+	public List<TokenSpanCached> extractNounPhrases(Document document, int sentenceIndex) {
+		Set<TokenSpanCached> spans = new HashSet<TokenSpanCached>();
+		int tokenCount = document.getSentenceTokenCount(sentenceIndex);
+			
+		for (int j = 0; j < tokenCount; j++) {
+			extractNounPhrasesEndingAt(document, sentenceIndex, j, spans);
+			extractNounPhrasesStartingAt(document, sentenceIndex, j, spans);
+		}
+	
+		return new ArrayList<TokenSpanCached>(spans);
 	}
 	
 	private void extractNounPhrasesEndingAt(Document document, int sentenceIndex, int endIndex, Set<TokenSpanCached> spans) {

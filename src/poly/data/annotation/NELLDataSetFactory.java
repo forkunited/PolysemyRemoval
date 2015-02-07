@@ -6,9 +6,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
@@ -26,6 +28,10 @@ public class NELLDataSetFactory {
 		NON_POLYSEMOUS,
 		UNLABELED_POLYSEMOUS,
 		LABELED_POLYSEMOUS
+	}
+	
+	private interface DataSetConstructor {
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet();
 	}
 	
 	private PolyDataTools dataTools;
@@ -168,8 +174,51 @@ public class NELLDataSetFactory {
 		return retData;
 	}	
 	
-	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(String dataFileDirPath, double dataFraction) {
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadSupervisedDataSet(String dataFileDirPath, final String name, final LabelsList labels, final int minExamplesPerType, final double nellConfidenceThreshold, final Datum.Tools.InverseLabelIndicator<LabelsList> inverseLabelIndicator, final Set<String> ignoreDocuments) {
+		File file = new File(dataFileDirPath, "NELLData_" + name);
+		
+		final NELLDataSetFactory that = this;
+		return loadDataSet(file, new DataSetConstructor() { 
+			public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet() { 
+				return that.constructSupervisedDataSet(name, labels, minExamplesPerType, nellConfidenceThreshold, inverseLabelIndicator, ignoreDocuments);	
+			}
+		});
+	}
+	
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadLowConfidenceDataSet(String dataFileDirPath, final int exampleCount, final double nellConfidenceThreshold) {
+		File file = new File(dataFileDirPath, "NELLData_LowConfidence_e" + exampleCount + "_c" + (int)(nellConfidenceThreshold * 100));
+		
+		final NELLDataSetFactory that = this;
+		return loadDataSet(file, new DataSetConstructor() { 
+			public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet() { 
+				return that.constructLowConfidenceDataSet(exampleCount, nellConfidenceThreshold);	
+			}
+		});
+	}
+	
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadPolysemousDataSet(String dataFileDirPath, final int exampleCount, final double nellConfidenceThreshold, final Datum.Tools.InverseLabelIndicator<LabelsList> inverseLabelIndicator) {
+		File file = new File(dataFileDirPath, "NELLData_Polysemous_e" + exampleCount + "_c" + (int)(nellConfidenceThreshold * 100));
+		
+		final NELLDataSetFactory that = this;
+		return loadDataSet(file, new DataSetConstructor() { 
+			public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet() { 
+				return that.constructPolysemousDataSet(exampleCount, nellConfidenceThreshold, inverseLabelIndicator);	
+			}
+		});
+	}
+	
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(String dataFileDirPath, final double dataFraction) {
 		File file = new File(dataFileDirPath, "NELLData_f" + (int)(dataFraction * 100));
+		
+		final NELLDataSetFactory that = this;
+		return loadDataSet(file, new DataSetConstructor() { 
+			public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet() { 
+				return that.constructDataSet(dataFraction);	
+			}
+		});
+	}
+	
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadDataSet(File file, DataSetConstructor constructor) {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = null;
 		OutputWriter output = this.dataTools.getOutputWriter();
 		if (file.exists()) {
@@ -184,7 +233,7 @@ public class NELLDataSetFactory {
 			output.debugWriteln("Finished loading data set.");
 		} else {
 			output.debugWriteln("Constructing data set...");
-			data = constructDataSet(dataFraction);
+			data = constructor.constructDataSet(); 
 			try {
 				if (!data.serialize(new FileWriter(file)))
 					return null;
@@ -222,5 +271,155 @@ public class NELLDataSetFactory {
 		}
 		
 		return data;
+	}
+	
+	// Constructs a data set with minExamplesPerType positive examples per label
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructSupervisedDataSet(String name, LabelsList labels, int minExamplesPerType, double nellConfidenceThreshold, Datum.Tools.InverseLabelIndicator<LabelsList> inverseLabelIndicator, Set<String> ignoreDocuments) {
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
+		File documentDir = new File(this.documentDirPath);
+		File[] documentFiles = documentDir.listFiles();
+		Map<String, Integer> labelCounts = new HashMap<String, Integer>();
+		int id = 0;
+		Set<String> unsaturatedLabels = new HashSet<String>();
+		for (String label : labels.getLabels()) {
+			labelCounts.put(label, 0);
+			unsaturatedLabels.add(label);
+		}
+		
+		for (File documentFile : documentFiles) {
+			if (ignoreDocuments.contains(documentFile.getName()))
+				continue;
+			
+			Document document = this.dataTools.getDocumentCache().getDocument(documentFile.getName());
+			List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
+			for (TokenSpanCached np : nps) {
+				String npStr = np.toString();
+				
+				LabelsList npLabels = getLabelForNounPhrase(npStr, nellConfidenceThreshold, inverseLabelIndicator);
+				if (npLabels == null)
+					continue;
+				
+				if (this.nell.areCategoriesMutuallyExclusive(Arrays.asList(npLabels.getLabels())))
+					continue;
+				
+				boolean hasUnsaturatedLabel = false;
+				for (String label : npLabels.getLabels()) {
+					if (unsaturatedLabels.contains(label)) {
+						hasUnsaturatedLabel = true;
+						break;
+					}
+				}
+				
+				if (!hasUnsaturatedLabel)
+					continue;
+				
+				for (String label : npLabels.getLabels()) {
+					if (labelCounts.containsKey(label)) {
+						labelCounts.put(label, labelCounts.get(label) + 1);
+						if (labelCounts.get(label) >= minExamplesPerType) {
+							unsaturatedLabels.remove(label);
+						}
+					}
+				}
+				
+				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, npLabels, false);
+				data.add(datum);
+				id++;
+			}
+			
+			if (unsaturatedLabels.isEmpty()) {
+				break;
+			}
+		}
+		
+		return data;
+	}
+	
+	// minExamplesPerType low confidence examples (no label above confidence)
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructLowConfidenceDataSet(int exampleCount, double nellConfidenceThreshold) {
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
+		File documentDir = new File(this.documentDirPath);
+		File[] documentFiles = documentDir.listFiles();
+		int id = 0;
+		for (File documentFile : documentFiles) {
+			Document document = this.dataTools.getDocumentCache().getDocument(documentFile.getName());
+			List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
+			for (TokenSpanCached np : nps) {
+				String npStr = np.toString();
+				List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, 0.0);
+				if (categories.size() == 0)
+					continue;
+				boolean lowConfidence = true;
+				for (Pair<String, Double> category : categories) {
+					if (category.getSecond() >= nellConfidenceThreshold) {
+						lowConfidence = false;
+						break;
+					}
+				}
+				if (!lowConfidence)
+					break;
+				
+				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, null, false);
+				data.add(datum);
+				id++;
+			
+				if (data.size() >= exampleCount)
+					break;
+			}
+			
+			if (data.size() >= exampleCount)
+				break;
+		}
+		
+		return data;
+	}
+	
+	// minExamplesPerType polysemous examples
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructPolysemousDataSet(int exampleCount, double nellConfidenceThreshold, Datum.Tools.InverseLabelIndicator<LabelsList> inverseLabelIndicator) {
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
+		File documentDir = new File(this.documentDirPath);
+		File[] documentFiles = documentDir.listFiles();
+		int id = 0;
+		for (File documentFile : documentFiles) {
+			Document document = this.dataTools.getDocumentCache().getDocument(documentFile.getName());
+			List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
+			for (TokenSpanCached np : nps) {
+				String npStr = np.toString();
+				
+				LabelsList labels = getLabelForNounPhrase(npStr, nellConfidenceThreshold, inverseLabelIndicator);
+				if (labels == null)
+					continue;
+				
+				if (!this.nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())))
+					continue;
+				
+				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, labels, true);
+				data.add(datum);
+				id++;
+				
+				if (data.size() >= exampleCount)
+					break;
+			}
+			
+			if (data.size() >= exampleCount)
+				break;
+		}
+			
+		return data;
+	}
+	
+	private LabelsList getLabelForNounPhrase(String np, double nellConfidenceThreshold, Datum.Tools.InverseLabelIndicator<LabelsList> inverseLabelIndicator) {
+		List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(np, nellConfidenceThreshold);
+		if (categories.size() == 0)
+			return null;
+		
+		Map<String, Double> categoryWeights = new HashMap<String, Double>();
+		List<String> positiveIndicators = new ArrayList<String>();
+		for (Pair<String, Double> category : categories) {
+			positiveIndicators.add(category.getFirst());
+			categoryWeights.put(category.getFirst(), category.getSecond());
+		}
+
+		return inverseLabelIndicator.label(categoryWeights, positiveIndicators);
 	}
 }

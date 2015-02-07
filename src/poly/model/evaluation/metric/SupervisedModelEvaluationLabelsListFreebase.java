@@ -1,6 +1,7 @@
 package poly.model.evaluation.metric;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import poly.data.annotation.LabelsList;
 import poly.data.annotation.TokenSpansDatum;
 import ark.data.Gazetteer;
 import ark.data.annotation.Datum.Tools;
+import ark.data.annotation.Datum.Tools.InverseLabelIndicator;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.data.annotation.nlp.TokenSpan;
 import ark.data.feature.FeaturizedDataSet;
@@ -58,6 +60,7 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 		
 		NELL nell = (this.computeNELLBaseline) ? new NELL((PolyDataTools)data.getDatumTools().getDataTools()) : null;
 		Gazetteer freebaseNELLCategoryGazetteer = data.getDatumTools().getDataTools().getGazetteer("FreebaseNELLCategory");
+		InverseLabelIndicator<LabelsList> inverseLabelIndicator = data.getDatumTools().getInverseLabelIndicator("UnweightedConstrained");
 		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : predictions.entrySet()) {
 			TokenSpan[] datumTokenSpans = entry.getKey().getTokenSpans();
 			for (int i = 0; i < datumTokenSpans.length; i++) {
@@ -73,10 +76,21 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 						}
 						
 						for (String nellCategory : indicatorLabels) {
-							boolean predictedTrue = 
-									(this.computeNELLBaseline && nell.getNounPhraseNELLCategories(datumTokenSpans[i].toString(), this.NELLConfidenceThreshold).contains(nellCategory))
-									||
-									(!this.computeNELLBaseline && entry.getValue().contains(nellCategory) && entry.getValue().getLabelWeight(nellCategory) >= 0.5);
+							boolean predictedTrue = false;
+							if (this.computeNELLBaseline) {
+								List<Pair<String, Double>> nellCategoryWeights = nell.getNounPhraseNELLWeightedCategories(datumTokenSpans[i].toString(), this.NELLConfidenceThreshold);
+								List<String> nellCategories = new ArrayList<String>();
+								Map<String, Double> weights = new HashMap<String, Double>();
+								for (Pair<String, Double> nellCategoryWeight : nellCategoryWeights) {
+									weights.put(nellCategoryWeight.getFirst(), nellCategoryWeight.getSecond());
+									nellCategories.add(nellCategoryWeight.getFirst());
+								}
+								LabelsList nellLabel = inverseLabelIndicator.label(weights, nellCategories);
+								predictedTrue = nellLabel.contains(nellCategory);
+							} else {
+								predictedTrue = entry.getValue().contains(nellCategory) && entry.getValue().getLabelWeight(nellCategory) >= 0.5;
+							}
+							
 							boolean actualTrue = actualFreebaseNELLCategories.contains(nellCategory);
 							if (predictedTrue && actualTrue)
 								tp++;
@@ -90,7 +104,6 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 					}
 				}
 			}
-			
 		}
 		
 		if (this.evaluationType == EvaluationType.F1) {

@@ -432,7 +432,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			try {
 				int id = json.getInt("id");
 				boolean polysemous = json.getBoolean("polysemous");
-				L label = labelFromString(json.getString("label"));
+				L label = (json.has("label")) ? labelFromString(json.getString("label")) : null;
 				JSONArray jsonTokenSpans = json.getJSONArray("tokenSpans");
 				List<TokenSpanCached> tokenSpans = new ArrayList<TokenSpanCached>();
 				for (int i = 0; i < jsonTokenSpans.length(); i++) {
@@ -453,7 +453,8 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			try {
 				json.put("id", datum.id);
 				json.put("polysemous", datum.polysemous);
-				json.put("label", datum.label.toString());
+				if (datum.label != null)
+					json.put("label", datum.label.toString());
 				
 				JSONArray tokenSpans = new JSONArray();
 				for (TokenSpanCached tokenSpan : datum.tokenSpans) {

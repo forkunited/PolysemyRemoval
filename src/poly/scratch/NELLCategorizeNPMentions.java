@@ -47,12 +47,12 @@ public class NELLCategorizeNPMentions {
 		ANNOTATED
 	}
 	
-	private static final PolyDataTools dataTools = new PolyDataTools(new OutputWriter(), new PolyProperties());
-	private static final Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
-	private static final Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools = TokenSpansDatum.getBooleanTools(dataTools);
-	private static final NELLDataSetFactory nellDataFactory = new NELLDataSetFactory(dataTools);
-	private static final NLPAnnotatorStanford nlpAnnotator = new NLPAnnotatorStanford();
-	private static final InverseLabelIndicator<LabelsList> inverseLabelIndicator = datumTools.getInverseLabelIndicator("UnweightedConstrained");
+	private static PolyDataTools dataTools = new PolyDataTools(new OutputWriter(), new PolyProperties());
+	private static Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
+	private static Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools = TokenSpansDatum.getBooleanTools(dataTools);
+	private static NELLDataSetFactory nellDataFactory = new NELLDataSetFactory(dataTools);
+	private static NLPAnnotatorStanford nlpAnnotator = new NLPAnnotatorStanford();
+	private static InverseLabelIndicator<LabelsList> inverseLabelIndicator = datumTools.getInverseLabelIndicator("UnweightedConstrained");
 	
 	private static LabelsList validLabels;
 	private static InputType inputType;
@@ -149,15 +149,16 @@ public class NELLCategorizeNPMentions {
 			for (final String label : validLabels.getLabels()) {
 				File modelFile = new File(modelFilePathPrefix + label);
 				dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath());
-				
-				BufferedReader modelReader = FileUtil.getFileReader(modelFile.getAbsolutePath());
-				SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = SupervisedModel.deserialize(modelReader, true, binaryTools);
-				if (binaryModel == null) {
-					dataTools.getOutputWriter().debugWriteln("ERROR: Failed to deserialize " + label + " model.");	
-					return false;
+				if (modelFile.exists() && modelFile.length() > 0) {
+					BufferedReader modelReader = FileUtil.getFileReader(modelFile.getAbsolutePath());
+					SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = SupervisedModel.deserialize(modelReader, true, binaryTools);
+					if (binaryModel == null) {
+						dataTools.getOutputWriter().debugWriteln("ERROR: Failed to deserialize " + label + " model.");	
+						return false;
+					}
+					binaryModels.add(binaryModel);
+					modelReader.close();
 				}
-				binaryModels.add(binaryModel);
-				modelReader.close();
 				
 				datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
 					@Override

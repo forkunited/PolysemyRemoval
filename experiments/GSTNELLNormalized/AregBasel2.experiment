@@ -27,7 +27,7 @@ compositeEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceT
 compositeEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=Accuracy)
 compositeEvaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Accuracy)
 
-gridDimension=l2(values=".0000001,.000001,.00001,.0001", training=true)
+gridDimension=l2(values=".000001,.00001,.0001", training=true)
 gridDimension=classificationThreshold(values=".1,.2,.3,.4,.5,.6,.7,.8,.9", training=false)
 
 feature_cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*")
@@ -67,7 +67,6 @@ feature_phrh1=NGramContext(scale=INDICATOR, mode=WITHIN, minFeatureOccurrence=2,
 feature_affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, mode=WITHIN, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken)
 
 feature_doc1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
-feature_doc2=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=2, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens)
 feature_sent1=NGramSentence(noTokenSpan=true, scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllTokenSpans)
 feature_sent2=NGramSentence(noTokenSpan=true, scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=2, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllTokenSpans)
 

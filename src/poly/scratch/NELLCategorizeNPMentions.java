@@ -148,7 +148,7 @@ public class NELLCategorizeNPMentions {
 			
 			for (final String label : validLabels.getLabels()) {
 				File modelFile = new File(modelFilePathPrefix + label);
-				dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath());
+				dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath() + "(" + modelFile.length() + " bytes)");
 				if (modelFile.exists() && modelFile.length() > 0) {
 					BufferedReader modelReader = FileUtil.getFileReader(modelFile.getAbsolutePath());
 					SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = SupervisedModel.deserialize(modelReader, true, binaryTools);
@@ -158,26 +158,26 @@ public class NELLCategorizeNPMentions {
 					}
 					binaryModels.add(binaryModel);
 					modelReader.close();
-				}
 				
-				datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
-					@Override
-					public String toString() {
-						return label;
-					}
-					
-					@Override
-					public boolean indicator(LabelsList labels) {
-						if (labels == null)
-							return true;
-						return labels.contains(label);
-					}
-
-					@Override
-					public double weight(LabelsList labels) {
-						return labels.getLabelWeight(label);
-					}	
-				});
+					datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
+						@Override
+						public String toString() {
+							return label;
+						}
+						
+						@Override
+						public boolean indicator(LabelsList labels) {
+							if (labels == null)
+								return true;
+							return labels.contains(label);
+						}
+	
+						@Override
+						public double weight(LabelsList labels) {
+							return labels.getLabelWeight(label);
+						}	
+					});
+				}
 			
 			}
 			

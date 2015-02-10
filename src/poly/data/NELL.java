@@ -187,8 +187,22 @@ public class NELL {
 			extractNounPhrasesEndingAt(document, sentenceIndex, j, spans);
 			extractNounPhrasesStartingAt(document, sentenceIndex, j, spans);
 		}
+		
+		List<TokenSpanCached> retSpans = new ArrayList<TokenSpanCached>(spans.size());
+		for (TokenSpanCached span1 : spans) {
+			boolean subspan = false;
+			for (TokenSpanCached span2 : spans) {
+				if (!span1.equals(span2) && span2.containsTokenSpan(span1)) {
+					subspan = true;
+					break;
+				}
+			}
+			
+			if (!subspan)
+				retSpans.add(span1);
+		}
 	
-		return new ArrayList<TokenSpanCached>(spans);
+		return retSpans;
 	}
 	
 	private void extractNounPhrasesEndingAt(Document document, int sentenceIndex, int endIndex, Set<TokenSpanCached> spans) {

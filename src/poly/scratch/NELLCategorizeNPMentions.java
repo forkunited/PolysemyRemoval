@@ -1,0 +1,254 @@
+package poly.scratch;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.json.JSONObject;
+
+import poly.data.PolyDataTools;
+import poly.data.annotation.LabelsList;
+import poly.data.annotation.NELLDataSetFactory;
+import poly.data.annotation.PolyDocument;
+import poly.data.annotation.TokenSpansDatum;
+import poly.util.PolyProperties;
+import ark.data.annotation.DataSet;
+import ark.data.annotation.Datum;
+import ark.data.annotation.Datum.Tools.InverseLabelIndicator;
+import ark.data.annotation.Datum.Tools.LabelIndicator;
+import ark.data.annotation.Language;
+import ark.data.feature.Feature;
+import ark.data.feature.FeaturizedDataSet;
+import ark.model.SupervisedModel;
+import ark.model.SupervisedModelCompositeBinary;
+import ark.model.annotator.nlp.NLPAnnotatorStanford;
+import ark.util.FileUtil;
+import ark.util.OutputWriter;
+import ark.util.ThreadMapper;
+import ark.util.ThreadMapper.Fn;
+
+public class NELLCategorizeNPMentions {
+	public enum InputType {
+		PLAIN_TEXT,
+		ANNOTATED
+	}
+	
+	private static final PolyDataTools dataTools = new PolyDataTools(new OutputWriter(), new PolyProperties());
+	private static final Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
+	private static final Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools = TokenSpansDatum.getBooleanTools(dataTools);
+	private static final NELLDataSetFactory nellDataFactory = new NELLDataSetFactory(dataTools);
+	private static final NLPAnnotatorStanford nlpAnnotator = new NLPAnnotatorStanford();
+	private static final InverseLabelIndicator<LabelsList> inverseLabelIndicator = datumTools.getInverseLabelIndicator("UnweightedConstrained");
+	
+	private static LabelsList validLabels;
+	private static InputType inputType;
+	private static int maxThreads;
+	private static double mentionModelThreshold; // FIXME Use this to decide whether or not to use models...
+	private static File input;
+	private static File featuresFile;
+	private static String modelFilePathPrefix;
+	private static File outputDataFile;
+	private static File outputDocumentDir;
+	
+	private static SupervisedModel<TokenSpansDatum<LabelsList>, LabelsList> model;
+	private static List<Feature<TokenSpansDatum<LabelsList>, LabelsList>> features;
+	
+	public static void main(String[] args) {
+		inputType = InputType.valueOf(args[0]);
+		maxThreads = Integer.parseInt(args[1]);
+		mentionModelThreshold = Double.parseDouble(args[2]);
+		input = new File(args[3]);
+		featuresFile = new File(args[4]);
+		modelFilePathPrefix = args[5];
+		validLabels = LabelsList.fromString(args[6]);
+		if (args.length > 6)
+			outputDataFile = new File(args[7]);
+		if (args.length > 7)
+			outputDocumentDir = new File(args[8]);
+
+		List<File> inputFiles = new ArrayList<File>();
+		if (input.isDirectory()) {
+			inputFiles.addAll(Arrays.asList(input.listFiles()));
+		} else {
+			inputFiles.add(input);
+		}
+		
+		if (!deserializeModels())
+			return;
+		
+		dataTools.getOutputWriter().debugWriteln("Running annotation and models...");
+		
+		if (!initializeNlpPipeline())
+			return;
+		
+		ThreadMapper<File, List<JSONObject>> threads = new ThreadMapper<File, List<JSONObject>>(new Fn<File, List<JSONObject>>() {
+			public List<JSONObject> apply(File file) {
+				PolyDocument document = null;
+				if (inputType == InputType.PLAIN_TEXT) {
+					NLPAnnotatorStanford threadAnnotator = new NLPAnnotatorStanford(nlpAnnotator);
+					document = new PolyDocument(file.getName(), FileUtil.readFile(file), Language.English, threadAnnotator);
+					if (outputDocumentDir != null) {
+						if (!document.saveToJSONFile((new File(outputDocumentDir, document.getName())).toString()))
+							return null;
+					}
+				} else {
+					document = new PolyDocument(FileUtil.readJSONFile(file));
+				}
+		
+				DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = categorizeNPMentions(document);
+				
+				List<JSONObject> jsonLabeledData = new ArrayList<JSONObject>();
+				for (TokenSpansDatum<LabelsList> datum : labeledData)
+					jsonLabeledData.add(datumTools.datumToJSON(datum));
+				
+				dataTools.getDocumentCache().removeDocument(document.getName());
+				
+				return jsonLabeledData;
+			}
+		});
+		
+		dataTools.getOutputWriter().debugWriteln("Finished running annotation and models. Outputting results...");
+		
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(outputDataFile));
+			List<List<JSONObject>> threadResults = threads.run(inputFiles, maxThreads);
+			for (List<JSONObject> threadResult : threadResults) {
+				if (threadResult == null) {
+					dataTools.getOutputWriter().debugWriteln("ERROR: Thread failed.");
+					writer.close();
+					return;
+				}
+
+				for (JSONObject datum : threadResult)
+					writer.write(datum.toString() + "\n");
+			}
+			
+			writer.close();
+		} catch (IOException e) {
+			dataTools.getOutputWriter().debugWriteln("ERROR: Failed to output results.");
+			e.printStackTrace();
+			return;
+		}
+		dataTools.getOutputWriter().debugWriteln("Finished outputting results.");
+	}
+	
+	private static boolean deserializeModels() {
+		
+		Feature<TokenSpansDatum<LabelsList>, LabelsList> feature = null;
+		List<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>> binaryModels = new ArrayList<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>>();
+		features = new ArrayList<Feature<TokenSpansDatum<LabelsList>, LabelsList>>();
+		
+		try {
+			BufferedReader reader = FileUtil.getFileReader(featuresFile.getAbsolutePath());
+			while ((feature = Feature.deserialize(reader, true, datumTools)) != null) {
+				dataTools.getOutputWriter().debugWriteln("Deserialized " + feature.toString(false) + " (" + feature.getVocabularySize() + ")");
+				features.add(feature.clone(datumTools, dataTools.getParameterEnvironment(), false));
+			}
+			reader.close();
+
+			dataTools.getOutputWriter().debugWriteln("Finished deserializing " + features.size() + " features.");
+			
+			for (final String label : validLabels.getLabels()) {
+				File modelFile = new File(modelFilePathPrefix + label);
+				dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath());
+				
+				BufferedReader modelReader = FileUtil.getFileReader(modelFile.getAbsolutePath());
+				SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = SupervisedModel.deserialize(modelReader, true, binaryTools);
+				if (binaryModel == null) {
+					dataTools.getOutputWriter().debugWriteln("ERROR: Failed to deserialize " + label + " model.");	
+					return false;
+				}
+				binaryModels.add(binaryModel);
+				modelReader.close();
+				
+				datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
+					@Override
+					public String toString() {
+						return label;
+					}
+					
+					@Override
+					public boolean indicator(LabelsList labels) {
+						if (labels == null)
+							return true;
+						return labels.contains(label);
+					}
+
+					@Override
+					public double weight(LabelsList labels) {
+						return labels.getLabelWeight(label);
+					}	
+				});
+			
+			}
+			
+			model = new SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(binaryModels, datumTools.getLabelIndicators(), binaryTools, inverseLabelIndicator);
+			
+			dataTools.getOutputWriter().debugWriteln("Finished deserializing models.");
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	private static boolean initializeNlpPipeline() {
+		nlpAnnotator.enableNer();
+		if (!nlpAnnotator.initializePipeline())
+			return false;
+		return true;
+	}
+	
+	private static DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNPMentions(PolyDocument document) {
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = nellDataFactory.constructDataSet(document, datumTools, true, 0.0);
+		
+		FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList> featurizedData = 
+			new FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList>("", 
+																	features, 
+																	1, 
+																	datumTools,
+																	null);
+		
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(datumTools, null);
+		
+		for (TokenSpansDatum<LabelsList> datum : data) {
+			LabelsList labels = datum.getLabel();
+			List<String> confidentLabels = new ArrayList<String>();
+			Map<String, Double> labelWeights = new HashMap<String, Double>();
+			for (String label : labels.getLabels()) {
+				if (!validLabels.contains(label))
+					continue;
+				double weight = labels.getLabelWeight(label);
+				if (weight >= mentionModelThreshold) {
+					confidentLabels.add(label);
+				}
+				labelWeights.put(label, weight);
+			}
+			
+			if (confidentLabels.isEmpty()) {
+				featurizedData.add(datum);
+			} else {
+				labeledData.add(new TokenSpansDatum<LabelsList>(datum, inverseLabelIndicator.label(labelWeights, confidentLabels), false));
+			}
+		}
+		
+		if (!featurizedData.precomputeFeatures())
+			return null;
+		
+		Map<TokenSpansDatum<LabelsList>, LabelsList> dataLabels = model.classify(featurizedData);
+
+		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : dataLabels.entrySet()) {
+			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), entry.getValue(), false));
+		}
+		
+		return labeledData;
+	}
+}

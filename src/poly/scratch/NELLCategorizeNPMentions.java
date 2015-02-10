@@ -8,9 +8,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
 
 import org.json.JSONObject;
 
@@ -20,6 +25,7 @@ import poly.data.annotation.NELLDataSetFactory;
 import poly.data.annotation.PolyDocument;
 import poly.data.annotation.TokenSpansDatum;
 import poly.util.PolyProperties;
+import ark.data.Gazetteer;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
 import ark.data.annotation.Datum.Tools.InverseLabelIndicator;
@@ -51,8 +57,7 @@ public class NELLCategorizeNPMentions {
 	private static LabelsList validLabels;
 	private static InputType inputType;
 	private static int maxThreads;
-	private static double mentionModelThreshold; // FIXME Use this to decide whether or not to use models...
-	private static File input;
+	private static double mentionModelThreshold;
 	private static File featuresFile;
 	private static String modelFilePathPrefix;
 	private static File outputDataFile;
@@ -60,26 +65,11 @@ public class NELLCategorizeNPMentions {
 	
 	private static SupervisedModel<TokenSpansDatum<LabelsList>, LabelsList> model;
 	private static List<Feature<TokenSpansDatum<LabelsList>, LabelsList>> features;
+	private static List<File> inputFiles;
 	
 	public static void main(String[] args) {
-		inputType = InputType.valueOf(args[0]);
-		maxThreads = Integer.parseInt(args[1]);
-		mentionModelThreshold = Double.parseDouble(args[2]);
-		input = new File(args[3]);
-		featuresFile = new File(args[4]);
-		modelFilePathPrefix = args[5];
-		validLabels = LabelsList.fromString(args[6]);
-		if (args.length > 6)
-			outputDataFile = new File(args[7]);
-		if (args.length > 7)
-			outputDocumentDir = new File(args[8]);
-
-		List<File> inputFiles = new ArrayList<File>();
-		if (input.isDirectory()) {
-			inputFiles.addAll(Arrays.asList(input.listFiles()));
-		} else {
-			inputFiles.add(input);
-		}
+		if (!parseArgs(args))
+			return;
 		
 		if (!deserializeModels())
 			return;
@@ -202,8 +192,10 @@ public class NELLCategorizeNPMentions {
 	
 	private static boolean initializeNlpPipeline() {
 		nlpAnnotator.enableNer();
-		if (!nlpAnnotator.initializePipeline())
+		if (!nlpAnnotator.initializePipeline()) {
+			dataTools.getOutputWriter().debugWriteln("ERROR: Failed to initialze nlp pipeline.");
 			return false;
+		}
 		return true;
 	}
 	
@@ -250,5 +242,87 @@ public class NELLCategorizeNPMentions {
 		}
 		
 		return labeledData;
+	}
+	
+	private static boolean parseArgs(String[] args) {
+		OptionParser parser = new OptionParser();
+		parser.accepts("inputType").withRequiredArg();
+		parser.accepts("maxThreads").withRequiredArg();
+		parser.accepts("mentionModelThreshold").withRequiredArg();
+		parser.accepts("featuresFile").withRequiredArg();
+		parser.accepts("input").withRequiredArg();
+		parser.accepts("modelFilePathPrefix").withRequiredArg();
+		parser.accepts("validLabels").withRequiredArg();
+		parser.accepts("outputDataFile").withRequiredArg();
+		parser.accepts("outputDocumentDir").withRequiredArg();
+		
+		OptionSet options = parser.parse(args);
+       
+		if (options.has("inputType")) {
+			inputType = InputType.valueOf(options.valueOf("inputType").toString());
+		} else {
+			inputType = InputType.PLAIN_TEXT;
+		}
+		
+		if (options.has("maxThreads")) {
+			maxThreads = Integer.parseInt(options.valueOf("maxThreads").toString());
+		} else {
+			maxThreads = 1;
+		}
+		
+		if (options.has("mentionModelThreshold")) {
+			mentionModelThreshold = Double.parseDouble(options.valueOf("mentionModelThreshold").toString());
+		} else {
+			mentionModelThreshold = 0.9;
+		}
+		
+		if (options.has("featuresFile")) {
+			featuresFile = new File(options.valueOf("featuresFile").toString());
+		} else {
+			dataTools.getOutputWriter().debugWriteln("ERROR: Missing 'featuresFile' argument.");
+			return false;
+		}
+		
+		if (options.has("input")) {
+			File input = new File(options.valueOf("input").toString());
+			inputFiles = new ArrayList<File>();
+			if (input.isDirectory()) {
+				inputFiles.addAll(Arrays.asList(input.listFiles()));
+			} else {
+				inputFiles.add(input);
+			}
+		} else {
+			dataTools.getOutputWriter().debugWriteln("ERROR: Missing 'input' argument.");
+			return false;
+		}
+		
+		if (options.has("modelFilePathPrefix")) {
+			modelFilePathPrefix = options.valueOf("modelFilePathPrefix").toString();
+		} else {
+			dataTools.getOutputWriter().debugWriteln("ERROR: Missing 'modelFilePathPrefix' argument.");
+			return false;
+		}
+		
+		if (options.has("validLabels")) {
+			validLabels = LabelsList.fromString(options.valueOf("validLabels").toString());
+		} else {
+			Gazetteer g = dataTools.getGazetteer("FreebaseNELLCategory");
+			Set<String> freebaseLabels = g.getValues();
+			Set<String> nellCategories = new HashSet<String>();
+			for (String freebaseLabel : freebaseLabels) {
+				nellCategories.addAll(g.getIds(freebaseLabel));
+			}
+			validLabels = new LabelsList(nellCategories.toArray(new String[0]), 0);
+		}
+		
+		if (options.has("outputDataFile")) {
+			outputDataFile = new File(options.valueOf("outputDataFile").toString());
+		}
+		
+		if (options.has("outputDocumentDir")) {
+			outputDocumentDir = new File(options.valueOf("outputDocumentDir").toString());
+		}
+		
+		return true;
 	}
 }

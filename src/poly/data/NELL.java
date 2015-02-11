@@ -1,13 +1,13 @@
 package poly.data;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
 import poly.data.annotation.nlp.TokenSpanCached;
-
 import ark.data.Gazetteer;
 import ark.data.annotation.Document;
 import ark.data.annotation.nlp.PoSTag;
@@ -80,7 +80,7 @@ public class NELL {
 				);
 	}
 	
-	public boolean areCategoriesMutuallyExclusive(List<String> categories) {
+	public boolean areCategoriesMutuallyExclusive(Collection<String> categories) {
 		Set<String> doneCategories = new HashSet<String>();
 		for (String c1 : categories) {
 			doneCategories.add(c1);

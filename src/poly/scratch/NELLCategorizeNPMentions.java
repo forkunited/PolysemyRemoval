@@ -148,8 +148,8 @@ public class NELLCategorizeNPMentions {
 			
 			for (final String label : validLabels.getLabels()) {
 				File modelFile = new File(modelFilePathPrefix + label);
-				dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath() + "(" + modelFile.length() + " bytes)");
 				if (modelFile.exists() && modelFile.length() > 0) {
+					dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath() + "(" + modelFile.length() + " bytes)");
 					BufferedReader modelReader = FileUtil.getFileReader(modelFile.getAbsolutePath());
 					SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = SupervisedModel.deserialize(modelReader, true, binaryTools);
 					if (binaryModel == null) {

@@ -170,7 +170,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			
 			@Override
 			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
-				List<String> constrainedIndicators = new ArrayList<String>();
+				Set<String> constrainedIndicators = new HashSet<String>();
 				List<Pair<String, Double>> sortedWeights = new ArrayList<Pair<String, Double>>();
 				for (Entry<String, Double> entry : indicatorWeights.entrySet())
 					sortedWeights.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));

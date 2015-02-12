@@ -92,7 +92,7 @@ public class NELLCategorizeNPMentions {
 				} else {
 					document = new PolyDocument(FileUtil.readJSONFile(file));
 				}
-		
+				System.out.println(document.getName());
 				DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = categorizeNPMentions(document);
 				
 				List<JSONObject> jsonLabeledData = new ArrayList<JSONObject>();
@@ -105,11 +105,12 @@ public class NELLCategorizeNPMentions {
 			}
 		});
 		
-		dataTools.getOutputWriter().debugWriteln("Finished running annotation and models. Outputting results...");
-		
 		try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(outputDataFile));
 			List<List<JSONObject>> threadResults = threads.run(inputFiles, maxThreads);
+			
+			dataTools.getOutputWriter().debugWriteln("Finished running annotation and models. Outputting results...");
+			
 			for (List<JSONObject> threadResult : threadResults) {
 				if (threadResult == null) {
 					dataTools.getOutputWriter().debugWriteln("ERROR: Thread failed.");

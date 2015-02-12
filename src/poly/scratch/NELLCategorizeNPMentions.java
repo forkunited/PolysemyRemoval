@@ -240,6 +240,8 @@ public class NELLCategorizeNPMentions {
 		Map<TokenSpansDatum<LabelsList>, LabelsList> dataLabels = model.classify(featurizedData);
 
 		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : dataLabels.entrySet()) {
+			if (entry.getValue().getLabels().length == 0)
+				continue;
 			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), entry.getValue(), false));
 		}
 		

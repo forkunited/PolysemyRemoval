@@ -81,6 +81,7 @@ public class NELLCategorizeNPMentions {
 		
 		ThreadMapper<File, List<JSONObject>> threads = new ThreadMapper<File, List<JSONObject>>(new Fn<File, List<JSONObject>>() {
 			public List<JSONObject> apply(File file) {
+				dataTools.getOutputWriter().debugWriteln("Processing file " + file.getName());
 				PolyDocument document = null;
 				if (inputType == InputType.PLAIN_TEXT) {
 					NLPAnnotatorStanford threadAnnotator = new NLPAnnotatorStanford(nlpAnnotator);
@@ -92,7 +93,6 @@ public class NELLCategorizeNPMentions {
 				} else {
 					document = new PolyDocument(FileUtil.readJSONFile(file));
 				}
-				System.out.println(document.getName());
 				DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = categorizeNPMentions(document);
 				
 				List<JSONObject> jsonLabeledData = new ArrayList<JSONObject>();
@@ -150,7 +150,7 @@ public class NELLCategorizeNPMentions {
 			for (final String label : validLabels.getLabels()) {
 				File modelFile = new File(modelFilePathPrefix + label);
 				if (modelFile.exists() && modelFile.length() > 0) {
-					dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath() + "(" + modelFile.length() + " bytes)");
+					dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath() + " (" + modelFile.length() + " bytes)");
 					BufferedReader modelReader = FileUtil.getFileReader(modelFile.getAbsolutePath());
 					SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = SupervisedModel.deserialize(modelReader, true, binaryTools);
 					if (binaryModel == null) {

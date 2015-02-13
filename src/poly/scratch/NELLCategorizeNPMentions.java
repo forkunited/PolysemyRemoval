@@ -135,15 +135,12 @@ public class NELLCategorizeNPMentions {
 	
 	private static PolyDocument constructAnnotatedDocument(File file) {
 		String fileText = FileUtil.readFile(file);
-		System.out.println("FILE TEXT: " + fileText);
 		NLPAnnotatorStanford threadTokenAnnotator = new NLPAnnotatorStanford(tokenAnnotator);
 		threadTokenAnnotator.setText(fileText);
 		String[][] tokens = threadTokenAnnotator.makeTokens();
 		StringBuilder cleanTextBuilder = new StringBuilder();
-		
-		System.out.println("Tok " + tokens.length);
+
 		for (int i = 0; i < tokens.length; i++) {
-			System.out.println("toknn " + i + " " + tokens[i].length + " " + minSentenceAnnotationLength + " " + maxSentenceAnnotationLength);
 			if (tokens[i].length < minSentenceAnnotationLength || tokens[i].length > maxSentenceAnnotationLength)
 				continue;
 			
@@ -164,8 +161,6 @@ public class NELLCategorizeNPMentions {
 			
 			cleanTextBuilder.append(" ");
 		}
-		
-		System.out.println("CLEAN TEXT" + cleanTextBuilder.toString());
 		
 		NLPAnnotatorStanford threadNlpAnnotator = new NLPAnnotatorStanford(nlpAnnotator);
 		return new PolyDocument(file.getName(), cleanTextBuilder.toString(), Language.English, threadNlpAnnotator);
@@ -375,9 +370,9 @@ public class NELLCategorizeNPMentions {
 		}
 		
 		if (options.has("maxAnnotationSentenceLength")) {
-			minSentenceAnnotationLength = Integer.valueOf(options.valueOf("maxAnnotationSentenceLength").toString());
+			maxSentenceAnnotationLength = Integer.valueOf(options.valueOf("maxAnnotationSentenceLength").toString());
 		} else {
-			minSentenceAnnotationLength = 30;
+			maxSentenceAnnotationLength = 30;
 		}
 		
 		if (options.has("outputDataFile")) {

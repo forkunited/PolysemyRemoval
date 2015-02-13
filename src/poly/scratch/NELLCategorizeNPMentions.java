@@ -38,6 +38,7 @@ import ark.model.SupervisedModelCompositeBinary;
 import ark.model.annotator.nlp.NLPAnnotatorStanford;
 import ark.util.FileUtil;
 import ark.util.OutputWriter;
+import ark.util.StringUtil;
 import ark.util.ThreadMapper;
 import ark.util.ThreadMapper.Fn;
 
@@ -52,6 +53,7 @@ public class NELLCategorizeNPMentions {
 	private static Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools = TokenSpansDatum.getBooleanTools(dataTools);
 	private static NELLDataSetFactory nellDataFactory = new NELLDataSetFactory(dataTools);
 	private static NLPAnnotatorStanford nlpAnnotator = new NLPAnnotatorStanford();
+	private static NLPAnnotatorStanford tokenAnnotator = new NLPAnnotatorStanford();
 	private static InverseLabelIndicator<LabelsList> inverseLabelIndicator = datumTools.getInverseLabelIndicator("UnweightedConstrained");
 	
 	private static LabelsList validLabels;
@@ -62,6 +64,8 @@ public class NELLCategorizeNPMentions {
 	private static String modelFilePathPrefix;
 	private static File outputDataFile;
 	private static File outputDocumentDir;
+	private static int maxSentenceAnnotationLength;
+	private static int minSentenceAnnotationLength;
 	
 	private static SupervisedModel<TokenSpansDatum<LabelsList>, LabelsList> model;
 	private static List<Feature<TokenSpansDatum<LabelsList>, LabelsList>> features;
@@ -84,8 +88,7 @@ public class NELLCategorizeNPMentions {
 				dataTools.getOutputWriter().debugWriteln("Processing file " + file.getName());
 				PolyDocument document = null;
 				if (inputType == InputType.PLAIN_TEXT) {
-					NLPAnnotatorStanford threadAnnotator = new NLPAnnotatorStanford(nlpAnnotator);
-					document = new PolyDocument(file.getName(), FileUtil.readFile(file), Language.English, threadAnnotator);
+					document = constructAnnotatedDocument(file);
 					if (outputDocumentDir != null) {
 						if (!document.saveToJSONFile((new File(outputDocumentDir, document.getName())).toString()))
 							return null;
@@ -129,6 +132,25 @@ public class NELLCategorizeNPMentions {
 			return;
 		}
 		dataTools.getOutputWriter().debugWriteln("Finished outputting results.");
+	}
+	
+	private static PolyDocument constructAnnotatedDocument(File file) {
+		String fileText = FileUtil.readFile(file);
+		
+		NLPAnnotatorStanford threadTokenAnnotator = new NLPAnnotatorStanford(tokenAnnotator);
+		threadTokenAnnotator.setText(fileText);
+		String[][] tokens = threadTokenAnnotator.makeTokens();
+		StringBuilder cleanTextBuilder = new StringBuilder();
+		
+		for (int i = 0; i < tokens.length; i++) {
+			if (tokens[i].length < minSentenceAnnotationLength || tokens[i].length > maxSentenceAnnotationLength)
+				continue;
+			
+			cleanTextBuilder.append(StringUtil.join(tokens[i], " ")).append(" ");
+		}
+		
+		NLPAnnotatorStanford threadNlpAnnotator = new NLPAnnotatorStanford(nlpAnnotator);
+		return new PolyDocument(file.getName(), cleanTextBuilder.toString(), Language.English, threadNlpAnnotator);
 	}
 	
 	private static boolean deserializeModels() {
@@ -198,6 +220,15 @@ public class NELLCategorizeNPMentions {
 			dataTools.getOutputWriter().debugWriteln("ERROR: Failed to initialze nlp pipeline.");
 			return false;
 		}
+		
+		tokenAnnotator.disableConstituencyParses();
+		tokenAnnotator.disableDependencyParses();
+		tokenAnnotator.disablePoSTags();
+		if (!tokenAnnotator.initializePipeline()) {
+			dataTools.getOutputWriter().debugWriteln("ERROR: Failed to initialze tokenization pipeline.");
+			return false;
+		}
+		
 		return true;
 	}
 	
@@ -317,6 +348,18 @@ public class NELLCategorizeNPMentions {
 				nellCategories.addAll(g.getIds(freebaseLabel));
 			}
 			validLabels = new LabelsList(nellCategories.toArray(new String[0]), 0);
+		}
+		
+		if (options.has("minAnnotationSentenceLength")) {	
+			minSentenceAnnotationLength = Integer.valueOf(options.valueOf("minAnnotationSentenceLength").toString());
+		} else {
+			minSentenceAnnotationLength = 2;
+		}
+		
+		if (options.has("maxAnnotationSentenceLength")) {
+			minSentenceAnnotationLength = Integer.valueOf(options.valueOf("maxAnnotationSentenceLength").toString());
+		} else {
+			minSentenceAnnotationLength = 30;
 		}
 		
 		if (options.has("outputDataFile")) {

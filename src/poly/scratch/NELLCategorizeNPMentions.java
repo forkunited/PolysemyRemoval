@@ -141,7 +141,9 @@ public class NELLCategorizeNPMentions {
 		String[][] tokens = threadTokenAnnotator.makeTokens();
 		StringBuilder cleanTextBuilder = new StringBuilder();
 		
+		System.out.println("Tok " + tokens.length);
 		for (int i = 0; i < tokens.length; i++) {
+			System.out.println("toknn " + i + " " + tokens[i].length + " " + minSentenceAnnotationLength + " " + maxSentenceAnnotationLength);
 			if (tokens[i].length < minSentenceAnnotationLength || tokens[i].length > maxSentenceAnnotationLength)
 				continue;
 			

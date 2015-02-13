@@ -146,7 +146,7 @@ public class NELLCategorizeNPMentions {
 				continue;
 			
 			int endSymbolsStartToken = tokens[i].length + 1;
-			for (int j = tokens[i].length - 1; j >= 0; j++) {
+			for (int j = tokens[i].length - 1; j >= 0; j--) {
 				if (tokens[i][j].matches("[^A-Za-z0-9]+")) {
 					endSymbolsStartToken = j;
 				} else {

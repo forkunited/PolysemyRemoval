@@ -38,7 +38,6 @@ import ark.model.SupervisedModelCompositeBinary;
 import ark.model.annotator.nlp.NLPAnnotatorStanford;
 import ark.util.FileUtil;
 import ark.util.OutputWriter;
-import ark.util.StringUtil;
 import ark.util.ThreadMapper;
 import ark.util.ThreadMapper.Fn;
 
@@ -136,7 +135,7 @@ public class NELLCategorizeNPMentions {
 	
 	private static PolyDocument constructAnnotatedDocument(File file) {
 		String fileText = FileUtil.readFile(file);
-		
+		System.out.println("FILE TEXT: " + fileText);
 		NLPAnnotatorStanford threadTokenAnnotator = new NLPAnnotatorStanford(tokenAnnotator);
 		threadTokenAnnotator.setText(fileText);
 		String[][] tokens = threadTokenAnnotator.makeTokens();
@@ -163,6 +162,8 @@ public class NELLCategorizeNPMentions {
 			
 			cleanTextBuilder.append(" ");
 		}
+		
+		System.out.println("CLEAN TEXT" + cleanTextBuilder.toString());
 		
 		NLPAnnotatorStanford threadNlpAnnotator = new NLPAnnotatorStanford(nlpAnnotator);
 		return new PolyDocument(file.getName(), cleanTextBuilder.toString(), Language.English, threadNlpAnnotator);

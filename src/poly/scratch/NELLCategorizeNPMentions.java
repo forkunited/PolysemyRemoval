@@ -146,7 +146,22 @@ public class NELLCategorizeNPMentions {
 			if (tokens[i].length < minSentenceAnnotationLength || tokens[i].length > maxSentenceAnnotationLength)
 				continue;
 			
-			cleanTextBuilder.append(StringUtil.join(tokens[i], " ")).append(" ");
+			int endSymbolsStartToken = tokens[i].length + 1;
+			for (int j = tokens[i].length - 1; j >= 0; j++) {
+				if (tokens[i][j].matches("[^A-Za-z0-9]+")) {
+					endSymbolsStartToken = j;
+				} else {
+					break;
+				}
+			}
+			
+			for (int j = 0; j < tokens[i].length; j++) {
+				cleanTextBuilder.append(tokens[i][j]);
+				if (j < endSymbolsStartToken - 1)
+					cleanTextBuilder.append(" ");
+			}
+			
+			cleanTextBuilder.append(" ");
 		}
 		
 		NLPAnnotatorStanford threadNlpAnnotator = new NLPAnnotatorStanford(nlpAnnotator);

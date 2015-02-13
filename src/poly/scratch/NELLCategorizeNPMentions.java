@@ -383,6 +383,10 @@ public class NELLCategorizeNPMentions {
 			outputDocumentDir = new File(options.valueOf("outputDocumentDir").toString());
 		}
 		
+		if (options.has("outputDebugFile")) {
+			dataTools.getOutputWriter().setDebugFile(new File(options.valueOf("outputDebugFile").toString()), false);
+		}
+		
 		return true;
 	}
 }

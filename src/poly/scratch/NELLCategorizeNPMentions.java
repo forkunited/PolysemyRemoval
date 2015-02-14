@@ -303,6 +303,10 @@ public class NELLCategorizeNPMentions {
 		parser.accepts("validLabels").withRequiredArg();
 		parser.accepts("outputDataFile").withRequiredArg();
 		parser.accepts("outputDocumentDir").withRequiredArg();
+		parser.accepts("minAnnotationSentenceLength").withRequiredArg();
+		parser.accepts("maxAnnotationSentenceLength").withRequiredArg();
+		parser.accepts("outputDebugFile").withRequiredArg();
+		
 		
 		OptionSet options = parser.parse(args);
        
@@ -363,6 +367,14 @@ public class NELLCategorizeNPMentions {
 			validLabels = new LabelsList(nellCategories.toArray(new String[0]), 0);
 		}
 		
+		if (options.has("outputDataFile")) {
+			outputDataFile = new File(options.valueOf("outputDataFile").toString());
+		}
+		
+		if (options.has("outputDocumentDir")) {
+			outputDocumentDir = new File(options.valueOf("outputDocumentDir").toString());
+		}
+		
 		if (options.has("minAnnotationSentenceLength")) {	
 			minSentenceAnnotationLength = Integer.valueOf(options.valueOf("minAnnotationSentenceLength").toString());
 		} else {
@@ -373,14 +385,6 @@ public class NELLCategorizeNPMentions {
 			maxSentenceAnnotationLength = Integer.valueOf(options.valueOf("maxAnnotationSentenceLength").toString());
 		} else {
 			maxSentenceAnnotationLength = 30;
-		}
-		
-		if (options.has("outputDataFile")) {
-			outputDataFile = new File(options.valueOf("outputDataFile").toString());
-		}
-		
-		if (options.has("outputDocumentDir")) {
-			outputDocumentDir = new File(options.valueOf("outputDocumentDir").toString());
 		}
 		
 		if (options.has("outputDebugFile")) {

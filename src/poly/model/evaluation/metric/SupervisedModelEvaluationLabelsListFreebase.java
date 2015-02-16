@@ -54,11 +54,14 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 		double tn = 0.0;
 		double fn = 0.0;
 		
+
+		NELL nell = new NELL((PolyDataTools)data.getDatumTools().getDataTools());
+		List<String> freebaseCategories = nell.getFreebaseCategories();
 		List<String> indicatorLabels = new ArrayList<String>();
 		for (LabelIndicator<LabelsList> indicator : data.getDatumTools().getLabelIndicators())
-			indicatorLabels.add(indicator.toString());
-		
-		NELL nell = (this.computeNELLBaseline) ? new NELL((PolyDataTools)data.getDatumTools().getDataTools()) : null;
+			if (freebaseCategories.contains(indicator.toString()))
+				indicatorLabels.add(indicator.toString());
+	
 		Gazetteer freebaseNELLCategoryGazetteer = data.getDatumTools().getDataTools().getGazetteer("FreebaseNELLCategory");
 		InverseLabelIndicator<LabelsList> inverseLabelIndicator = data.getDatumTools().getInverseLabelIndicator("UnweightedConstrained");
 		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : predictions.entrySet()) {

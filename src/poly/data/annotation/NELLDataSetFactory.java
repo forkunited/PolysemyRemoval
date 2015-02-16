@@ -74,8 +74,6 @@ public class NELLDataSetFactory {
 			TokenSpansDatum<LabelsList> datum = null;
 			String npStr = np.toString();
 			List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, nellConfidenceThreshold);
-			if (categories.size() == 0)
-				continue;
 			
 			if (labeled) {
 				LabelsList labels = new LabelsList(categories);
@@ -261,8 +259,6 @@ public class NELLDataSetFactory {
 			for (TokenSpanCached np : nps) {
 				String npStr = np.toString();
 				List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, 0.0);
-				if (categories.size() == 0)
-					continue;
 				LabelsList labels = new LabelsList(categories);
 				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, labels, this.nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())));
 				data.add(datum);
@@ -347,8 +343,7 @@ public class NELLDataSetFactory {
 			for (TokenSpanCached np : nps) {
 				String npStr = np.toString();
 				List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, 0.0);
-				if (categories.size() == 0)
-					continue;
+
 				boolean lowConfidence = true;
 				for (Pair<String, Double> category : categories) {
 					if (category.getSecond() >= nellConfidenceThreshold) {

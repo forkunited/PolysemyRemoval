@@ -48,6 +48,21 @@ public class NELL {
 		this.nounPhraseStopWord = dataTools.getGazetteer("NELLNounPhraseStopWord");
 	}
 	
+	public List<String> getFreebaseCategories() {
+		Gazetteer g = this.dataTools.getGazetteer("FreebaseNELLCategory");
+		Set<String> freebaseLabels = g.getValues();
+		Set<String> nellCategories = new HashSet<String>();
+		for (String freebaseLabel : freebaseLabels) {
+			nellCategories.addAll(g.getIds(freebaseLabel));
+		}
+		
+		return new ArrayList<String>(nellCategories);
+	}
+	
+	public List<String> getCategories() {
+		return new ArrayList<String>(this.categoryGeneralization.getValues());
+	}
+	
 	public List<String> getNounPhraseNELLCategories(String nounPhrase, double confidenceThreshold) {
 		List<Pair<String, Double>> weightedCategories = this.nounPhraseCategory.getWeightedIds(nounPhrase);
 		List<String> categories = new ArrayList<String>();

@@ -125,7 +125,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		Tools<LabelsList> tools =  new Tools<LabelsList>(dataTools) {
 			@Override
 			public LabelsList labelFromString(String str) {
-				return LabelsList.fromString(str);
+				return LabelsList.fromString(str, (PolyDataTools)dataTools);
 			}
 		};
 		final NELL nell = new NELL((PolyDataTools)dataTools);

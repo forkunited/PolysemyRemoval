@@ -36,7 +36,7 @@ public class ExperimentGSTSeqPolysemy {
 		experimentName = "GSTSeqPolysemy/" + args[0];
 		String dataSetName = args[1];
 		int iterations = Integer.valueOf(args[2]);
-		labels = LabelsList.fromString(args[3]);
+		String labelsStr = args[3];
 		double dataFraction = Double.valueOf(args[4]);
 		int randomSeed = Integer.valueOf(args[5]);
 		int maxLabelThreads = Integer.valueOf(args[6]);
@@ -66,6 +66,8 @@ public class ExperimentGSTSeqPolysemy {
 		dataTools.getGazetteer("NounPhraseNELLCategory"); // Ensures that this gazetteer is only loaded once
 		dataTools.setRandomSeed(randomSeed);
 		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
+		
+		labels = LabelsList.fromString(labelsStr, dataTools);
 		
 		dataFactory = new PolysemousDataSetFactory(
 				dataFraction,

@@ -8,11 +8,30 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import poly.data.NELL;
+import poly.data.PolyDataTools;
 import ark.util.Pair;
 
 public class LabelsList {
+	public enum Type {
+		ALL_NELL_CATEGORIES,
+		FREEBASE_NELL_CATEGORIES
+	}
+	
 	private String[] labels;
 	private double[] labelWeights;
+	
+	public LabelsList(Type type, PolyDataTools dataTools) {
+		NELL nell = new NELL(dataTools);
+		
+		if (type == Type.ALL_NELL_CATEGORIES) {
+			this.labels = nell.getCategories().toArray(new String[0]);
+		} else if (type == Type.FREEBASE_NELL_CATEGORIES) {
+			this.labels = nell.getFreebaseCategories().toArray(new String[0]);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
 	
 	public LabelsList(List<Pair<String, Double>> weightedLabels) {
 		this.labels = new String[weightedLabels.size()];
@@ -142,19 +161,25 @@ public class LabelsList {
 		return h;
 	}
 	
-	public static LabelsList fromString(String str) {
-		String[] strParts = str.split(",");
-		if (strParts.length == 0 || !strParts[0].contains(":"))
-			return new LabelsList(strParts, 0);	
-		
-		String[] labels = new String[strParts.length];
-		double[] labelWeights = new double[strParts.length];
-		for (int i = 0; i < strParts.length; i++) {
-			String[] labelParts = strParts[i].split(":");
-			labels[i] = labelParts[0];
-			labelWeights[i] = Double.parseDouble(labelParts[1]);
+	public static LabelsList fromString(String str, PolyDataTools dataTools) {
+		if (str.equals("ALL_NELL_CATEGORIES")) {
+			return new LabelsList(Type.ALL_NELL_CATEGORIES, dataTools);
+		} else if (str.equals("FREEBASE_NELL_CATEGORIES")) {
+			return new LabelsList(Type.FREEBASE_NELL_CATEGORIES, dataTools);
+		} else {
+			String[] strParts = str.split(",");
+			if (strParts.length == 0 || !strParts[0].contains(":"))
+				return new LabelsList(strParts, 0);	
+			
+			String[] labels = new String[strParts.length];
+			double[] labelWeights = new double[strParts.length];
+			for (int i = 0; i < strParts.length; i++) {
+				String[] labelParts = strParts[i].split(":");
+				labels[i] = labelParts[0];
+				labelWeights[i] = Double.parseDouble(labelParts[1]);
+			}
+			
+			return new LabelsList(labels, labelWeights, 0);
 		}
-		
-		return new LabelsList(labels, labelWeights, 0);
 	}
 }

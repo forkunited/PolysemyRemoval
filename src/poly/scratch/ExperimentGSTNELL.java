@@ -18,7 +18,7 @@ public class ExperimentGSTNELL {
 	
 	public static void main(String[] args) {
 		String experimentName = "GSTNELL/" + args[0];
-		LabelsList labels = LabelsList.fromString(args[1]);
+		String labelsStr = args[1];
 		int randomSeed = Integer.valueOf(args[2]);
 		double nellConfidenceThreshold = Double.valueOf(args[3]);
 		double dataFraction = Double.valueOf(args[4]);
@@ -40,6 +40,8 @@ public class ExperimentGSTNELL {
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
 		dataTools.setRandomSeed(randomSeed);
 		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
+		
+		LabelsList labels = LabelsList.fromString(labelsStr, dataTools);
 		
 		TokenSpansDatum.Tools<LabelsList> datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
 		NELLDataSetFactory dataFactory = new NELLDataSetFactory(dataTools, properties.getHazyFacc1DataDirPath(), 1000000);

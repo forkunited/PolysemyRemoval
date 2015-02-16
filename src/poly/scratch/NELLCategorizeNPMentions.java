@@ -8,11 +8,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -25,7 +23,6 @@ import poly.data.annotation.NELLDataSetFactory;
 import poly.data.annotation.PolyDocument;
 import poly.data.annotation.TokenSpansDatum;
 import poly.util.PolyProperties;
-import ark.data.Gazetteer;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
 import ark.data.annotation.Datum.Tools.InverseLabelIndicator;
@@ -356,15 +353,9 @@ public class NELLCategorizeNPMentions {
 		}
 		
 		if (options.has("validLabels")) {
-			validLabels = LabelsList.fromString(options.valueOf("validLabels").toString());
+			validLabels = LabelsList.fromString(options.valueOf("validLabels").toString(), dataTools);
 		} else {
-			Gazetteer g = dataTools.getGazetteer("FreebaseNELLCategory");
-			Set<String> freebaseLabels = g.getValues();
-			Set<String> nellCategories = new HashSet<String>();
-			for (String freebaseLabel : freebaseLabels) {
-				nellCategories.addAll(g.getIds(freebaseLabel));
-			}
-			validLabels = new LabelsList(nellCategories.toArray(new String[0]), 0);
+			validLabels = new LabelsList(LabelsList.Type.ALL_NELL_CATEGORIES, dataTools);
 		}
 		
 		if (options.has("outputDataFile")) {

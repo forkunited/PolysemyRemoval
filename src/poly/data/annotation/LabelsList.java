@@ -21,6 +21,11 @@ public class LabelsList {
 	private String[] labels;
 	private double[] labelWeights;
 	
+	public LabelsList() {
+		this.labels = new String[0];
+		this.labelWeights = new double[0];
+	}
+	
 	public LabelsList(Type type, PolyDataTools dataTools) {
 		NELL nell = new NELL(dataTools);
 		
@@ -168,7 +173,10 @@ public class LabelsList {
 			return new LabelsList(Type.FREEBASE_NELL_CATEGORIES, dataTools);
 		} else {
 			String[] strParts = str.split(",");
-			if (strParts.length == 0 || !strParts[0].contains(":"))
+			if (strParts.length == 0 || (strParts.length == 1 && strParts[0].length() == 0))
+				return new LabelsList();
+				
+			if (!strParts[0].contains(":"))
 				return new LabelsList(strParts, 0);	
 			
 			String[] labels = new String[strParts.length];

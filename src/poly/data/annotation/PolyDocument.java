@@ -32,7 +32,6 @@ public class PolyDocument extends DocumentInMemory {
 		annotator.setLanguage(language);
 		annotator.setText(text);
 		
-		
 		this.tokens = annotator.makeTokens();
 		this.dependencyParses = annotator.makeDependencyParses(this, 0);
 		this.constituencyParses = annotator.makeConstituencyParses(this, 0);

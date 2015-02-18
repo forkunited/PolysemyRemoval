@@ -214,6 +214,59 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			}
 		});
 		
+		tools.addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
+			public String toString() {
+				return "WeightedConstrained";
+			}
+			
+			@Override
+			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
+				Set<String> constrainedIndicators = new HashSet<String>();
+				List<Pair<String, Double>> sortedWeights = new ArrayList<Pair<String, Double>>();
+				for (Entry<String, Double> entry : indicatorWeights.entrySet())
+					sortedWeights.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));
+				Set<String> positiveIndicatorSet = new HashSet<String>();
+				positiveIndicatorSet.addAll(positiveIndicators);
+				
+				Collections.sort(sortedWeights, new Comparator<Pair<String, Double>>() {
+					@Override
+					public int compare(Pair<String, Double> p0,
+							Pair<String, Double> p1) {
+						if (p0.getSecond() > p1.getSecond())
+							return -1;
+						else if (p0.getSecond() < p1.getSecond())
+							return 1;
+						else 
+							return 0;
+					}
+					
+				});
+				
+				for (Pair<String, Double> weightedIndicator : sortedWeights) {
+					if (!positiveIndicatorSet.contains(weightedIndicator.getFirst())
+						|| constrainedIndicators.contains(weightedIndicator.getFirst()))
+						continue;
+					
+					constrainedIndicators.add(weightedIndicator.getFirst());
+					if (nell.areCategoriesMutuallyExclusive(constrainedIndicators)) {
+						constrainedIndicators.remove(weightedIndicator.getFirst());
+						continue;
+					}
+				
+					constrainedIndicators.addAll(nell.getCategoryGeneralizations(weightedIndicator.getFirst()));
+				}
+				
+				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(constrainedIndicators.size());
+				for (String constrainedIndicator : constrainedIndicators) {
+					double weight = 1.0;
+					if (indicatorWeights.containsKey(constrainedIndicator))
+						weight = indicatorWeights.get(constrainedIndicator);
+					weightedLabels.add(new Pair<String, Double>(constrainedIndicator, weight));
+				}
+				
+				return new LabelsList(weightedLabels);
+			}
+		});
 		
 		return tools;
 	}

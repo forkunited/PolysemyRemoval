@@ -4,16 +4,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
 import poly.data.annotation.TokenSpansDatum;
-import poly.util.PolyProperties;
-
 import ark.data.Gazetteer;
 import ark.data.annotation.Datum;
 import ark.data.annotation.nlp.PoSTag;
 import ark.data.annotation.nlp.PoSTagClass;
-import ark.util.OutputWriter;
+import ark.model.annotator.nlp.NLPAnnotatorStanford;
 
 public class Scratch {
 	public static void main(String[] args) {
@@ -42,9 +39,20 @@ public class Scratch {
 		//Scratch x = new Scratch();
 		//String beforePattern1 = x.convertPattern("((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*", null);
 		//System.out.println(beforePattern1);
-		PolyDataTools tools = new PolyDataTools(new OutputWriter(), new PolyProperties());
-		System.out.println(tools.getGazetteer("NounPhraseNELLCategory").getIds("Wedding"));
+		//PolyDataTools tools = new PolyDataTools(new OutputWriter(), new PolyProperties());
+		//System.out.println(tools.getGazetteer("NounPhraseNELLCategory").getIds("Wedding"));
 		//System.out.println(tools.getCleanFn("PolyDefaultCleanFn").transform("Wedding"));
+		
+		NLPAnnotatorStanford nlp = new NLPAnnotatorStanford(3, 5);
+		nlp.setText("Jim has a dog askdfjsk he make i yo. Do. It is nice.");
+	
+		String[][] tokens = nlp.makeTokens();
+		for (int i = 0; i < tokens.length; i++) {
+			for (int j = 0; j < tokens[i].length; j++) {
+				System.out.print(tokens[i][j] + " ");
+			}
+			System.out.println("");
+		}
 	}
 	
 	protected Pattern posTagClassPattern = Pattern.compile("<p:([^>]*)>");

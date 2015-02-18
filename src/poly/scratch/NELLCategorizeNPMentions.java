@@ -1,37 +1,27 @@
 package poly.scratch;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 import org.json.JSONObject;
 
+import poly.data.NELLMentionCategorizer;
 import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
-import poly.data.annotation.NELLDataSetFactory;
 import poly.data.annotation.PolyDocument;
 import poly.data.annotation.TokenSpansDatum;
 import poly.util.PolyProperties;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
-import ark.data.annotation.Datum.Tools.InverseLabelIndicator;
-import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.data.annotation.Language;
-import ark.data.feature.Feature;
-import ark.data.feature.FeaturizedDataSet;
-import ark.model.SupervisedModel;
-import ark.model.SupervisedModelCompositeBinary;
 import ark.model.annotator.nlp.NLPAnnotatorStanford;
 import ark.util.FileUtil;
 import ark.util.OutputWriter;
@@ -44,34 +34,22 @@ public class NELLCategorizeNPMentions {
 		ANNOTATED
 	}
 	
+	public static final int DEFAULT_MIN_ANNOTATION_SENTENCE_LENGTH = 3;
+	public static final int DEFAULT_MAX_ANNOTATION_SENTENCE_LENGTH = 30;
+	
 	private static PolyDataTools dataTools = new PolyDataTools(new OutputWriter(), new PolyProperties());
 	private static Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
-	private static Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools = TokenSpansDatum.getBooleanTools(dataTools);
-	private static NELLDataSetFactory nellDataFactory = new NELLDataSetFactory(dataTools);
-	private static NLPAnnotatorStanford nlpAnnotator = new NLPAnnotatorStanford();
-	private static NLPAnnotatorStanford tokenAnnotator = new NLPAnnotatorStanford();
-	private static InverseLabelIndicator<LabelsList> inverseLabelIndicator = datumTools.getInverseLabelIndicator("UnweightedConstrained");
 	
-	private static LabelsList validLabels;
 	private static InputType inputType;
 	private static int maxThreads;
-	private static double mentionModelThreshold;
-	private static File featuresFile;
-	private static String modelFilePathPrefix;
 	private static File outputDataFile;
 	private static File outputDocumentDir;
-	private static int maxSentenceAnnotationLength;
-	private static int minSentenceAnnotationLength;
-	
-	private static SupervisedModel<TokenSpansDatum<LabelsList>, LabelsList> model;
-	private static List<Feature<TokenSpansDatum<LabelsList>, LabelsList>> features;
 	private static List<File> inputFiles;
+	private static NELLMentionCategorizer categorizer;
+	private static NLPAnnotatorStanford nlpAnnotator;
 	
 	public static void main(String[] args) {
 		if (!parseArgs(args))
-			return;
-		
-		if (!deserializeModels())
 			return;
 		
 		dataTools.getOutputWriter().debugWriteln("Running annotation and models...");
@@ -92,7 +70,8 @@ public class NELLCategorizeNPMentions {
 				} else {
 					document = new PolyDocument(FileUtil.readJSONFile(file));
 				}
-				DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = categorizeNPMentions(document);
+				
+				DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = categorizer.categorizeNounPhraseMentions(document);
 				
 				List<JSONObject> jsonLabeledData = new ArrayList<JSONObject>();
 				for (TokenSpansDatum<LabelsList> datum : labeledData)
@@ -132,96 +111,9 @@ public class NELLCategorizeNPMentions {
 	
 	private static PolyDocument constructAnnotatedDocument(File file) {
 		String fileText = FileUtil.readFile(file);
-		NLPAnnotatorStanford threadTokenAnnotator = new NLPAnnotatorStanford(tokenAnnotator);
-		threadTokenAnnotator.setText(fileText);
-		String[][] tokens = threadTokenAnnotator.makeTokens();
-		StringBuilder cleanTextBuilder = new StringBuilder();
-
-		for (int i = 0; i < tokens.length; i++) {
-			if (tokens[i].length < minSentenceAnnotationLength || tokens[i].length > maxSentenceAnnotationLength)
-				continue;
-			
-			int endSymbolsStartToken = tokens[i].length + 1;
-			for (int j = tokens[i].length - 1; j >= 0; j--) {
-				if (tokens[i][j].matches("[^A-Za-z0-9]+")) {
-					endSymbolsStartToken = j;
-				} else {
-					break;
-				}
-			}
-			
-			for (int j = 0; j < tokens[i].length; j++) {
-				cleanTextBuilder.append(tokens[i][j]);
-				if (j < endSymbolsStartToken - 1)
-					cleanTextBuilder.append(" ");
-			}
-			
-			cleanTextBuilder.append(" ");
-		}
 		
 		NLPAnnotatorStanford threadNlpAnnotator = new NLPAnnotatorStanford(nlpAnnotator);
-		return new PolyDocument(file.getName(), cleanTextBuilder.toString(), Language.English, threadNlpAnnotator);
-	}
-	
-	private static boolean deserializeModels() {
-		
-		Feature<TokenSpansDatum<LabelsList>, LabelsList> feature = null;
-		List<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>> binaryModels = new ArrayList<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>>();
-		features = new ArrayList<Feature<TokenSpansDatum<LabelsList>, LabelsList>>();
-		
-		try {
-			BufferedReader reader = FileUtil.getFileReader(featuresFile.getAbsolutePath());
-			while ((feature = Feature.deserialize(reader, true, datumTools)) != null) {
-				dataTools.getOutputWriter().debugWriteln("Deserialized " + feature.toString(false) + " (" + feature.getVocabularySize() + ")");
-				features.add(feature.clone(datumTools, dataTools.getParameterEnvironment(), false));
-			}
-			reader.close();
-
-			dataTools.getOutputWriter().debugWriteln("Finished deserializing " + features.size() + " features.");
-			
-			for (final String label : validLabels.getLabels()) {
-				File modelFile = new File(modelFilePathPrefix + label);
-				if (modelFile.exists() && modelFile.length() > 0) {
-					dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath() + " (" + modelFile.length() + " bytes)");
-					BufferedReader modelReader = FileUtil.getFileReader(modelFile.getAbsolutePath());
-					SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = SupervisedModel.deserialize(modelReader, true, binaryTools);
-					if (binaryModel == null) {
-						dataTools.getOutputWriter().debugWriteln("ERROR: Failed to deserialize " + label + " model.");	
-						return false;
-					}
-					binaryModels.add(binaryModel);
-					modelReader.close();
-				
-					datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
-						@Override
-						public String toString() {
-							return label;
-						}
-						
-						@Override
-						public boolean indicator(LabelsList labels) {
-							if (labels == null)
-								return true;
-							return labels.contains(label);
-						}
-	
-						@Override
-						public double weight(LabelsList labels) {
-							return labels.getLabelWeight(label);
-						}	
-					});
-				}
-			
-			}
-			
-			model = new SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(binaryModels, datumTools.getLabelIndicators(), binaryTools, inverseLabelIndicator);
-			
-			dataTools.getOutputWriter().debugWriteln("Finished deserializing models.");
-			return true;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
+		return new PolyDocument(file.getName(), fileText, Language.English, threadNlpAnnotator);
 	}
 	
 	private static boolean initializeNlpPipeline() {
@@ -230,110 +122,68 @@ public class NELLCategorizeNPMentions {
 			dataTools.getOutputWriter().debugWriteln("ERROR: Failed to initialze nlp pipeline.");
 			return false;
 		}
-		
-		tokenAnnotator.disableConstituencyParses();
-		tokenAnnotator.disableDependencyParses();
-		tokenAnnotator.disablePoSTags();
-		if (!tokenAnnotator.initializePipeline()) {
-			dataTools.getOutputWriter().debugWriteln("ERROR: Failed to initialze tokenization pipeline.");
-			return false;
-		}
-		
-		return true;
-	}
-	
-	private static DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNPMentions(PolyDocument document) {
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = nellDataFactory.constructDataSet(document, datumTools, true, 0.0);
-		
-		FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList> featurizedData = 
-			new FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList>("", 
-																	features, 
-																	1, 
-																	datumTools,
-																	null);
-		
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(datumTools, null);
-		
-		for (TokenSpansDatum<LabelsList> datum : data) {
-			LabelsList labels = datum.getLabel();
-			List<String> confidentLabels = new ArrayList<String>();
-			Map<String, Double> labelWeights = new HashMap<String, Double>();
-			for (String label : labels.getLabels()) {
-				if (!validLabels.contains(label))
-					continue;
-				double weight = labels.getLabelWeight(label);
-				if (weight >= mentionModelThreshold) {
-					confidentLabels.add(label);
-				}
-				labelWeights.put(label, weight);
-			}
-			
-			if (confidentLabels.isEmpty()) {
-				featurizedData.add(datum);
-			} else {
-				labeledData.add(new TokenSpansDatum<LabelsList>(datum, inverseLabelIndicator.label(labelWeights, confidentLabels), false));
-			}
-		}
-		
-		if (!featurizedData.precomputeFeatures())
-			return null;
-		
-		Map<TokenSpansDatum<LabelsList>, LabelsList> dataLabels = model.classify(featurizedData);
 
-		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : dataLabels.entrySet()) {
-			if (entry.getValue().getLabels().length == 0)
-				continue;
-			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), entry.getValue(), false));
-		}
-		
-		return labeledData;
+		return true;
 	}
 	
 	private static boolean parseArgs(String[] args) {
 		OptionParser parser = new OptionParser();
-		parser.accepts("inputType").withRequiredArg();
-		parser.accepts("maxThreads").withRequiredArg();
-		parser.accepts("mentionModelThreshold").withRequiredArg();
-		parser.accepts("featuresFile").withRequiredArg();
-		parser.accepts("input").withRequiredArg();
-		parser.accepts("modelFilePathPrefix").withRequiredArg();
-		parser.accepts("validLabels").withRequiredArg();
-		parser.accepts("outputDataFile").withRequiredArg();
-		parser.accepts("outputDocumentDir").withRequiredArg();
-		parser.accepts("minAnnotationSentenceLength").withRequiredArg();
-		parser.accepts("maxAnnotationSentenceLength").withRequiredArg();
-		parser.accepts("outputDebugFile").withRequiredArg();
-		
+		parser.accepts("inputType").withRequiredArg()
+			.describedAs("PLAIN_TEXT or ANNOTATED determines whether input file(s) are text or already annotated")
+			.defaultsTo("PLAIN_TEXT");
+		parser.accepts("maxThreads").withRequiredArg()
+			.describedAs("Maximum number of concurrent threads to use when annotating files")
+			.ofType(Integer.class)
+			.defaultsTo(1);
+		parser.accepts("mentionModelThreshold").withRequiredArg()
+			.describedAs("Confidence threshold above which NELL's beliefs are used to categorize noun-phrases without reference "
+					 + "to the mention-trained models")
+			.ofType(Double.class)
+			.defaultsTo(NELLMentionCategorizer.DEFAULT_MENTION_MODEL_THRESHOLD);
+		parser.accepts("featuresFile").withRequiredArg()
+			.describedAs("Path to initialized feature file")
+			.ofType(File.class)
+			.defaultsTo(NELLMentionCategorizer.DEFAULT_FEATURES_FILE);
+		parser.accepts("input").withRequiredArg()
+			.describedAs("Path to input file or directory on which to run the noun-phrase categorization")
+			.ofType(File.class);
+		parser.accepts("modelFilePathPrefix").withRequiredArg()
+			.describedAs("Prefix of paths to model files. Each model file path should start with this prefix and end with the NELL " +
+					" category for which the model was trained")
+			.defaultsTo(NELLMentionCategorizer.DEFAULT_MODEL_FILE_PATH_PREFIX);
+		parser.accepts("validLabels").withRequiredArg()
+			.describedAs("ALL_NELL_CATEGORIES, FREEBASE_NELL_CATEGORIES, or a list of categories by which to classify " 
+					+ "noun-phrase mentions")
+			.defaultsTo(NELLMentionCategorizer.DEFAULT_VALID_LABELS);
+		parser.accepts("outputDataFile").withRequiredArg()
+			.describedAs("Path to noun-phrase mention categorization data output file")
+			.ofType(File.class);
+		parser.accepts("outputDocumentDir").withRequiredArg()
+			.describedAs("Optional path to NLP document annotation output directory")
+			.ofType(File.class);
+		parser.accepts("minAnnotationSentenceLength").withRequiredArg()
+			.describedAs("Minimum length of sentences that are considered when parsing the document")
+			.ofType(Integer.class)
+			.defaultsTo(DEFAULT_MIN_ANNOTATION_SENTENCE_LENGTH);
+		parser.accepts("maxAnnotationSentenceLength").withRequiredArg()
+			.describedAs("Maximum length of sentences that are considered when parsing the document")
+			.ofType(Integer.class)
+			.defaultsTo(DEFAULT_MAX_ANNOTATION_SENTENCE_LENGTH);
+		parser.accepts("outputDebugFile").withRequiredArg()
+			.describedAs("Optional path to debug output file")
+			.ofType(File.class);
+		parser.accepts("labelType").withRequiredArg()
+			.describedAs("WEIGHTED, UNWEIGHTED, WEIGHTED_CONSTRAINED, or UNWEIGHTED_CONSTRAINED " +
+						 " determines whether labels are constrained to be non-polysemous and/or weighted")
+			.defaultsTo(NELLMentionCategorizer.DEFAULT_LABEL_TYPE.toString());
+		parser.accepts("help").forHelp();
 		
 		OptionSet options = parser.parse(args);
-       
-		if (options.has("inputType")) {
-			inputType = InputType.valueOf(options.valueOf("inputType").toString());
-		} else {
-			inputType = InputType.PLAIN_TEXT;
-		}
-		
-		if (options.has("maxThreads")) {
-			maxThreads = Integer.parseInt(options.valueOf("maxThreads").toString());
-		} else {
-			maxThreads = 1;
-		}
-		
-		if (options.has("mentionModelThreshold")) {
-			mentionModelThreshold = Double.parseDouble(options.valueOf("mentionModelThreshold").toString());
-		} else {
-			mentionModelThreshold = 0.9;
-		}
-		
-		if (options.has("featuresFile")) {
-			featuresFile = new File(options.valueOf("featuresFile").toString());
-		} else {
-			dataTools.getOutputWriter().debugWriteln("ERROR: Missing 'featuresFile' argument.");
-			return false;
-		}
+		inputType = InputType.valueOf(options.valueOf("inputType").toString());
+		maxThreads = (int)options.valueOf("maxThreads");
 		
 		if (options.has("input")) {
-			File input = new File(options.valueOf("input").toString());
+			File input = (File)options.valueOf("input");
 			inputFiles = new ArrayList<File>();
 			if (input.isDirectory()) {
 				inputFiles.addAll(Arrays.asList(input.listFiles()));
@@ -345,43 +195,30 @@ public class NELLCategorizeNPMentions {
 			return false;
 		}
 		
-		if (options.has("modelFilePathPrefix")) {
-			modelFilePathPrefix = options.valueOf("modelFilePathPrefix").toString();
+		if (options.has("outputDataFile")) {
+			outputDataFile = (File)options.valueOf("outputDataFile");
 		} else {
-			dataTools.getOutputWriter().debugWriteln("ERROR: Missing 'modelFilePathPrefix' argument.");
+			dataTools.getOutputWriter().debugWriteln("ERROR: Missing 'outputDataFile' argument.");
 			return false;
 		}
 		
-		if (options.has("validLabels")) {
-			validLabels = LabelsList.fromString(options.valueOf("validLabels").toString(), dataTools);
-		} else {
-			validLabels = new LabelsList(LabelsList.Type.ALL_NELL_CATEGORIES, dataTools);
-		}
-		
-		if (options.has("outputDataFile")) {
-			outputDataFile = new File(options.valueOf("outputDataFile").toString());
-		}
-		
 		if (options.has("outputDocumentDir")) {
-			outputDocumentDir = new File(options.valueOf("outputDocumentDir").toString());
+			outputDocumentDir = (File)options.valueOf("outputDocumentDir");
 		}
 		
-		if (options.has("minAnnotationSentenceLength")) {	
-			minSentenceAnnotationLength = Integer.valueOf(options.valueOf("minAnnotationSentenceLength").toString());
-		} else {
-			minSentenceAnnotationLength = 2;
-		}
-		
-		if (options.has("maxAnnotationSentenceLength")) {
-			maxSentenceAnnotationLength = Integer.valueOf(options.valueOf("maxAnnotationSentenceLength").toString());
-		} else {
-			maxSentenceAnnotationLength = 30;
-		}
+		nlpAnnotator = new NLPAnnotatorStanford((Integer)options.valueOf("minAnnotationSentenceLength"), (Integer)options.valueOf("maxAnnotationSentenceLength"));
 		
 		if (options.has("outputDebugFile")) {
-			dataTools.getOutputWriter().setDebugFile(new File(options.valueOf("outputDebugFile").toString()), false);
+			dataTools.getOutputWriter().setDebugFile((File)options.valueOf("outputDebugFile"), false);
 		}
 		
+		categorizer = new NELLMentionCategorizer(datumTools, 
+												 options.valueOf("validLabels").toString(),
+												 (double)options.valueOf("mentionModelThreshold"),
+												 NELLMentionCategorizer.LabelType.valueOf(options.valueOf("labelType").toString()),
+												 (File)options.valueOf("featuresFile"),
+												 options.valueOf("modelFilePathPrefix").toString());
+
 		return true;
 	}
 }

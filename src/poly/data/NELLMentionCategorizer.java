@@ -87,7 +87,7 @@ public class NELLMentionCategorizer {
 		this.features = new ArrayList<Feature<TokenSpansDatum<LabelsList>, LabelsList>>();
 		
 		try {
-			BufferedReader reader = FileUtil.getFileReader(featuresFile.getAbsolutePath());
+			BufferedReader reader = FileUtil.getFileReader(featuresFile.getPath());
 			while ((feature = Feature.deserialize(reader, true, this.datumTools)) != null) {
 				dataTools.getOutputWriter().debugWriteln("Deserialized " + feature.toString(false) + " (" + feature.getVocabularySize() + ")");
 				this.features.add(feature.clone(this.datumTools, dataTools.getParameterEnvironment(), false));
@@ -100,7 +100,7 @@ public class NELLMentionCategorizer {
 				File modelFile = new File(modelFilePathPrefix + label);
 				if (modelFile.exists() && modelFile.length() > 0) {
 					dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath() + " (" + modelFile.length() + " bytes)");
-					BufferedReader modelReader = FileUtil.getFileReader(modelFile.getAbsolutePath());
+					BufferedReader modelReader = FileUtil.getFileReader(modelFile.getPath());
 					SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = SupervisedModel.deserialize(modelReader, true, this.binaryTools);
 					if (binaryModel == null) {
 						dataTools.getOutputWriter().debugWriteln("ERROR: Failed to deserialize " + label + " model.");	

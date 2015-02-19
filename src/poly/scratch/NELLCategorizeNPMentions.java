@@ -181,6 +181,15 @@ public class NELLCategorizeNPMentions {
 		
 		OptionSet options = parser.parse(args);
 		
+		if (options.has("help")) {
+			try {
+				parser.printHelpOn(System.out);
+			} catch (IOException e) {
+				return false;
+			}
+			return false;
+		}
+		
 		output.debugWriteln("Loading data tools (gazetteers etc)...");
 		dataTools = new PolyDataTools(output, new PolyProperties());
 		datumTools = TokenSpansDatum.getLabelsListTools(dataTools);

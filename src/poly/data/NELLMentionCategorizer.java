@@ -98,13 +98,13 @@ public class NELLMentionCategorizer {
 			
 			for (final String label : this.validLabels.getLabels()) {
 				File modelFile = new File(modelFilePathPrefix + label);
-				if (modelFile.exists() && modelFile.length() > 0) {
+				if (FileUtil.fileExists(modelFile.getPath())) {
 					dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getAbsolutePath() + " (" + modelFile.length() + " bytes)");
 					BufferedReader modelReader = FileUtil.getFileReader(modelFile.getPath());
 					SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = SupervisedModel.deserialize(modelReader, true, this.binaryTools);
 					if (binaryModel == null) {
-						dataTools.getOutputWriter().debugWriteln("ERROR: Failed to deserialize " + label + " model.");	
-						return false;
+						dataTools.getOutputWriter().debugWriteln("WARNING: Failed to deserialize " + label + " model.  Maybe empty?");	
+						continue;
 					}
 					binaryModels.add(binaryModel);
 					modelReader.close();

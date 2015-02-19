@@ -37,8 +37,8 @@ public class NELLCategorizeNPMentions {
 	public static final int DEFAULT_MIN_ANNOTATION_SENTENCE_LENGTH = 3;
 	public static final int DEFAULT_MAX_ANNOTATION_SENTENCE_LENGTH = 30;
 	
-	private static PolyDataTools dataTools = new PolyDataTools(new OutputWriter(), new PolyProperties());
-	private static Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
+	private static PolyDataTools dataTools; 
+	private static Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools;
 	
 	private static InputType inputType;
 	private static int maxThreads;
@@ -127,6 +127,7 @@ public class NELLCategorizeNPMentions {
 	}
 	
 	private static boolean parseArgs(String[] args) {
+		OutputWriter output = new OutputWriter();
 		OptionParser parser = new OptionParser();
 		parser.accepts("inputType").withRequiredArg()
 			.describedAs("PLAIN_TEXT or ANNOTATED determines whether input file(s) are text or already annotated")
@@ -179,6 +180,12 @@ public class NELLCategorizeNPMentions {
 		parser.accepts("help").forHelp();
 		
 		OptionSet options = parser.parse(args);
+		
+		output.debugWriteln("Loading data tools (gazetteers etc)...");
+		dataTools = new PolyDataTools(output, new PolyProperties());
+		datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
+		output.debugWriteln("Finished loading data tools.");
+		
 		inputType = InputType.valueOf(options.valueOf("inputType").toString());
 		maxThreads = (int)options.valueOf("maxThreads");
 		

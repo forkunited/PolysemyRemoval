@@ -139,15 +139,19 @@ public class NELLMentionCategorizer {
 			return false;
 		}
 	}
-	
+
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data) {
+		return categorizeNounPhraseMentions(data, 1);
+	}
+	
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads) {
 		if (this.features == null || this.model == null)
 			return null;
 
 		FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList> featurizedData = 
 			new FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList>("", 
 																	this.features, 
-																	1, 
+																	maxThreads, 
 																	this.datumTools,
 																	null);
 		
@@ -189,9 +193,13 @@ public class NELLMentionCategorizer {
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(PolyDocument document) {
+		return categorizeNounPhraseMentions(document, 1);
+	}
+	
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(PolyDocument document, int maxThreads) {
 		if (this.features == null || this.model == null)
 			return null;
 			
-		return categorizeNounPhraseMentions(this.nellDataFactory.constructDataSet(document, this.datumTools, true, 0.0));
+		return categorizeNounPhraseMentions(this.nellDataFactory.constructDataSet(document, this.datumTools, true, 0.0), maxThreads);
 	}
 }

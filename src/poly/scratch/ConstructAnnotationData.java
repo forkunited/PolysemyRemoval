@@ -96,7 +96,7 @@ public class ConstructAnnotationData {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataSetName, labels, examplesPerLabel, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("UnweightedConstrained"), devTestDocuments);
 		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> nonPolysemousDataParts = nonPolysemousData.makePartition(new double[] { .9,  .1 }, documentClusterer, dataTools.getGlobalRandom());
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousTestData = nonPolysemousDataParts.get(1);
-		
+
 		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, 1.0, NELLMentionCategorizer.LabelType.WEIGHTED_CONSTRAINED, NELLMentionCategorizer.DEFAULT_FEATURES_FILE, NELLMentionCategorizer.DEFAULT_MODEL_FILE_PATH_PREFIX);
 			
 		constructAnnotationsForData("lc", labels, categorizer, maxThreads, lowConfidenceData);

@@ -162,7 +162,7 @@ public class NELLMentionCategorizer {
 			List<String> confidentLabels = new ArrayList<String>();
 			Map<String, Double> labelWeights = new HashMap<String, Double>();
 			
-			if (labels.getLabels() == null) {
+			if (labels == null) {
 				featurizedData.add(datum);
 				continue;
 			}

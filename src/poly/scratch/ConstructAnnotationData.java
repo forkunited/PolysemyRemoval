@@ -126,7 +126,7 @@ public class ConstructAnnotationData {
 							new File(output.getModelFilePath() + "." + name + "." + label));
 				
 				for (TokenSpansDatum<Boolean> datum : binaryData) {
-					boolean labelValue = datum.getLabel();
+					boolean labelValue = (datum.getLabel() == null) ? false : datum.getLabel();
 					boolean mentionLabeledValue = mentionLabeledBinaryData.getDatumById(datum.getId()).getLabel();
 					
 					if (labelValue == mentionLabeledValue)

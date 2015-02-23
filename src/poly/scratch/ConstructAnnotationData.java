@@ -29,11 +29,12 @@ public class ConstructAnnotationData {
 		int examplesPerLabel = Integer.valueOf(args[3]); 
 		int polysemousTestExamples = Integer.valueOf(args[4]);
 		int lowConfidenceTestExamples = Integer.valueOf(args[5]);
-		String dataSetName = args[6];
-		int maxThreads = Integer.valueOf(args[7]);
-		File featuresFile = new File(args[8]);
-		String modelFilePathPrefix = args[9];
-		String outputFilePathPrefix = args[10];
+		int noBeliefTestExamples = Integer.valueOf(args[6]);
+		String dataSetName = args[7];
+		int maxThreads = Integer.valueOf(args[8]);
+		File featuresFile = new File(args[9]);
+		String modelFilePathPrefix = args[10];
+		String outputFilePathPrefix = args[11];
 		
 		final PolyProperties properties = new PolyProperties();
 		OutputWriter output = new OutputWriter(
@@ -89,7 +90,7 @@ public class ConstructAnnotationData {
 		devTestData.makePartition(new double[] { .5,  .5 }, documentClusterer, dataTools.getGlobalRandom());
 		
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> lowConfidenceData = dataFactory.loadLowConfidenceDataSet(properties.getNELLDataFileDirPath(), lowConfidenceTestExamples, nellConfidenceThreshold);
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> noBeliefData = dataFactory.loadNoBeliefDataSet(properties.getNELLDataFileDirPath(), lowConfidenceTestExamples, nellConfidenceThreshold);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> noBeliefData = dataFactory.loadNoBeliefDataSet(properties.getNELLDataFileDirPath(), noBeliefTestExamples, nellConfidenceThreshold);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> polysemousData = dataFactory.loadPolysemousDataSet(properties.getNELLDataFileDirPath(), polysemousTestExamples, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("Unweighted"));
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataSetName, labels, examplesPerLabel, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("UnweightedConstrained"), devTestDocuments);
 		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> nonPolysemousDataParts = nonPolysemousData.makePartition(new double[] { .9,  .1 }, documentClusterer, dataTools.getGlobalRandom());

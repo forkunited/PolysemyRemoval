@@ -194,6 +194,17 @@ public class NELLDataSetFactory {
 		});
 	}
 	
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadNoBeliefDataSet(String dataFileDirPath, final int exampleCount, final double nellConfidenceThreshold) {
+		File file = new File(dataFileDirPath, "NELLData_NoBelief_e" + exampleCount + "_c" + (int)(nellConfidenceThreshold * 100));
+		
+		final NELLDataSetFactory that = this;
+		return loadDataSet(file, new DataSetConstructor() { 
+			public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet() { 
+				return that.constructNoBeliefDataSet(exampleCount, nellConfidenceThreshold);	
+			}
+		});
+	}
+	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> loadPolysemousDataSet(String dataFileDirPath, final int exampleCount, final double nellConfidenceThreshold, final Datum.Tools.InverseLabelIndicator<LabelsList> inverseLabelIndicator) {
 		File file = new File(dataFileDirPath, "NELLData_Polysemous_e" + exampleCount + "_c" + (int)(nellConfidenceThreshold * 100));
 		
@@ -331,6 +342,36 @@ public class NELLDataSetFactory {
 		return data;
 	}
 	
+	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructNoBeliefDataSet(int exampleCount, double nellConfidenceThreshold) {
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
+		File documentDir = new File(this.documentDirPath);
+		File[] documentFiles = documentDir.listFiles();
+		int id = 0;
+		for (File documentFile : documentFiles) {
+			Document document = this.dataTools.getDocumentCache().getDocument(documentFile.getName());
+			List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
+			for (TokenSpanCached np : nps) {
+				String npStr = np.toString();
+				List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, 0.0);
+
+				if (categories.size() != 0)
+					continue;
+				
+				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, null, false);
+				data.add(datum);
+				id++;
+			
+				if (data.size() >= exampleCount)
+					break;
+			}
+			
+			if (data.size() >= exampleCount)
+				break;
+		}
+		
+		return data;
+	}
+	
 	// minExamplesPerType low confidence examples (no label above confidence)
 	private DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructLowConfidenceDataSet(int exampleCount, double nellConfidenceThreshold) {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
@@ -344,6 +385,9 @@ public class NELLDataSetFactory {
 				String npStr = np.toString();
 				List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, 0.0);
 
+				if (categories.size() == 0)
+					continue;
+				
 				boolean lowConfidence = true;
 				for (Pair<String, Double> category : categories) {
 					if (category.getSecond() >= nellConfidenceThreshold) {
@@ -352,7 +396,7 @@ public class NELLDataSetFactory {
 					}
 				}
 				if (!lowConfidence)
-					break;
+					continue;
 				
 				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, null, false);
 				data.add(datum);

@@ -23,27 +23,24 @@ import ark.util.ThreadMapper.Fn;
 
 public class ConstructAnnotationData {
 	public static void main(String[] args) {
-		String experimentName = "GSTNELLNormalized/" + args[0];
-		String labelsStr = args[1];
-		int randomSeed = Integer.valueOf(args[2]);
-		double nellConfidenceThreshold = Double.valueOf(args[3]);
-		int examplesPerLabel = Integer.valueOf(args[4]); 
-		int polysemousTestExamples = Integer.valueOf(args[5]);
-		int lowConfidenceTestExamples = Integer.valueOf(args[6]);
-		String dataSetName = args[7];
-		int maxThreads = Integer.valueOf(args[8]);
+		String labelsStr = args[0];
+		int randomSeed = Integer.valueOf(args[1]);
+		double nellConfidenceThreshold = Double.valueOf(args[2]);
+		int examplesPerLabel = Integer.valueOf(args[3]); 
+		int polysemousTestExamples = Integer.valueOf(args[4]);
+		int lowConfidenceTestExamples = Integer.valueOf(args[5]);
+		String dataSetName = args[6];
+		int maxThreads = Integer.valueOf(args[7]);
+		File featuresFile = new File(args[8]);
+		String modelFilePathPrefix = args[9];
+		String outputFilePathPrefix = args[10];
 		
-		String experimentOutputName = dataSetName + "/" + experimentName;
-
 		final PolyProperties properties = new PolyProperties();
-		String experimentOutputPath = new File(properties.getExperimentOutputDirPath(), experimentOutputName).getAbsolutePath(); 
-		
 		OutputWriter output = new OutputWriter(
-				new File(experimentOutputPath + ".debug.out"),
-				new File(experimentOutputPath + ".results.out"),
-				new File(experimentOutputPath + ".data.out"),
-				new File(experimentOutputPath + ".model.out")
-			);
+				new File(outputFilePathPrefix + ".debug.out"), 
+				new File(outputFilePathPrefix + ".results.out"), 
+				new File(outputFilePathPrefix + ".data.out"), 
+				new File(outputFilePathPrefix + ".model.out"));
 		
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
 		dataTools.setRandomSeed(randomSeed);
@@ -92,15 +89,17 @@ public class ConstructAnnotationData {
 		devTestData.makePartition(new double[] { .5,  .5 }, documentClusterer, dataTools.getGlobalRandom());
 		
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> lowConfidenceData = dataFactory.loadLowConfidenceDataSet(properties.getNELLDataFileDirPath(), lowConfidenceTestExamples, nellConfidenceThreshold);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> noBeliefData = dataFactory.loadNoBeliefDataSet(properties.getNELLDataFileDirPath(), lowConfidenceTestExamples, nellConfidenceThreshold);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> polysemousData = dataFactory.loadPolysemousDataSet(properties.getNELLDataFileDirPath(), polysemousTestExamples, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("Unweighted"));
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataSetName, labels, examplesPerLabel, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("UnweightedConstrained"), devTestDocuments);
 		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> nonPolysemousDataParts = nonPolysemousData.makePartition(new double[] { .9,  .1 }, documentClusterer, dataTools.getGlobalRandom());
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousTestData = nonPolysemousDataParts.get(1);
 
-		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, 1.0, NELLMentionCategorizer.LabelType.WEIGHTED_CONSTRAINED, NELLMentionCategorizer.DEFAULT_FEATURES_FILE, NELLMentionCategorizer.DEFAULT_MODEL_FILE_PATH_PREFIX);
-			
+		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, 1.0, NELLMentionCategorizer.LabelType.WEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix);
+		
 		constructAnnotationsForData("lc", labels, categorizer, maxThreads, lowConfidenceData);
-		constructAnnotationsForData("poly", labels, categorizer, maxThreads, polysemousData);
+		constructAnnotationsForData("nb", labels, categorizer, maxThreads, noBeliefData);
+		constructAnnotationsForData("hc_poly", labels, categorizer, maxThreads, polysemousData);
 		constructAnnotationsForData("hc_nonpoly", labels, categorizer, maxThreads, nonPolysemousTestData);
 	}
 	
@@ -133,7 +132,6 @@ public class ConstructAnnotationData {
 					String sentenceStr = getSpanSurroundingSentences(span);
 					String idStr = String.valueOf(datum.getId());
 					String spanJsonStr = span.toJSON(true).toString();
-					
 					
 					StringBuilder annotationLine = new StringBuilder();
 					annotationLine.append("\t");

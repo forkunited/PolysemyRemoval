@@ -55,13 +55,18 @@ public class NELLMentionCategorizer {
 			 DEFAULT_MENTION_MODEL_THRESHOLD, 
 			 DEFAULT_LABEL_TYPE, 
 			 DEFAULT_FEATURES_FILE, 
-			 DEFAULT_MODEL_FILE_PATH_PREFIX);
+			 DEFAULT_MODEL_FILE_PATH_PREFIX,
+			 null);
 	}
 	
-	public NELLMentionCategorizer(Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools, String validLabels, double mentionModelThreshold, LabelType labelType, File featuresFile, String modelFilePathPrefix) {
+	public NELLMentionCategorizer(Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools, String validLabels, double mentionModelThreshold, LabelType labelType, File featuresFile, String modelFilePathPrefix, NELLDataSetFactory nellDataFactory) {
 		this.datumTools = datumTools;
 		this.binaryTools = TokenSpansDatum.getBooleanTools(datumTools.getDataTools());
-		this.nellDataFactory = new NELLDataSetFactory((PolyDataTools)datumTools.getDataTools());
+		
+		if (nellDataFactory == null)
+			new NELLDataSetFactory((PolyDataTools)datumTools.getDataTools());
+		else
+			this.nellDataFactory = nellDataFactory;
 		
 		this.validLabels = LabelsList.fromString(DEFAULT_VALID_LABELS, (PolyDataTools)datumTools.getDataTools());
 		this.mentionModelThreshold = mentionModelThreshold;

@@ -233,7 +233,8 @@ public class NELLCategorizeNPMentions {
 												 (double)options.valueOf("mentionModelThreshold"),
 												 NELLMentionCategorizer.LabelType.valueOf(options.valueOf("labelType").toString()),
 												 (File)options.valueOf("featuresFile"),
-												 options.valueOf("modelFilePathPrefix").toString());
+												 options.valueOf("modelFilePathPrefix").toString(),
+												 null);
 
 		return true;
 	}

@@ -58,26 +58,6 @@ public class ConstructAnnotationData {
 						return datum.getTokenSpans()[0].getDocument().getName();
 					}
 				};
-				
-		for (final String label : labels.getLabels()) {
-			LabelIndicator<LabelsList> labelIndicator = new LabelIndicator<LabelsList>() {
-				public String toString() {
-					return label;
-				}
-				
-				@Override
-				public boolean indicator(LabelsList labelList) {
-					return labelList.contains(label);
-				}
-				
-				@Override
-				public double weight(LabelsList labelList) {
-					return labelList.getLabelWeight(label);
-				}
-			};
-			
-			datumTools.addLabelIndicator(labelIndicator);
-		}
 		
 		// Random fraction of data for dev and test
 		// Dev-test documents are collected and ignored in loading training data (below)
@@ -95,7 +75,31 @@ public class ConstructAnnotationData {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataSetName, labels, examplesPerLabel, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("UnweightedConstrained"), devTestDocuments);
 		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> nonPolysemousDataParts = nonPolysemousData.makePartition(new double[] { .9,  .1 }, documentClusterer, dataTools.getGlobalRandom());
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousTestData = nonPolysemousDataParts.get(1);
-
+		
+		for (final String label : labels.getLabels()) {
+			LabelIndicator<LabelsList> labelIndicator = new LabelIndicator<LabelsList>() {
+				public String toString() {
+					return label;
+				}
+				
+				@Override
+				public boolean indicator(LabelsList labelList) {
+					return labelList.contains(label);
+				}
+				
+				@Override
+				public double weight(LabelsList labelList) {
+					return labelList.getLabelWeight(label);
+				}
+			};
+			
+			lowConfidenceData.getDatumTools().addLabelIndicator(labelIndicator);
+			noBeliefData.getDatumTools().addLabelIndicator(labelIndicator);
+			polysemousData.getDatumTools().addLabelIndicator(labelIndicator);
+			nonPolysemousTestData.getDatumTools().addLabelIndicator(labelIndicator);
+		}
+		
+		
 		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, 1.0, NELLMentionCategorizer.LabelType.WEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
 		
 		constructAnnotationsForData("lc", labels, categorizer, maxThreads, lowConfidenceData);

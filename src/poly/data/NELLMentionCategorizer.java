@@ -146,10 +146,10 @@ public class NELLMentionCategorizer {
 	}
 
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data) {
-		return categorizeNounPhraseMentions(data, 1);
+		return categorizeNounPhraseMentions(data, 1, false);
 	}
 	
-	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads) {
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, boolean outputUnlabeled) {
 		if (this.features == null || this.model == null)
 			return null;
 
@@ -195,7 +195,7 @@ public class NELLMentionCategorizer {
 		Map<TokenSpansDatum<LabelsList>, LabelsList> dataLabels = this.model.classify(featurizedData);
 
 		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : dataLabels.entrySet()) {
-			if (entry.getValue().getLabels().length == 0)
+			if (!outputUnlabeled && entry.getValue().getLabels().length == 0)
 				continue;
 			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), entry.getValue(), false));
 		}
@@ -211,6 +211,6 @@ public class NELLMentionCategorizer {
 		if (this.features == null || this.model == null)
 			return null;
 			
-		return categorizeNounPhraseMentions(this.nellDataFactory.constructDataSet(document, this.datumTools, true, 0.0), maxThreads);
+		return categorizeNounPhraseMentions(this.nellDataFactory.constructDataSet(document, this.datumTools, true, 0.0), maxThreads, false);
 	}
 }

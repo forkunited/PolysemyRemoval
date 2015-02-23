@@ -109,7 +109,7 @@ public class ConstructAnnotationData {
 	}
 	
 	private static void constructAnnotationsForData(String name, LabelsList labels, NELLMentionCategorizer categorizer, int maxThreads, DataSet<TokenSpansDatum<LabelsList>, LabelsList> data) {
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> mentionLabeledData = categorizer.categorizeNounPhraseMentions(data, maxThreads);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> mentionLabeledData = categorizer.categorizeNounPhraseMentions(data, maxThreads, true);
 		
 		OutputWriter output = data.getDatumTools().getDataTools().getOutputWriter();
 		ThreadMapper<String, Boolean> threads = new ThreadMapper<String, Boolean>(new Fn<String, Boolean>() {

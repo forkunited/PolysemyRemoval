@@ -101,7 +101,9 @@ public class ConstructAnnotationData {
 		}
 		
 		
-		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, 1.0, NELLMentionCategorizer.LabelType.WEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
+		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, 1.0, NELLMentionCategorizer.LabelType.UNWEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
+		
+		System.out.println(nonPolysemousData.size() + " " + nonPolysemousTestData.size());
 		
 		constructAnnotationsForData("lc", labels, categorizer, maxThreads, lowConfidenceData);
 		constructAnnotationsForData("nb", labels, categorizer, maxThreads, noBeliefData);

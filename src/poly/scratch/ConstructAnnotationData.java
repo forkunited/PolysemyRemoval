@@ -118,7 +118,7 @@ public class ConstructAnnotationData {
 		final DataSet<TokenSpansDatum<LabelsList>, LabelsList> mentionLabeledData = categorizer.categorizeNounPhraseMentions(data, maxThreads, true);
 		final DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabeledData = nellLabelData(data, maxThreads, nellConfidenceThreshold);
 		
-		OutputWriter output = data.getDatumTools().getDataTools().getOutputWriter();
+		final OutputWriter output = data.getDatumTools().getDataTools().getOutputWriter();
 		ThreadMapper<String, Boolean> threads = new ThreadMapper<String, Boolean>(new Fn<String, Boolean>() {
 			public Boolean apply(String label) {
 				LabelIndicator<LabelsList> labelIndicator = nellLabeledData.getDatumTools().getLabelIndicator(label);
@@ -168,7 +168,7 @@ public class ConstructAnnotationData {
 		threads.run(Arrays.asList(labels.getLabels()), maxThreads);
 	}
 	
-	private static DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabelData(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, final double nellConfidenceThreshold) {
+	private static DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabelData(final DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, final double nellConfidenceThreshold) {
 		final DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(data.getDatumTools(), null);
 		final NELL nell = new NELL((PolyDataTools)data.getDatumTools().getDataTools());
 		

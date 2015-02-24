@@ -114,9 +114,9 @@ public class ConstructAnnotationData {
 		constructAnnotationsForData("hc_nonpoly", labels, categorizer, maxThreads, nellConfidenceThreshold, nonPolysemousTestData);
 	}
 	
-	private static void constructAnnotationsForData(String name, LabelsList labels, NELLMentionCategorizer categorizer, int maxThreads, double nellConfidenceThreshold, DataSet<TokenSpansDatum<LabelsList>, LabelsList> data) {
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> mentionLabeledData = categorizer.categorizeNounPhraseMentions(data, maxThreads, true);
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabeledData = nellLabelData(data, maxThreads, nellConfidenceThreshold);
+	private static void constructAnnotationsForData(final String name, LabelsList labels, NELLMentionCategorizer categorizer, int maxThreads, double nellConfidenceThreshold, DataSet<TokenSpansDatum<LabelsList>, LabelsList> data) {
+		final DataSet<TokenSpansDatum<LabelsList>, LabelsList> mentionLabeledData = categorizer.categorizeNounPhraseMentions(data, maxThreads, true);
+		final DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabeledData = nellLabelData(data, maxThreads, nellConfidenceThreshold);
 		
 		OutputWriter output = data.getDatumTools().getDataTools().getOutputWriter();
 		ThreadMapper<String, Boolean> threads = new ThreadMapper<String, Boolean>(new Fn<String, Boolean>() {
@@ -168,9 +168,9 @@ public class ConstructAnnotationData {
 		threads.run(Arrays.asList(labels.getLabels()), maxThreads);
 	}
 	
-	private static DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabelData(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, double nellConfidenceThreshold) {
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(data.getDatumTools(), null);
-		NELL nell = new NELL((PolyDataTools)data.getDatumTools().getDataTools());
+	private static DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabelData(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, final double nellConfidenceThreshold) {
+		final DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(data.getDatumTools(), null);
+		final NELL nell = new NELL((PolyDataTools)data.getDatumTools().getDataTools());
 		
 		labeledData.addAll(data.map(new Fn<TokenSpansDatum<LabelsList>, TokenSpansDatum<LabelsList>>(){
 

@@ -1,11 +1,15 @@
 package poly.scratch;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import poly.data.NELL;
 import poly.data.NELLMentionCategorizer;
 import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
@@ -18,6 +22,7 @@ import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.data.annotation.Document;
 import ark.data.annotation.nlp.TokenSpan;
 import ark.util.OutputWriter;
+import ark.util.Pair;
 import ark.util.ThreadMapper;
 import ark.util.ThreadMapper.Fn;
 
@@ -103,21 +108,22 @@ public class ConstructAnnotationData {
 		
 		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, Double.MAX_VALUE, NELLMentionCategorizer.LabelType.UNWEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
 		
-		constructAnnotationsForData("lc", labels, categorizer, maxThreads, lowConfidenceData);
-		constructAnnotationsForData("nb", labels, categorizer, maxThreads, noBeliefData);
-		constructAnnotationsForData("hc_poly", labels, categorizer, maxThreads, polysemousData);
-		constructAnnotationsForData("hc_nonpoly", labels, categorizer, maxThreads, nonPolysemousTestData);
+		constructAnnotationsForData("lc", labels, categorizer, maxThreads, nellConfidenceThreshold, lowConfidenceData);
+		constructAnnotationsForData("nb", labels, categorizer, maxThreads, nellConfidenceThreshold, noBeliefData);
+		constructAnnotationsForData("hc_poly", labels, categorizer, maxThreads, nellConfidenceThreshold, polysemousData);
+		constructAnnotationsForData("hc_nonpoly", labels, categorizer, maxThreads, nellConfidenceThreshold, nonPolysemousTestData);
 	}
 	
-	private static void constructAnnotationsForData(String name, LabelsList labels, NELLMentionCategorizer categorizer, int maxThreads, DataSet<TokenSpansDatum<LabelsList>, LabelsList> data) {
+	private static void constructAnnotationsForData(String name, LabelsList labels, NELLMentionCategorizer categorizer, int maxThreads, double nellConfidenceThreshold, DataSet<TokenSpansDatum<LabelsList>, LabelsList> data) {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> mentionLabeledData = categorizer.categorizeNounPhraseMentions(data, maxThreads, true);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabeledData = nellLabelData(data, maxThreads, nellConfidenceThreshold);
 		
 		OutputWriter output = data.getDatumTools().getDataTools().getOutputWriter();
 		ThreadMapper<String, Boolean> threads = new ThreadMapper<String, Boolean>(new Fn<String, Boolean>() {
 			public Boolean apply(String label) {
-				LabelIndicator<LabelsList> labelIndicator = data.getDatumTools().getLabelIndicator(label);
-				Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools = data.getDatumTools().makeBinaryDatumTools(labelIndicator);
-				DataSet<TokenSpansDatum<Boolean>, Boolean> binaryData = data.makeBinaryDataSet(label, binaryTools);
+				LabelIndicator<LabelsList> labelIndicator = nellLabeledData.getDatumTools().getLabelIndicator(label);
+				Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools = nellLabeledData.getDatumTools().makeBinaryDatumTools(labelIndicator);
+				DataSet<TokenSpansDatum<Boolean>, Boolean> binaryData = nellLabeledData.makeBinaryDataSet(label, binaryTools);
 				DataSet<TokenSpansDatum<Boolean>, Boolean> mentionLabeledBinaryData = mentionLabeledData.makeBinaryDataSet(label, binaryTools);
 				
 				OutputWriter labelOutput = new OutputWriter(
@@ -160,6 +166,33 @@ public class ConstructAnnotationData {
 		});
 		
 		threads.run(Arrays.asList(labels.getLabels()), maxThreads);
+	}
+	
+	private static DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabelData(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, double nellConfidenceThreshold) {
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(data.getDatumTools(), null);
+		NELL nell = new NELL((PolyDataTools)data.getDatumTools().getDataTools());
+		
+		labeledData.addAll(data.map(new Fn<TokenSpansDatum<LabelsList>, TokenSpansDatum<LabelsList>>(){
+
+			@Override
+			public TokenSpansDatum<LabelsList> apply(
+					TokenSpansDatum<LabelsList> item) {
+				List<Pair<String, Double>> weightedCategories = nell.getNounPhraseNELLWeightedCategories(item.getTokenSpans()[0].toString(), nellConfidenceThreshold);
+				List<String> positiveIndicators = new ArrayList<String>(weightedCategories.size());
+				Map<String, Double> labelWeights = new HashMap<String, Double>();
+				for (Pair<String, Double> weightedCategory : weightedCategories) {
+					positiveIndicators.add(weightedCategory.getFirst());
+					labelWeights.put(weightedCategory.getFirst(), weightedCategory.getSecond());
+				}
+				
+				LabelsList label = data.getDatumTools().getInverseLabelIndicator("UnweightedConstrained").label(labelWeights, positiveIndicators);
+
+				return new TokenSpansDatum<LabelsList>(item, label, false);
+			}
+			
+		}, maxThreads));
+	
+		return labeledData;
 	}
 	
 	private static String getSpanSurroundingSentences(TokenSpan span) {

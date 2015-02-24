@@ -97,6 +97,7 @@ public class ConstructAnnotationData {
 			noBeliefData.getDatumTools().addLabelIndicator(labelIndicator);
 			polysemousData.getDatumTools().addLabelIndicator(labelIndicator);
 			nonPolysemousTestData.getDatumTools().addLabelIndicator(labelIndicator);
+			datumTools.addLabelIndicator(labelIndicator);
 		}
 		
 		

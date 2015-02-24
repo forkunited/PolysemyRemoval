@@ -101,7 +101,7 @@ public class ConstructAnnotationData {
 		}
 		
 		
-		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, 1.0, NELLMentionCategorizer.LabelType.UNWEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
+		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, Double.MAX_VALUE, NELLMentionCategorizer.LabelType.UNWEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
 		
 		constructAnnotationsForData("lc", labels, categorizer, maxThreads, lowConfidenceData);
 		constructAnnotationsForData("nb", labels, categorizer, maxThreads, noBeliefData);
@@ -129,9 +129,6 @@ public class ConstructAnnotationData {
 				for (TokenSpansDatum<Boolean> datum : binaryData) {
 					boolean labelValue = (datum.getLabel() == null) ? false : datum.getLabel();
 					boolean mentionLabeledValue = mentionLabeledBinaryData.getDatumById(datum.getId()).getLabel();
-					
-					if (name.equals("hc_nonpoly") && labelValue)
-						System.out.println(label + " " + labelValue + " " + mentionLabeledValue);
 					
 					if (labelValue == mentionLabeledValue)
 						continue;

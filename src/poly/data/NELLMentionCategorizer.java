@@ -34,7 +34,7 @@ public class NELLMentionCategorizer {
 	}
 	
 	public static final String DEFAULT_VALID_LABELS = "ALL_NELL_CATEGORIES";
-	public static final double DEFAULT_MENTION_MODEL_THRESHOLD =  1.0;
+	public static final double DEFAULT_MENTION_MODEL_THRESHOLD =  Double.MAX_VALUE;
 	public static final LabelType DEFAULT_LABEL_TYPE= LabelType.WEIGHTED_CONSTRAINED;
 	public static final File DEFAULT_FEATURES_FILE = new File("AregBasel2.model.out");
 	public static final String DEFAULT_MODEL_FILE_PATH_PREFIX = "AregBasel2.model.out.";

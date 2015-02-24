@@ -103,8 +103,6 @@ public class ConstructAnnotationData {
 		
 		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, 1.0, NELLMentionCategorizer.LabelType.UNWEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
 		
-		System.out.println(nonPolysemousData.size() + " " + nonPolysemousTestData.size());
-		
 		constructAnnotationsForData("lc", labels, categorizer, maxThreads, lowConfidenceData);
 		constructAnnotationsForData("nb", labels, categorizer, maxThreads, noBeliefData);
 		constructAnnotationsForData("hc_poly", labels, categorizer, maxThreads, polysemousData);
@@ -124,9 +122,9 @@ public class ConstructAnnotationData {
 				
 				OutputWriter labelOutput = new OutputWriter(
 							new File(output.getDebugFilePath() + "." + name + "." + label), 
-							new File(output.getResultsFilePath() + "." + name + "." + label), 
+							null, 
 							new File(output.getDataFilePath() + "." + name + "." + label), 
-							new File(output.getModelFilePath() + "." + name + "." + label));
+							null);
 				
 				for (TokenSpansDatum<Boolean> datum : binaryData) {
 					boolean labelValue = (datum.getLabel() == null) ? false : datum.getLabel();
@@ -154,6 +152,8 @@ public class ConstructAnnotationData {
 					labelOutput.dataWriteln(annotationLine.toString());
 					
 				}
+				
+				labelOutput.close();
 				
 				return true;
 			}

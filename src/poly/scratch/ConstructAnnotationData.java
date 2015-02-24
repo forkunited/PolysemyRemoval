@@ -127,7 +127,6 @@ public class ConstructAnnotationData {
 				
 				for (TokenSpansDatum<Boolean> datum : binaryData) {
 					boolean labelValue = (datum.getLabel() == null) ? false : datum.getLabel();
-					mentionLabeledBinaryData.getDatumById(datum.getId()).getLabel();
 					boolean mentionLabeledValue = mentionLabeledBinaryData.getDatumById(datum.getId()).getLabel();
 					
 					if (labelValue == mentionLabeledValue)

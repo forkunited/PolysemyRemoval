@@ -197,6 +197,10 @@ public class NELLMentionCategorizer {
 		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : dataLabels.entrySet()) {
 			if (!outputUnlabeled && entry.getValue().getLabels().length == 0)
 				continue;
+			if (entry.getValue() == null) {
+				System.out.println("Bad " +entry.getKey().getId());
+				System.exit(0);
+			}
 			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), entry.getValue(), false));
 		}
 		

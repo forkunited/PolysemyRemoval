@@ -130,6 +130,9 @@ public class ConstructAnnotationData {
 					boolean labelValue = (datum.getLabel() == null) ? false : datum.getLabel();
 					boolean mentionLabeledValue = mentionLabeledBinaryData.getDatumById(datum.getId()).getLabel();
 					
+					if (name.equals("hc_nonpoly"))
+						System.out.println(label + " " + labelValue + " " + mentionLabeledValue);
+					
 					if (labelValue == mentionLabeledValue)
 						continue;
 					

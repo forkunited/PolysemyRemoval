@@ -142,7 +142,7 @@ public class NELLCategorizeNPMentions {
 				LabelsList allLabels = categorizer.getValidLabels();
 				for (JSONObject outputDatum : outputData) {
 					JSONObject tokenSpanObj = outputDatum.getJSONArray("tokenSpans").getJSONObject(0);
-					str.append(outputDatum.getString("id")).append("\t");
+					str.append(outputDatum.getInt("id")).append("\t");
 					str.append(tokenSpanObj.getString("document")).append("\t");
 					str.append(tokenSpanObj.getString("sentenceIndex")).append("\t");
 					str.append(tokenSpanObj.getString("startTokenIndex")).append("\t");

@@ -85,6 +85,10 @@ public class NELLMentionCategorizer {
 			throw new IllegalArgumentException();
 	}
 	
+	public LabelsList getValidLabels() {
+		return this.validLabels;
+	}
+	
 	public boolean deserialize(File featuresFile, String modelFilePathPrefix) {
 		Feature<TokenSpansDatum<LabelsList>, LabelsList> feature = null;
 		List<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>> binaryModels = new ArrayList<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>>();

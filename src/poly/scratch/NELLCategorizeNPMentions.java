@@ -11,6 +11,7 @@ import java.util.List;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import poly.data.NELLMentionCategorizer;
@@ -34,6 +35,11 @@ public class NELLCategorizeNPMentions {
 		ANNOTATED
 	}
 	
+	public enum OutputType {
+		JSON,
+		TSV
+	}
+	
 	public static final int DEFAULT_MIN_ANNOTATION_SENTENCE_LENGTH = 3;
 	public static final int DEFAULT_MAX_ANNOTATION_SENTENCE_LENGTH = 30;
 	
@@ -41,6 +47,7 @@ public class NELLCategorizeNPMentions {
 	private static Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools;
 	
 	private static InputType inputType;
+	private static OutputType outputType;
 	private static int maxThreads;
 	private static File outputDataFile;
 	private static File outputDocumentDir;
@@ -89,15 +96,21 @@ public class NELLCategorizeNPMentions {
 			
 			dataTools.getOutputWriter().debugWriteln("Finished running annotation and models. Outputting results...");
 			
+			writer.write(constructOutputHeader());
 			for (List<JSONObject> threadResult : threadResults) {
 				if (threadResult == null) {
 					dataTools.getOutputWriter().debugWriteln("ERROR: Thread failed.");
 					writer.close();
 					return;
 				}
-
-				for (JSONObject datum : threadResult)
-					writer.write(datum.toString() + "\n");
+				
+				String output = constructOutput(threadResult);
+				if (output == null) {
+					dataTools.getOutputWriter().debugWriteln("ERROR: Output construction failed.");
+					writer.close();
+					return;
+				}
+				writer.write(output);
 			}
 			
 			writer.close();
@@ -107,6 +120,49 @@ public class NELLCategorizeNPMentions {
 			return;
 		}
 		dataTools.getOutputWriter().debugWriteln("Finished outputting results.");
+	}
+	
+	private static String constructOutputHeader() {
+		StringBuilder str = new StringBuilder();
+		
+		str.append("id\tdoc\tsen\tstok\tetok\tstr");
+		
+		LabelsList labels = categorizer.getValidLabels();
+		for (String label : labels.getLabels())
+			str.append("\t").append(label);
+		str.append("\n");
+		
+		return str.toString();
+	}
+	
+	private static String constructOutput(List<JSONObject> outputData) {
+		StringBuilder str = new StringBuilder();
+		if (outputType == OutputType.TSV) {
+			try {
+				LabelsList allLabels = categorizer.getValidLabels();
+				for (JSONObject outputDatum : outputData) {
+					JSONObject tokenSpanObj = outputDatum.getJSONArray("tokenSpans").getJSONObject(0);
+					str.append(outputDatum.getString("id")).append("\t");
+					str.append(tokenSpanObj.getString("document")).append("\t");
+					str.append(tokenSpanObj.getString("sentenceIndex")).append("\t");
+					str.append(tokenSpanObj.getString("startTokenIndex")).append("\t");
+					str.append(tokenSpanObj.getString("endTokenIndex")).append("\t");
+					str.append(outputDatum.getString("str"));
+					
+					LabelsList datumLabels = LabelsList.fromString(outputDatum.getString("label"), dataTools);
+					for (String label : allLabels.getLabels())
+						str.append("\t").append(datumLabels.getLabelWeight(label));
+					str.append("\n");
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+				return null;
+			}
+		} else {
+			for (JSONObject outputDatum : outputData)
+				str.append(outputDatum.toString()).append("\n");		
+		}
+		return str.toString();
 	}
 	
 	private static PolyDocument constructAnnotatedDocument(File file) {
@@ -132,6 +188,9 @@ public class NELLCategorizeNPMentions {
 		parser.accepts("inputType").withRequiredArg()
 			.describedAs("PLAIN_TEXT or ANNOTATED determines whether input file(s) are text or already annotated")
 			.defaultsTo("PLAIN_TEXT");
+		parser.accepts("outputType").withRequiredArg()
+			.describedAs("JSON or TSV determines whether output data is stored as json objects or a tab-separated table")
+			.defaultsTo("JSON");
 		parser.accepts("maxThreads").withRequiredArg()
 			.describedAs("Maximum number of concurrent threads to use when annotating files")
 			.ofType(Integer.class)
@@ -196,6 +255,7 @@ public class NELLCategorizeNPMentions {
 		output.debugWriteln("Finished loading data tools.");
 		
 		inputType = InputType.valueOf(options.valueOf("inputType").toString());
+		outputType = OutputType.valueOf(options.valueOf("outputType").toString());
 		maxThreads = (int)options.valueOf("maxThreads");
 		
 		if (options.has("input")) {

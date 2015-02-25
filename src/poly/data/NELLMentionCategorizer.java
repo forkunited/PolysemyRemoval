@@ -68,7 +68,7 @@ public class NELLMentionCategorizer {
 		else
 			this.nellDataFactory = nellDataFactory;
 		
-		this.validLabels = LabelsList.fromString(DEFAULT_VALID_LABELS, (PolyDataTools)datumTools.getDataTools());
+		this.validLabels = LabelsList.fromString(validLabels, (PolyDataTools)datumTools.getDataTools());
 		this.mentionModelThreshold = mentionModelThreshold;
 		
 		if (labelType == LabelType.UNWEIGHTED) {

@@ -64,7 +64,7 @@ public class NELLMentionCategorizer {
 		this.binaryTools = TokenSpansDatum.getBooleanTools(datumTools.getDataTools());
 		
 		if (nellDataFactory == null)
-			new NELLDataSetFactory((PolyDataTools)datumTools.getDataTools());
+			this.nellDataFactory = new NELLDataSetFactory((PolyDataTools)datumTools.getDataTools());
 		else
 			this.nellDataFactory = nellDataFactory;
 		

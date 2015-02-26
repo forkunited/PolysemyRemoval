@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import ark.model.SupervisedModel;
 import ark.model.SupervisedModelCompositeBinary;
 import ark.util.FileUtil;
 import ark.util.OutputWriter;
+import ark.util.Pair;
 
 public class NELLMentionCategorizer {
 	public enum LabelType {
@@ -42,6 +44,7 @@ public class NELLMentionCategorizer {
 	private Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools;
 	private Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools;
 	private NELLDataSetFactory nellDataFactory;
+	private NELL nell;
 	
 	private LabelsList validLabels;
 	private double mentionModelThreshold;
@@ -80,6 +83,8 @@ public class NELLMentionCategorizer {
 		} else {
 			this.inverseLabelIndicator = this.datumTools.getInverseLabelIndicator("WeightedConstrained");
 		}
+		
+		this.nell = new NELL((PolyDataTools)this.datumTools.getDataTools());
 		
 		if (!deserialize(featuresFile, modelFilePathPrefix))
 			throw new IllegalArgumentException();
@@ -168,28 +173,12 @@ public class NELLMentionCategorizer {
 		
 		for (TokenSpansDatum<LabelsList> datum : data) {
 			LabelsList labels = datum.getLabel();
-			List<String> confidentLabels = new ArrayList<String>();
-			Map<String, Double> labelWeights = new HashMap<String, Double>();
 			
-			if (labels == null) {
-				featurizedData.add(datum);
-				continue;
-			}
-			
-			for (String label : labels.getLabels()) {
-				if (!this.validLabels.contains(label))
-					continue;
-				double weight = labels.getLabelWeight(label);
-				if (weight >= this.mentionModelThreshold) {
-					confidentLabels.add(label);
-				}
-				labelWeights.put(label, weight);
-			}
-			
-			if (confidentLabels.isEmpty()) {
+			if (labels == null || labels.size() == 0 || datum.isPolysemous()) {
 				featurizedData.add(datum);
 			} else {
-				labeledData.add(new TokenSpansDatum<LabelsList>(datum, this.inverseLabelIndicator.label(labelWeights, confidentLabels), false));
+				LabelsList label = filterToValidLabels(this.inverseLabelIndicator.label(labels.getWeightMap(), labels.getLabelsAboveWeight(this.mentionModelThreshold)));
+				labeledData.add(new TokenSpansDatum<LabelsList>(datum, label, isLabelPolysemous(label)));
 			}
 		}
 		
@@ -199,12 +188,32 @@ public class NELLMentionCategorizer {
 		Map<TokenSpansDatum<LabelsList>, LabelsList> dataLabels = this.model.classify(featurizedData);
 
 		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : dataLabels.entrySet()) {
-			if (!outputUnlabeled && entry.getValue().getLabels().length == 0)
+			LabelsList label = filterToValidLabels(entry.getValue());
+			if (!outputUnlabeled && label.size() == 0)
 				continue;
-			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), entry.getValue(), false));
+			
+			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), label, isLabelPolysemous(label)));
 		}
 		
 		return labeledData;
+	}
+	
+	private boolean isLabelPolysemous(LabelsList labels) {
+		List<String> positiveLabels = new ArrayList<String>();
+		for (String label : labels.getLabels())
+			if (labels.getLabelWeight(label) >= 0.5)
+				positiveLabels.add(label);
+		
+		return this.nell.areCategoriesMutuallyExclusive(positiveLabels);
+	}
+	
+	private LabelsList filterToValidLabels(LabelsList labels) {
+		String[] labelArray = labels.getLabels();
+		List<Pair<String, Double>> filteredLabels = new ArrayList<Pair<String, Double>>(labelArray.length);
+		for (String label : labelArray)
+			if (this.validLabels.contains(label))
+				filteredLabels.add(new Pair<String, Double>(label, labels.getLabelWeight(label)));
+		return new LabelsList(filteredLabels);
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(PolyDocument document) {
@@ -215,6 +224,6 @@ public class NELLMentionCategorizer {
 		if (this.features == null || this.model == null)
 			return null;
 			
-		return categorizeNounPhraseMentions(this.nellDataFactory.constructDataSet(document, this.datumTools, true, 0.0), maxThreads, false);
+		return categorizeNounPhraseMentions(this.nellDataFactory.constructDataSet(document, this.datumTools, true, this.mentionModelThreshold, this.datumTools.getInverseLabelIndicator("WeightedGeneralized")), maxThreads, false);
 	}
 }

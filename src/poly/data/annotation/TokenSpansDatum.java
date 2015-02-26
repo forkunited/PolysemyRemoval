@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.json.JSONArray;
@@ -140,11 +141,7 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			
 			@Override
 			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
-				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(indicatorWeights.size());
-				for (Entry<String, Double> entry : indicatorWeights.entrySet()) {
-					weightedLabels.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));
-				}
-				return new LabelsList(weightedLabels);
+				return new LabelsList(indicatorWeights);
 			}
 		});
 		
@@ -160,6 +157,24 @@ public class TokenSpansDatum<L> extends Datum<L> {
 					weightedLabels.add(new Pair<String, Double>(positiveIndicator, 1.0));
 				}
 				return new LabelsList(weightedLabels);
+			}
+		});
+		
+		tools.addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
+			public String toString() {
+				return "UnweightedGeneralized";
+			}
+			
+			@Override
+			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
+				Map<String, Double> generalizedIndicators = new TreeMap<String, Double>();
+				for (String positiveIndicator : positiveIndicators) {
+					generalizedIndicators.put(positiveIndicator, 1.0);
+					Set<String> generalizations = nell.getCategoryGeneralizations(positiveIndicator);
+					for (String generalization : generalizations)
+						generalizedIndicators.put(generalization, 1.0);
+				}
+				return new LabelsList(generalizedIndicators);
 			}
 		});
 		
@@ -216,12 +231,39 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		
 		tools.addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
 			public String toString() {
+				return "WeightedGeneralized";
+			}
+			
+			@Override
+			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
+				Map<String, Double> generalizedWeights = new TreeMap<String, Double>();
+				for (String positiveIndicator : positiveIndicators) {
+					if (!generalizedWeights.containsKey(positiveIndicator))
+						generalizedWeights.put(positiveIndicator, indicatorWeights.get(positiveIndicator));
+					else {
+						generalizedWeights.put(positiveIndicator, Math.max(indicatorWeights.get(positiveIndicator), generalizedWeights.get(positiveIndicator)));
+						
+						Set<String> generalizations = nell.getCategoryGeneralizations(positiveIndicator);
+						for (String generalization : generalizations) {
+							if (!generalizedWeights.containsKey(generalization))
+								generalizedWeights.put(generalization, indicatorWeights.get(positiveIndicator));
+							else
+								generalizedWeights.put(generalization, Math.max(indicatorWeights.get(generalization), generalizedWeights.get(generalization)));
+						}
+					}
+				}
+				
+				return new LabelsList(generalizedWeights);
+			}
+		});
+		
+		tools.addInverseLabelIndicator(new Datum.Tools.InverseLabelIndicator<LabelsList>() {
+			public String toString() {
 				return "WeightedConstrained";
 			}
 			
 			@Override
 			public LabelsList label(Map<String, Double> indicatorWeights, List<String> positiveIndicators) {
-				Set<String> constrainedIndicators = new HashSet<String>();
 				List<Pair<String, Double>> sortedWeights = new ArrayList<Pair<String, Double>>();
 				for (Entry<String, Double> entry : indicatorWeights.entrySet())
 					sortedWeights.add(new Pair<String, Double>(entry.getKey(), entry.getValue()));
@@ -242,29 +284,32 @@ public class TokenSpansDatum<L> extends Datum<L> {
 					
 				});
 				
+				Map<String, Double> constrainedWeights = new TreeMap<String, Double>();
 				for (Pair<String, Double> weightedIndicator : sortedWeights) {
-					if (!positiveIndicatorSet.contains(weightedIndicator.getFirst())
-						|| constrainedIndicators.contains(weightedIndicator.getFirst()))
+					if (!positiveIndicatorSet.contains(weightedIndicator.getFirst()))
 						continue;
 					
-					constrainedIndicators.add(weightedIndicator.getFirst());
-					if (nell.areCategoriesMutuallyExclusive(constrainedIndicators)) {
-						constrainedIndicators.remove(weightedIndicator.getFirst());
-						continue;
+					if (!constrainedWeights.containsKey(weightedIndicator.getFirst()))
+						constrainedWeights.put(weightedIndicator.getFirst(), weightedIndicator.getSecond());
+					else {
+						constrainedWeights.put(weightedIndicator.getFirst(), Math.max(weightedIndicator.getSecond(), constrainedWeights.get(weightedIndicator.getFirst())));
+						
+						if (nell.areCategoriesMutuallyExclusive(constrainedWeights.keySet())) {
+							constrainedWeights.remove(weightedIndicator.getFirst());
+							continue;
+						}
+						
+						Set<String> generalizations = nell.getCategoryGeneralizations(weightedIndicator.getFirst());
+						for (String generalization : generalizations) {
+							if (!constrainedWeights.containsKey(generalization))
+								constrainedWeights.put(generalization, weightedIndicator.getSecond());
+							else
+								constrainedWeights.put(generalization, Math.max(weightedIndicator.getSecond(), constrainedWeights.get(generalization)));
+						}
 					}
-				
-					constrainedIndicators.addAll(nell.getCategoryGeneralizations(weightedIndicator.getFirst()));
 				}
 				
-				List<Pair<String, Double>> weightedLabels = new ArrayList<Pair<String, Double>>(constrainedIndicators.size());
-				for (String constrainedIndicator : constrainedIndicators) {
-					double weight = 1.0;
-					if (indicatorWeights.containsKey(constrainedIndicator))
-						weight = indicatorWeights.get(constrainedIndicator);
-					weightedLabels.add(new Pair<String, Double>(constrainedIndicator, weight));
-				}
-				
-				return new LabelsList(weightedLabels);
+				return new LabelsList(constrainedWeights);
 			}
 		});
 		

@@ -11,9 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
+import ark.data.annotation.Datum.Tools.InverseLabelIndicator;
 import ark.data.annotation.Document;
 import ark.util.FileUtil;
 import ark.util.OutputWriter;
@@ -61,10 +63,10 @@ public class NELLDataSetFactory {
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document, Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools) {
-		return constructDataSet(document, datumTools, false, 0.0);
+		return constructDataSet(document, datumTools, false, 0.0, null);
 	}
 	
-	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document, Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools, boolean labeled, double nellConfidenceThreshold) {
+	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document, Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools, boolean labeled, double nellConfidenceThreshold, InverseLabelIndicator<LabelsList> inverseLabelIndicator) {
 		this.documentCache.addDocument(document);
 		
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(datumTools, null);
@@ -73,10 +75,17 @@ public class NELLDataSetFactory {
 		for (TokenSpanCached np : nps) {
 			TokenSpansDatum<LabelsList> datum = null;
 			String npStr = np.toString();
-			List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, nellConfidenceThreshold);
 			
 			if (labeled) {
-				LabelsList labels = new LabelsList(categories);
+				List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, nellConfidenceThreshold);
+				Map<String, Double> weights = new TreeMap<String, Double>();
+				List<String> indicators = new ArrayList<String>(categories.size());
+				for (Pair<String, Double> category : categories) {
+					weights.put(category.getFirst(), category.getSecond());
+					indicators.add(category.getFirst());
+				}
+				LabelsList labels = inverseLabelIndicator.label(weights, indicators);
+				
 				datum = new TokenSpansDatum<LabelsList>(id, np, labels, this.nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())));
 			} else {
 				datum = new TokenSpansDatum<LabelsList>(id, np, null, false);

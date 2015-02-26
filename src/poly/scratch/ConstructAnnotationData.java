@@ -3,6 +3,7 @@ package poly.scratch;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,9 +45,9 @@ public class ConstructAnnotationData {
 		final PolyProperties properties = new PolyProperties();
 		OutputWriter output = new OutputWriter(
 				new File(outputFilePathPrefix + ".debug.out"), 
-				new File(outputFilePathPrefix + ".results.out"), 
+				null, 
 				new File(outputFilePathPrefix + ".data.out"), 
-				new File(outputFilePathPrefix + ".model.out"));
+				null);
 		
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
 		dataTools.setRandomSeed(randomSeed);
@@ -117,15 +118,15 @@ public class ConstructAnnotationData {
 	private static void constructAnnotationsForData(final String name, LabelsList labels, NELLMentionCategorizer categorizer, int maxThreads, double nellConfidenceThreshold, DataSet<TokenSpansDatum<LabelsList>, LabelsList> data) {
 		final DataSet<TokenSpansDatum<LabelsList>, LabelsList> mentionLabeledData = categorizer.categorizeNounPhraseMentions(data, maxThreads, true);
 		final DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabeledData = nellLabelData(data, maxThreads, nellConfidenceThreshold);
-		
 		final OutputWriter output = data.getDatumTools().getDataTools().getOutputWriter();
-		ThreadMapper<String, Boolean> threads = new ThreadMapper<String, Boolean>(new Fn<String, Boolean>() {
-			public Boolean apply(String label) {
+		
+		ThreadMapper<String, Pair<String, Integer>> threads = new ThreadMapper<String, Pair<String, Integer>>(new Fn<String, Pair<String, Integer>>() {
+			public Pair<String, Integer> apply(String label) {
 				LabelIndicator<LabelsList> labelIndicator = nellLabeledData.getDatumTools().getLabelIndicator(label);
 				Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools = nellLabeledData.getDatumTools().makeBinaryDatumTools(labelIndicator);
 				DataSet<TokenSpansDatum<Boolean>, Boolean> binaryData = nellLabeledData.makeBinaryDataSet(label, binaryTools);
 				DataSet<TokenSpansDatum<Boolean>, Boolean> mentionLabeledBinaryData = mentionLabeledData.makeBinaryDataSet(label, binaryTools);
-				
+				int predictionCount = 0;
 				OutputWriter labelOutput = new OutputWriter(
 							new File(output.getDebugFilePath() + "." + name + "." + label), 
 							null, 
@@ -135,6 +136,9 @@ public class ConstructAnnotationData {
 				for (TokenSpansDatum<Boolean> datum : binaryData) {
 					boolean labelValue = (datum.getLabel() == null) ? false : datum.getLabel();
 					boolean mentionLabeledValue = mentionLabeledBinaryData.getDatumById(datum.getId()).getLabel();
+					
+					if (mentionLabeledValue)
+						predictionCount++;
 					
 					if (labelValue == mentionLabeledValue)
 						continue;
@@ -161,11 +165,28 @@ public class ConstructAnnotationData {
 				
 				labelOutput.close();
 				
-				return true;
+				return new Pair<String, Integer>(label, predictionCount);
 			}
 		});
 		
-		threads.run(Arrays.asList(labels.getLabels()), maxThreads);
+		List<Pair<String, Integer>> labelCounts = threads.run(Arrays.asList(labels.getLabels()), maxThreads);
+		labelCounts.sort(new Comparator<Pair<String, Integer>>() {
+			@Override
+			public int compare(Pair<String, Integer> arg0,
+					Pair<String, Integer> arg1) {
+				if (arg0.getSecond() > arg1.getSecond())
+					return -1;
+				else if (arg0.getSecond() < arg1.getSecond())
+					return 1;
+				else
+					return 0;
+			}
+		});
+		
+		output.dataWriteln(name + " prediction counts");
+		for (Pair<String, Integer> labelCount : labelCounts)
+			output.dataWriteln(labelCount.getFirst() + "\t" + labelCount.getSecond());
+		output.dataWrite("");
 	}
 	
 	private static DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabelData(final DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, final double nellConfidenceThreshold) {

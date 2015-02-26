@@ -88,11 +88,30 @@ public class LabelsList {
 		return this.labels.keySet().toArray(new String[0]);
 	}
 	
+	public Map<String, Double> getWeightMap() {
+		return this.labels;
+	}
+	
+	public int size() {
+		return this.labels.size();
+	}
+	
 	public double getLabelWeight(String label) {
 		if (this.labels.containsKey(label))
 			return this.labels.get(label);
 		return 0.0;
 	}
+	
+	public List<String> getLabelsAboveWeight(double threshold) {
+		List<String> retLabels = new ArrayList<String>();
+		
+		for (Entry<String, Double> entry : this.labels.entrySet())
+			if (entry.getValue() >= threshold)
+				retLabels.add(entry.getKey());
+		
+		return retLabels;
+	}
+	
 	
 	public String toString() {
 		StringBuilder str = new StringBuilder();

@@ -126,6 +126,9 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		Tools<LabelsList> tools =  new Tools<LabelsList>(dataTools) {
 			@Override
 			public LabelsList labelFromString(String str) {
+				if (str == null)
+					return null;
+				
 				return LabelsList.fromString(str, (PolyDataTools)dataTools);
 			}
 		};
@@ -320,6 +323,8 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		Tools<Boolean> tools =  new Tools<Boolean>(dataTools) {
 			@Override
 			public Boolean labelFromString(String str) {
+				if (str == null)
+					return null;
 				return str.toLowerCase().equals("true") || str.equals("1");
 			}
 		};

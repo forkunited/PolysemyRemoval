@@ -107,7 +107,7 @@ public class ConstructAnnotationData {
 		}
 		
 		
-		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, Double.MAX_VALUE, NELLMentionCategorizer.LabelType.UNWEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
+		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, labelsStr, Double.MAX_VALUE, NELLMentionCategorizer.LabelType.WEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
 		
 		constructAnnotationsForData("lc", labels, categorizer, maxThreads, nellConfidenceThreshold, lowConfidenceData);
 		constructAnnotationsForData("nb", labels, categorizer, maxThreads, nellConfidenceThreshold, noBeliefData);
@@ -127,11 +127,7 @@ public class ConstructAnnotationData {
 				DataSet<TokenSpansDatum<Boolean>, Boolean> binaryData = nellLabeledData.makeBinaryDataSet(label, binaryTools);
 				DataSet<TokenSpansDatum<Boolean>, Boolean> mentionLabeledBinaryData = mentionLabeledData.makeBinaryDataSet(label, binaryTools);
 				int predictionCount = 0;
-				OutputWriter labelOutput = new OutputWriter(
-							new File(output.getDebugFilePath() + "." + name + "." + label), 
-							null, 
-							new File(output.getDataFilePath() + "." + name + "." + label), 
-							null);
+				List<Pair<TokenSpansDatum<Boolean>, Double>> scoredDatums = new ArrayList<Pair<TokenSpansDatum<Boolean>, Double>>();
 				
 				for (TokenSpansDatum<Boolean> datum : binaryData) {
 					boolean labelValue = (datum.getLabel() == null) ? false : datum.getLabel();
@@ -140,9 +136,33 @@ public class ConstructAnnotationData {
 					if (mentionLabeledValue)
 						predictionCount++;
 					
-					if (labelValue == mentionLabeledValue)
-						continue;
-					
+					if (labelValue != mentionLabeledValue) {
+						scoredDatums.add(new Pair<TokenSpansDatum<Boolean>, Double>(datum, 
+								mentionLabeledData.getDatumById(datum.getId()).getLabel().getLabelWeight(label)));
+					}
+				}
+				
+				scoredDatums.sort(new Comparator<Pair<TokenSpansDatum<Boolean>, Double>>() {
+					@Override
+					public int compare(Pair<TokenSpansDatum<Boolean>, Double> arg0,
+							Pair<TokenSpansDatum<Boolean>, Double> arg1) {
+						if (arg0.getSecond() > arg1.getSecond())
+							return -1;
+						else if (arg0.getSecond() < arg1.getSecond())
+							return 1;
+						else
+							return 0;
+					}
+				});
+
+				OutputWriter labelOutput = new OutputWriter(
+						new File(output.getDebugFilePath() + "." + name + "." + label), 
+						null, 
+						new File(output.getDataFilePath() + "." + name + "." + label), 
+						null);
+				
+				for (Pair<TokenSpansDatum<Boolean>, Double> scoredDatum : scoredDatums) {
+					TokenSpansDatum<Boolean> datum = scoredDatum.getFirst();
 					TokenSpan span = datum.getTokenSpans()[0];
 					String mentionStr = span.toString();
 					String sentenceStr = getSpanSurroundingSentences(span);
@@ -160,7 +180,6 @@ public class ConstructAnnotationData {
 					annotationLine.append(spanJsonStr);
 					
 					labelOutput.dataWriteln(annotationLine.toString());
-					
 				}
 				
 				labelOutput.close();

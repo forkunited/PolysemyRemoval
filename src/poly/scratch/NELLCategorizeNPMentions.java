@@ -96,7 +96,9 @@ public class NELLCategorizeNPMentions {
 			
 			dataTools.getOutputWriter().debugWriteln("Finished running annotation and models. Outputting results...");
 			
-			writer.write(constructOutputHeader());
+			String outputHeader = constructOutputHeader();
+			if (outputHeader != null)
+				writer.write(outputHeader);
 			for (List<JSONObject> threadResult : threadResults) {
 				if (threadResult == null) {
 					dataTools.getOutputWriter().debugWriteln("ERROR: Thread failed.");
@@ -123,6 +125,9 @@ public class NELLCategorizeNPMentions {
 	}
 	
 	private static String constructOutputHeader() {
+		if (outputType != OutputType.TSV)
+			return null;
+		
 		StringBuilder str = new StringBuilder();
 		
 		str.append("id\tdoc\tsen\tstok\tetok\tstr");

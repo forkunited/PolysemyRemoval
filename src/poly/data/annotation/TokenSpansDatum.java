@@ -245,14 +245,14 @@ public class TokenSpansDatum<L> extends Datum<L> {
 						generalizedWeights.put(positiveIndicator, indicatorWeights.get(positiveIndicator));
 					else {
 						generalizedWeights.put(positiveIndicator, Math.max(indicatorWeights.get(positiveIndicator), generalizedWeights.get(positiveIndicator)));
-						
-						Set<String> generalizations = nell.getCategoryGeneralizations(positiveIndicator);
-						for (String generalization : generalizations) {
-							if (!generalizedWeights.containsKey(generalization))
-								generalizedWeights.put(generalization, indicatorWeights.get(positiveIndicator));
-							else
-								generalizedWeights.put(generalization, Math.max(indicatorWeights.get(generalization), generalizedWeights.get(generalization)));
-						}
+					}
+					
+					Set<String> generalizations = nell.getCategoryGeneralizations(positiveIndicator);
+					for (String generalization : generalizations) {
+						if (!generalizedWeights.containsKey(generalization))
+							generalizedWeights.put(generalization, indicatorWeights.get(positiveIndicator));
+						else
+							generalizedWeights.put(generalization, Math.max(indicatorWeights.get(generalization), generalizedWeights.get(generalization)));
 					}
 				}
 				
@@ -296,19 +296,19 @@ public class TokenSpansDatum<L> extends Datum<L> {
 						constrainedWeights.put(weightedIndicator.getFirst(), weightedIndicator.getSecond());
 					else {
 						constrainedWeights.put(weightedIndicator.getFirst(), Math.max(weightedIndicator.getSecond(), constrainedWeights.get(weightedIndicator.getFirst())));
-						
-						if (nell.areCategoriesMutuallyExclusive(constrainedWeights.keySet())) {
-							constrainedWeights.remove(weightedIndicator.getFirst());
-							continue;
-						}
-						
-						Set<String> generalizations = nell.getCategoryGeneralizations(weightedIndicator.getFirst());
-						for (String generalization : generalizations) {
-							if (!constrainedWeights.containsKey(generalization))
-								constrainedWeights.put(generalization, weightedIndicator.getSecond());
-							else
-								constrainedWeights.put(generalization, Math.max(weightedIndicator.getSecond(), constrainedWeights.get(generalization)));
-						}
+					}
+					
+					if (nell.areCategoriesMutuallyExclusive(constrainedWeights.keySet())) {
+						constrainedWeights.remove(weightedIndicator.getFirst());
+						continue;
+					}
+					
+					Set<String> generalizations = nell.getCategoryGeneralizations(weightedIndicator.getFirst());
+					for (String generalization : generalizations) {
+						if (!constrainedWeights.containsKey(generalization))
+							constrainedWeights.put(generalization, weightedIndicator.getSecond());
+						else
+							constrainedWeights.put(generalization, Math.max(weightedIndicator.getSecond(), constrainedWeights.get(generalization)));
 					}
 				}
 				

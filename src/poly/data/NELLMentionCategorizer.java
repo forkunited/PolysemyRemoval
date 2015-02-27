@@ -97,6 +97,7 @@ public class NELLMentionCategorizer {
 		List<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>> binaryModels = new ArrayList<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>>();
 		PolyDataTools dataTools = (PolyDataTools)this.datumTools.getDataTools();
 		this.features = new ArrayList<Feature<TokenSpansDatum<LabelsList>, LabelsList>>();
+		List<LabelIndicator<LabelsList>> labelIndicators = new ArrayList<LabelIndicator<LabelsList>>();
 		
 		try {
 			BufferedReader reader = FileUtil.getFileReader(featuresFile.getPath());
@@ -121,7 +122,7 @@ public class NELLMentionCategorizer {
 					binaryModels.add(binaryModel);
 					modelReader.close();
 				
-					this.datumTools.addLabelIndicator(new LabelIndicator<LabelsList>() {
+					LabelIndicator<LabelsList> labelIndicator = new LabelIndicator<LabelsList>() {
 						@Override
 						public String toString() {
 							return label;
@@ -138,12 +139,15 @@ public class NELLMentionCategorizer {
 						public double weight(LabelsList labels) {
 							return labels.getLabelWeight(label);
 						}	
-					});
+					};
+					
+					this.datumTools.addLabelIndicator(labelIndicator);
+					labelIndicators.add(labelIndicator);
 				}
 			
 			}
 			
-			this.model = new SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(binaryModels, this.datumTools.getLabelIndicators(), binaryTools, inverseLabelIndicator);
+			this.model = new SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(binaryModels, labelIndicators, binaryTools, inverseLabelIndicator);
 			dataTools.getOutputWriter().debugWriteln("Finished deserializing models.");
 			return true;
 		} catch (IOException e) {

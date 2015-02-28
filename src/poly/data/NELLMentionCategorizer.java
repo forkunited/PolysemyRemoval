@@ -175,7 +175,7 @@ public class NELLMentionCategorizer {
 		
 		for (TokenSpansDatum<LabelsList> datum : data) {
 			LabelsList labels = datum.getLabel();
-			List<String> aboveThreshold = labels.getLabelsAboveWeight(this.mentionModelThreshold);
+			List<String> aboveThreshold = (labels != null) ? labels.getLabelsAboveWeight(this.mentionModelThreshold) : null;
 			if (labels == null || aboveThreshold.size() == 0 || datum.isPolysemous()) {
 				featurizedData.add(datum);
 			} else {

@@ -175,11 +175,11 @@ public class NELLMentionCategorizer {
 		
 		for (TokenSpansDatum<LabelsList> datum : data) {
 			LabelsList labels = datum.getLabel();
-			
-			if (labels == null || labels.size() == 0 || datum.isPolysemous()) {
+			List<String> aboveThreshold = labels.getLabelsAboveWeight(this.mentionModelThreshold);
+			if (labels == null || aboveThreshold.size() == 0 || datum.isPolysemous()) {
 				featurizedData.add(datum);
 			} else {
-				LabelsList label = filterToValidLabels(this.inverseLabelIndicator.label(labels.getWeightMap(), labels.getLabelsAboveWeight(this.mentionModelThreshold)));
+				LabelsList label = filterToValidLabels(this.inverseLabelIndicator.label(labels.getWeightMap(), aboveThreshold));
 				labeledData.add(new TokenSpansDatum<LabelsList>(datum, label, isLabelPolysemous(label)));
 			}
 		}

@@ -209,7 +209,6 @@ public class ConstructAnnotationData {
 		output.dataWriteln("\n" + name + " prediction counts");
 		for (Pair<String, Integer> labelCount : labelCounts)
 			output.dataWriteln(labelCount.getFirst() + "\t" + labelCount.getSecond());
-		output.dataWrite("");
 	}
 	
 	private static DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabelData(final DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, final double nellConfidenceThreshold) {

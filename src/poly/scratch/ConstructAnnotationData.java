@@ -69,7 +69,7 @@ public class ConstructAnnotationData {
 		// Dev-test documents are collected and ignored in loading training data (below)
 		// The dev and test data are loaded as a random fraction so that the label frequencies in the sample match the frequencies in the population
 		// (but this is not true of the training data)
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> devTestData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), .01, nellConfidenceThreshold, NELLDataSetFactory.PolysemyMode.NON_POLYSEMOUS, datumTools.getInverseLabelIndicator("UnweightedConstrained"));
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> devTestData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), .01, nellConfidenceThreshold, NELLDataSetFactory.PolysemyMode.NON_POLYSEMOUS, datumTools.getInverseLabelIndicator("UnweightedGeneralized"));
 		Set<String> devTestDocuments = new HashSet<String>();
 		for (TokenSpansDatum<LabelsList> datum : devTestData)
 			devTestDocuments.add(datum.getTokenSpans()[0].getDocument().getName());
@@ -78,7 +78,7 @@ public class ConstructAnnotationData {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> lowConfidenceData = dataFactory.loadLowConfidenceDataSet(properties.getNELLDataFileDirPath(), lowConfidenceTestExamples, nellConfidenceThreshold);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> noBeliefData = dataFactory.loadNoBeliefDataSet(properties.getNELLDataFileDirPath(), noBeliefTestExamples, nellConfidenceThreshold);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> polysemousData = dataFactory.loadPolysemousDataSet(properties.getNELLDataFileDirPath(), polysemousTestExamples, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("Unweighted"));
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataSetName, labels, examplesPerLabel, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("UnweightedConstrained"), devTestDocuments);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataSetName, labels, examplesPerLabel, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("UnweightedGeneralized"), devTestDocuments);
 		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> nonPolysemousDataParts = nonPolysemousData.makePartition(new double[] { .9,  .1 }, documentClusterer, dataTools.getGlobalRandom());
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousTestData = nonPolysemousDataParts.get(1);
 		
@@ -119,6 +119,8 @@ public class ConstructAnnotationData {
 		final DataSet<TokenSpansDatum<LabelsList>, LabelsList> mentionLabeledData = categorizer.categorizeNounPhraseMentions(data, maxThreads, true);
 		final DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabeledData = nellLabelData(data, maxThreads, nellConfidenceThreshold);
 		final OutputWriter output = data.getDatumTools().getDataTools().getOutputWriter();
+		
+		output.debugWriteln("Constructing " + name + " data (" + data.size() + ")");
 		
 		ThreadMapper<String, Pair<String, Integer>> threads = new ThreadMapper<String, Pair<String, Integer>>(new Fn<String, Pair<String, Integer>>() {
 			public Pair<String, Integer> apply(String label) {
@@ -204,7 +206,7 @@ public class ConstructAnnotationData {
 			}
 		});
 		
-		output.dataWriteln(name + " prediction counts");
+		output.dataWriteln("\n" + name + " prediction counts");
 		for (Pair<String, Integer> labelCount : labelCounts)
 			output.dataWriteln(labelCount.getFirst() + "\t" + labelCount.getSecond());
 		output.dataWrite("");
@@ -247,7 +249,7 @@ public class ConstructAnnotationData {
 			List<String> tokens = document.getSentenceTokens(i);
 			for (int j = 0; j < tokens.size(); j++) {
 				if (span.containsToken(i, j)) {
-					str.append("_").append(tokens.get(j)).append("_ ");
+					str.append("__").append(tokens.get(j)).append("__ ");
 				} else {
 					str.append(tokens.get(j)).append(" ");
 				}

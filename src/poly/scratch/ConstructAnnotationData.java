@@ -137,8 +137,10 @@ public class ConstructAnnotationData {
 						predictionCount++;
 					
 					if (labelValue != mentionLabeledValue) {
+						double weight = mentionLabeledData.getDatumById(datum.getId()).getLabel().getLabelWeight(label);
+						double confidence = Math.abs(weight - 0.5);
 						scoredDatums.add(new Pair<TokenSpansDatum<Boolean>, Double>(datum, 
-								mentionLabeledData.getDatumById(datum.getId()).getLabel().getLabelWeight(label)));
+								confidence));
 					}
 				}
 				

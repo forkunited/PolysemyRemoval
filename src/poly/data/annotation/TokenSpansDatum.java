@@ -594,12 +594,12 @@ public class TokenSpansDatum<L> extends Datum<L> {
 		@Override
 		public <T extends Datum<Boolean>> Datum.Tools<T, Boolean> makeBinaryDatumTools(
 				LabelIndicator<L> labelIndicator) {
-			this.dataTools.getOutputWriter().getDebugFilePath();
+			OutputWriter genericOutput = this.dataTools.getOutputWriter();
 			OutputWriter output = new OutputWriter(
-					new File(this.dataTools.getOutputWriter().getDebugFilePath() + "." + labelIndicator.toString()),
-					new File(this.dataTools.getOutputWriter().getResultsFilePath() + "." + labelIndicator.toString()),
-					new File(this.dataTools.getOutputWriter().getDataFilePath() + "." + labelIndicator.toString()),
-					new File(this.dataTools.getOutputWriter().getModelFilePath() + "." + labelIndicator.toString())
+					(genericOutput.getDebugFilePath() != null) ? new File(genericOutput.getDebugFilePath() + "." + labelIndicator.toString()) : null,
+					(genericOutput.getResultsFilePath() != null) ? new File(genericOutput.getResultsFilePath() + "." + labelIndicator.toString()) : null,
+					(genericOutput.getDataFilePath() != null) ? new File(genericOutput.getDataFilePath() + "." + labelIndicator.toString()) : null,
+					(genericOutput.getModelFilePath() != null) ? new File(genericOutput.getModelFilePath() + "." + labelIndicator.toString()) : null
 				);
 			
 			PolyDataTools dataTools = new PolyDataTools(output, (PolyDataTools)this.dataTools);

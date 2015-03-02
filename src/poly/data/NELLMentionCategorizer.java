@@ -226,6 +226,6 @@ public class NELLMentionCategorizer {
 		if (this.features == null || this.model == null)
 			return null;
 			
-		return categorizeNounPhraseMentions(this.nellDataFactory.constructDataSet(document, this.datumTools, true, this.mentionModelThreshold, this.datumTools.getInverseLabelIndicator("WeightedGeneralized")), maxThreads, false);
+		return categorizeNounPhraseMentions(this.nellDataFactory.constructDataSet(document, this.datumTools, (this.mentionModelThreshold <= 1.0), this.mentionModelThreshold, this.datumTools.getInverseLabelIndicator("WeightedGeneralized")), maxThreads, false);
 	}
 }

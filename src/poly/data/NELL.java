@@ -18,7 +18,6 @@ import ark.util.Pair;
 public class NELL {
 	private PolyDataTools dataTools;
 	
-	private Gazetteer nounPhraseCategory;
 	private Gazetteer categoryGeneralization;
 	private Gazetteer categoryMutex;
 	
@@ -34,7 +33,6 @@ public class NELL {
 	public NELL(PolyDataTools dataTools) {
 		this.dataTools = dataTools;
 		
-		this.nounPhraseCategory = dataTools.getGazetteer("NounPhraseNELLCategory");
 		this.categoryGeneralization = dataTools.getGazetteer("NELLCategoryGeneralization");
 		this.categoryMutex = dataTools.getGazetteer("NELLCategoryMutex");
 		
@@ -64,7 +62,9 @@ public class NELL {
 	}
 	
 	public List<String> getNounPhraseNELLCategories(String nounPhrase, double confidenceThreshold) {
-		List<Pair<String, Double>> weightedCategories = this.nounPhraseCategory.getWeightedIds(nounPhrase);
+		Gazetteer nounPhraseCategory = this.dataTools.getGazetteer("NounPhraseNELLCategory");
+		
+		List<Pair<String, Double>> weightedCategories = nounPhraseCategory.getWeightedIds(nounPhrase);
 		List<String> categories = new ArrayList<String>();
 		if (weightedCategories == null)
 			return categories;
@@ -77,7 +77,9 @@ public class NELL {
 	}
 	
 	public List<Pair<String, Double>> getNounPhraseNELLWeightedCategories(String nounPhrase, double confidenceThreshold) {
-		List<Pair<String, Double>> weightedCategories = this.nounPhraseCategory.getWeightedIds(nounPhrase);
+		Gazetteer nounPhraseCategory = this.dataTools.getGazetteer("NounPhraseNELLCategory");
+		
+		List<Pair<String, Double>> weightedCategories = nounPhraseCategory.getWeightedIds(nounPhrase);
 		List<Pair<String, Double>> retCategories = new ArrayList<Pair<String, Double>>();
 		if (weightedCategories == null)
 			return retCategories;

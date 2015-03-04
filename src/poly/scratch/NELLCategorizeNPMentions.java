@@ -73,7 +73,7 @@ public class NELLCategorizeNPMentions {
 		ThreadMapper<File, Boolean> threads = new ThreadMapper<File, Boolean>(new Fn<File, Boolean>() {
 			public Boolean apply(File file) {
 				File outputDataFile = new File(outputDataDir, file.getName() + ".data.json");
-				if (quittingTime > 0 && quittingTime <= timer.getClockRunTimeInMillis("")) {
+				if (quittingTime > 0 && quittingTime <= timer.getClockRunTimeInMillis("")/1000.0) {
 					dataTools.getOutputWriter().debugWriteln("Skipping file " + file.getName() + ".  Time limit reached. ");
 					return true;
 				}

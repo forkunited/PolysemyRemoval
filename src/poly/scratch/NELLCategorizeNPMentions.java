@@ -28,6 +28,7 @@ import ark.util.FileUtil;
 import ark.util.OutputWriter;
 import ark.util.ThreadMapper;
 import ark.util.ThreadMapper.Fn;
+import ark.util.Timer;
 
 public class NELLCategorizeNPMentions {
 	public enum InputType {
@@ -49,13 +50,18 @@ public class NELLCategorizeNPMentions {
 	private static InputType inputType;
 	private static OutputType outputType;
 	private static int maxThreads;
-	private static File outputDataFile;
+	private static File outputDataDir;
 	private static File outputDocumentDir;
 	private static List<File> inputFiles;
 	private static NELLMentionCategorizer categorizer;
 	private static NLPAnnotatorStanford nlpAnnotator;
+	private static boolean appendOutput;
+	private static long quittingTime;
 	
 	public static void main(String[] args) {
+		Timer timer = new Timer();
+		timer.startClock("");
+		
 		if (!parseArgs(args))
 			return;
 		
@@ -64,86 +70,97 @@ public class NELLCategorizeNPMentions {
 		if (!initializeNlpPipeline())
 			return;
 		
-		ThreadMapper<File, List<JSONObject>> threads = new ThreadMapper<File, List<JSONObject>>(new Fn<File, List<JSONObject>>() {
-			public List<JSONObject> apply(File file) {
-				dataTools.getOutputWriter().debugWriteln("Processing file " + file.getName());
+		ThreadMapper<File, Boolean> threads = new ThreadMapper<File, Boolean>(new Fn<File, Boolean>() {
+			public Boolean apply(File file) {
+				File outputDataFile = new File(outputDataDir, file.getName() + ".data.json");
+				if (quittingTime > 0 && quittingTime <= timer.getClockRunTimeInMillis("")) {
+					dataTools.getOutputWriter().debugWriteln("Skipping file " + file.getName() + ".  Time limit reached. ");
+					return true;
+				}
+				
+				if (appendOutput && outputDataFile.exists()) {
+					dataTools.getOutputWriter().debugWriteln("Skipping file " + file.getName() + ".  Output already exists. ");
+					return true;
+				}
+				
+				dataTools.getOutputWriter().debugWriteln("Processing file " + file.getName() + "...");
 				PolyDocument document = null;
 				if (inputType == InputType.PLAIN_TEXT) {
 					document = constructAnnotatedDocument(file);
+					if (document == null) {
+						dataTools.getOutputWriter().debugWriteln("ERROR: Failed to annotate document " + file.getName() + ". ");
+						return false;
+					}
+					
 					if (outputDocumentDir != null) {
-						if (!document.saveToJSONFile((new File(outputDocumentDir, document.getName())).toString()))
-							return null;
+						if (!document.saveToJSONFile((new File(outputDocumentDir, document.getName() + ".json")).toString())) {
+							dataTools.getOutputWriter().debugWriteln("ERROR: Failed to save annotated " + file.getName() + ". ");
+							return false;
+						}
 					}
 				} else {
 					document = new PolyDocument(FileUtil.readJSONFile(file));
 				}
 				
 				DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = categorizer.categorizeNounPhraseMentions(document);
-				
+				if (labeledData == null) {
+					dataTools.getOutputWriter().debugWriteln("ERROR: Failed to run categorizer on " + file.getName() + ". ");
+					return false;
+				}
+			
 				List<JSONObject> jsonLabeledData = new ArrayList<JSONObject>();
 				for (TokenSpansDatum<LabelsList> datum : labeledData)
 					jsonLabeledData.add(datumTools.datumToJSON(datum));
 				
-				dataTools.getDocumentCache().removeDocument(document.getName());
 				
-				return jsonLabeledData;
+				if (!outputData(jsonLabeledData, outputDataFile)) {
+					dataTools.getOutputWriter().debugWriteln("ERROR: Failed to output data for " + file.getName() + ". ");
+					return false;
+				}
+				
+				dataTools.getDocumentCache().removeDocument(document.getName());
+				return true;
 			}
 		});
 		
-		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(outputDataFile));
-			List<List<JSONObject>> threadResults = threads.run(inputFiles, maxThreads);
-			
-			dataTools.getOutputWriter().debugWriteln("Finished running annotation and models. Outputting results...");
-			
-			String outputHeader = constructOutputHeader();
-			if (outputHeader != null)
-				writer.write(outputHeader);
-			for (List<JSONObject> threadResult : threadResults) {
-				if (threadResult == null) {
-					dataTools.getOutputWriter().debugWriteln("ERROR: Thread failed.");
-					writer.close();
-					return;
-				}
-				
-				String output = constructOutput(threadResult);
-				if (output == null) {
-					dataTools.getOutputWriter().debugWriteln("ERROR: Output construction failed.");
-					writer.close();
-					return;
-				}
-				writer.write(output);
-			}
-			
-			writer.close();
-		} catch (IOException e) {
-			dataTools.getOutputWriter().debugWriteln("ERROR: Failed to output results.");
-			e.printStackTrace();
-			return;
-		}
-		dataTools.getOutputWriter().debugWriteln("Finished outputting results.");
+		threads.run(inputFiles, maxThreads);
+		dataTools.getOutputWriter().debugWriteln("Finished running annotation and models.");
 	}
 	
-	private static String constructOutputHeader() {
-		if (outputType != OutputType.TSV)
-			return null;
-		
-		StringBuilder str = new StringBuilder();
-		
-		str.append("id\tdoc\tsen\tstok\tetok\tstr");
-		
-		LabelsList labels = categorizer.getValidLabels();
-		for (String label : labels.getLabels())
-			str.append("\t").append(label);
-		str.append("\n");
-		
-		return str.toString();
+	private static boolean outputData(List<JSONObject> data, File outputFile) {
+		OutputWriter output = dataTools.getOutputWriter();
+		output.debugWriteln("Outputting data to " + outputFile.getName() + "...");
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+			String outputData = constructOutput(data);
+			if (outputData == null) {
+				dataTools.getOutputWriter().debugWriteln("ERROR: Output construction failed for " + outputFile.getName() + ".");
+				writer.close();
+				return false;
+			}
+			
+			writer.write(outputData);
+			writer.close();
+			
+		} catch (IOException e) {
+			dataTools.getOutputWriter().debugWriteln("ERROR: Failed to output data to " + outputFile.getName() + ". (" + e.getMessage() + ")");
+			e.printStackTrace();
+			return false;
+		}
+		output.debugWriteln("Finished outputting data to " + outputFile.getName() + ".");
+		return true;
 	}
 	
 	private static String constructOutput(List<JSONObject> outputData) {
 		StringBuilder str = new StringBuilder();
 		if (outputType == OutputType.TSV) {
 			try {
+				str.append("id\tdoc\tsen\tstok\tetok\tstr");
+				LabelsList labels = categorizer.getValidLabels();
+				for (String label : labels.getLabels())
+					str.append("\t").append(label);
+				str.append("\n");
+				
 				LabelsList allLabels = categorizer.getValidLabels();
 				for (JSONObject outputDatum : outputData) {
 					JSONObject tokenSpanObj = outputDatum.getJSONArray("tokenSpans").getJSONObject(0);
@@ -220,8 +237,8 @@ public class NELLCategorizeNPMentions {
 			.describedAs("ALL_NELL_CATEGORIES, FREEBASE_NELL_CATEGORIES, or a list of categories by which to classify " 
 					+ "noun-phrase mentions")
 			.defaultsTo(NELLMentionCategorizer.DEFAULT_VALID_LABELS);
-		parser.accepts("outputDataFile").withRequiredArg()
-			.describedAs("Path to noun-phrase mention categorization data output file")
+		parser.accepts("outputDataDir").withRequiredArg()
+			.describedAs("Path to noun-phrase mention categorization data output directory")
 			.ofType(File.class);
 		parser.accepts("outputDocumentDir").withRequiredArg()
 			.describedAs("Optional path to NLP document annotation output directory")
@@ -241,6 +258,15 @@ public class NELLCategorizeNPMentions {
 			.describedAs("WEIGHTED, UNWEIGHTED, WEIGHTED_CONSTRAINED, or UNWEIGHTED_CONSTRAINED " +
 						 " determines whether labels are constrained to be non-polysemous and/or weighted")
 			.defaultsTo(NELLMentionCategorizer.DEFAULT_LABEL_TYPE.toString());
+		parser.accepts("appendOutput").withRequiredArg()
+			.describedAs("Indicates whether to append to existing output files or overwrite them.")
+			.ofType(Boolean.class)
+			.defaultsTo(false);
+		parser.accepts("quittingTime").withRequiredArg()
+			.describedAs("If non-zero, this is the number of seconds after which no more documents will be annotated.")
+			.ofType(Long.class)
+			.defaultsTo(0L);
+		
 		parser.accepts("help").forHelp();
 		
 		OptionSet options = parser.parse(args);
@@ -262,6 +288,8 @@ public class NELLCategorizeNPMentions {
 		inputType = InputType.valueOf(options.valueOf("inputType").toString());
 		outputType = OutputType.valueOf(options.valueOf("outputType").toString());
 		maxThreads = (int)options.valueOf("maxThreads");
+		appendOutput = (boolean)options.valueOf("appendOutput");
+		quittingTime = (long)options.valueOf("quittingTime");
 		
 		if (options.has("input")) {
 			File input = (File)options.valueOf("input");
@@ -276,10 +304,10 @@ public class NELLCategorizeNPMentions {
 			return false;
 		}
 		
-		if (options.has("outputDataFile")) {
-			outputDataFile = (File)options.valueOf("outputDataFile");
+		if (options.has("outputDataDir")) {
+			outputDataDir = (File)options.valueOf("outputDataDir");
 		} else {
-			dataTools.getOutputWriter().debugWriteln("ERROR: Missing 'outputDataFile' argument.");
+			dataTools.getOutputWriter().debugWriteln("ERROR: Missing 'outputDataDir' argument.");
 			return false;
 		}
 		
@@ -290,7 +318,7 @@ public class NELLCategorizeNPMentions {
 		nlpAnnotator = new NLPAnnotatorStanford((Integer)options.valueOf("minAnnotationSentenceLength"), (Integer)options.valueOf("maxAnnotationSentenceLength"));
 		
 		if (options.has("outputDebugFile")) {
-			dataTools.getOutputWriter().setDebugFile((File)options.valueOf("outputDebugFile"), false);
+			dataTools.getOutputWriter().setDebugFile((File)options.valueOf("outputDebugFile"), appendOutput);
 		}
 		
 		categorizer = new NELLMentionCategorizer(datumTools, 
@@ -300,7 +328,7 @@ public class NELLCategorizeNPMentions {
 												 (File)options.valueOf("featuresFile"),
 												 options.valueOf("modelFilePathPrefix").toString(),
 												 null);
-
+	
 		return true;
 	}
 }

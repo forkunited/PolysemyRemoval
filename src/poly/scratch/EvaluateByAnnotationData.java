@@ -80,7 +80,7 @@ public class EvaluateByAnnotationData {
 			String line = null;
 			int id = 0;
 			while ((line = r.readLine()) != null) {
-				boolean label = line.substring(0, line.indexOf('\t')).trim().equals('1');
+				boolean label = line.substring(0, line.indexOf('\t')).trim().equals("1");
 				TokenSpanCached tokenSpan = TokenSpanCached.fromJSON(new JSONObject(line.substring(line.lastIndexOf('\t'))), documents);
 				TokenSpansDatum<Boolean> datum = new TokenSpansDatum<Boolean>(id, tokenSpan, label, false);
 				data.add(datum);

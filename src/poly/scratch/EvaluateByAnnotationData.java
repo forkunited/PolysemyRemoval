@@ -54,7 +54,8 @@ public class EvaluateByAnnotationData {
 		Set<String> names = new TreeSet<String>();
 		for (File inputFile : inputFiles) {
 			Pair<String, DataSet<TokenSpansDatum<Boolean>, Boolean>> annotatedData = loadAnnotatedData(inputFile, binaryTools, dataTools.getDocumentCache());		
-			String[] nameAndCategory = annotatedData.getFirst().split(".");
+			System.out.println("Evaluating " + annotatedData.getFirst() + "...");
+			String[] nameAndCategory = annotatedData.getFirst().split("\\.");
 			String name = nameAndCategory[0];
 			String category = nameAndCategory[1];
 			

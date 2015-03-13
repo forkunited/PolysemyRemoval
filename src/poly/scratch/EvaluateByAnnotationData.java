@@ -64,6 +64,7 @@ public class EvaluateByAnnotationData {
 			if (!categoryToNameToPerformance.containsKey(category))
 				categoryToNameToPerformance.put(category, new HashMap<String, Pair<Double, Double>>());
 			categoryToNameToPerformance.get(category).put(name, evaluation);
+			names.add(name);
 		}
 		
 		outputEvaluations(names, categoryToNameToPerformance);
@@ -151,6 +152,7 @@ public class EvaluateByAnnotationData {
 			outputStr.append(name).append("\t");
 			outputStr.append(name).append(" (base)\t");
 		}
+		outputStr.append("\n");
 		
 		for (Entry<String, Map<String, Pair<Double, Double>>> categoryEntry : evaluations.entrySet()) {
 			String category = categoryEntry.getKey();

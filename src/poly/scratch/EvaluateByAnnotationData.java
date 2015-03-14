@@ -50,7 +50,7 @@ public class EvaluateByAnnotationData {
 		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, "ALL_NELL_CATEGORIES", Double.MAX_VALUE, NELLMentionCategorizer.LabelType.WEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
 		
 		File[] inputFiles = inputFileDir.listFiles();
-		Map<String, Map<String, Pair<Double, Double>>> categoryToNameToPerformance = new TreeMap<String, Map<String, Pair<Double, Double>>>();
+		Map<String, Map<String, Pair<Evaluation, Evaluation>>> categoryToNameToPerformance = new TreeMap<String, Map<String, Pair<Evaluation, Evaluation>>>();
 		Set<String> names = new TreeSet<String>();
 		for (File inputFile : inputFiles) {
 			Pair<String, DataSet<TokenSpansDatum<Boolean>, Boolean>> annotatedData = loadAnnotatedData(inputFile, binaryTools, dataTools.getDocumentCache());		
@@ -59,10 +59,10 @@ public class EvaluateByAnnotationData {
 			String name = nameAndCategory[0];
 			String category = nameAndCategory[1];
 			
-			Pair<Double, Double> evaluation = evaluateByAnnotatedData(maxThreads, labels, categorizer, nellConfidenceThreshold, annotatedData.getSecond(), category);
+			Pair<Evaluation, Evaluation> evaluation = evaluateByAnnotatedData(maxThreads, labels, categorizer, nellConfidenceThreshold, annotatedData.getSecond(), category);
 			
 			if (!categoryToNameToPerformance.containsKey(category))
-				categoryToNameToPerformance.put(category, new HashMap<String, Pair<Double, Double>>());
+				categoryToNameToPerformance.put(category, new HashMap<String, Pair<Evaluation, Evaluation>>());
 			categoryToNameToPerformance.get(category).put(name, evaluation);
 			names.add(name);
 		}
@@ -93,25 +93,45 @@ public class EvaluateByAnnotationData {
 		return new Pair<String, DataSet<TokenSpansDatum<Boolean>, Boolean>>(nameAndCategory, data);
 	}
 	
-	private static Pair<Double, Double> evaluateByAnnotatedData(int maxThreads, LabelsList labels, NELLMentionCategorizer categorizer, double nellConfidenceThreshold, DataSet<TokenSpansDatum<Boolean>, Boolean> data, String label) {
+	private static Pair<Evaluation, Evaluation> evaluateByAnnotatedData(int maxThreads, LabelsList labels, NELLMentionCategorizer categorizer, double nellConfidenceThreshold, DataSet<TokenSpansDatum<Boolean>, Boolean> data, String label) {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> unlabeledData = makeUnlabeledData(data);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> mentionLabeledData = categorizer.categorizeNounPhraseMentions(unlabeledData, maxThreads, true);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabeledData = nellLabelData(unlabeledData, maxThreads, nellConfidenceThreshold);
 		
-		double mentionModelCorrect = 0;
-		double nellCorrect = 0;
+		
+		Evaluation mentionEvaluation = new Evaluation();
+		Evaluation baselineEvaluation = new Evaluation();
 		for (TokenSpansDatum<Boolean> datum : data) {
-			if (mentionLabeledData.getDatumById(datum.getId()).getLabel().contains(label) 
-					== nellLabeledData.getDatumById(datum.getId()).getLabel().contains(label))
+			boolean mentionLabel = mentionLabeledData.getDatumById(datum.getId()).getLabel().contains(label);
+			boolean baselineLabel = nellLabeledData.getDatumById(datum.getId()).getLabel().contains(label);
+			
+			if (mentionLabel == baselineLabel)
 				System.out.println("ERROR: Equal labels " + datum.getId() + " " + datum.getTokenSpans()[0].toJSON(true));
 				
-			if (datum.getLabel().equals(mentionLabeledData.getDatumById(datum.getId()).getLabel().contains(label)))
-				mentionModelCorrect++;
-			if (datum.getLabel().equals(nellLabeledData.getDatumById(datum.getId()).getLabel().contains(label)))
-				nellCorrect++;
+			if (datum.getLabel()) {
+				if (mentionLabel)
+					mentionEvaluation.incrementTP();
+				else
+					mentionEvaluation.incrementFN();
+				
+				if (baselineLabel)
+					baselineEvaluation.incrementTP();
+				else
+					baselineEvaluation.incrementFN();
+			} else {
+				if (!mentionLabel)
+					mentionEvaluation.incrementTN();
+				else
+					mentionEvaluation.incrementFP();
+				
+				if (!baselineLabel)
+					baselineEvaluation.incrementTN();
+				else
+					baselineEvaluation.incrementFP();
+			}
 		}
 		
-		return new Pair<Double, Double>(mentionModelCorrect/data.size(), nellCorrect/data.size());
+		return new Pair<Evaluation, Evaluation>(mentionEvaluation, baselineEvaluation);
 	}
 	
 	private static DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabelData(final DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, final double nellConfidenceThreshold) {
@@ -148,29 +168,87 @@ public class EvaluateByAnnotationData {
 		return data;
 	}
 	
-	private static void outputEvaluations(Set<String> dataSetNames, Map<String, Map<String, Pair<Double, Double>>> evaluations) {
+	private static void outputEvaluations(Set<String> dataSetNames, Map<String, Map<String, Pair<Evaluation, Evaluation>>> evaluations) {
 		StringBuilder outputStr = new StringBuilder();
 		
 		outputStr.append("\t");
 		for (String name : dataSetNames) {
 			outputStr.append(name).append("\t");
-			outputStr.append(name).append(" (base)\t");
+			outputStr.append(name).append("-(base)\t");
 		}
 		outputStr.append("\n");
 		
-		for (Entry<String, Map<String, Pair<Double, Double>>> categoryEntry : evaluations.entrySet()) {
+		for (Entry<String, Map<String, Pair<Evaluation, Evaluation>>> categoryEntry : evaluations.entrySet()) {
 			String category = categoryEntry.getKey();
 			outputStr.append(category).append("\t");
 			
 			for (String name : dataSetNames) {
-				Pair<Double, Double> evaluation = categoryEntry.getValue().get(name);
-				outputStr.append(evaluation.getFirst()).append("\t");
-				outputStr.append(evaluation.getSecond()).append("\t");
+				Pair<Evaluation, Evaluation> evaluation = categoryEntry.getValue().get(name);
+				outputStr.append(evaluation.getFirst().computeAccuracy()).append("\t");
+				outputStr.append(evaluation.getSecond().computeAccuracy()).append("\t");
 			}
 		
 			outputStr.append("\n");
 		}
 		
 		System.out.println(outputStr.toString());
+	}
+	
+	private static class Evaluation {
+		private double tp;
+		private double tn;
+		private double fp;
+		private double fn;
+		
+		public Evaluation(double tp, double tn, double fp, double fn) {
+			this.tp = tp;
+			this.tn = tn;
+			this.fp = fp;
+			this.fn = fn;
+		}
+		
+		public Evaluation() {
+			this(0.0, 0.0, 0.0, 0.0);
+		}
+		
+		public double incrementTP() {
+			this.tp++;
+			return this.tp;
+		}
+
+		public double incrementTN() {
+			this.tn++;
+			return this.tn;
+		}
+		
+		public double incrementFP() {
+			this.fp++;
+			return this.fp;
+		}
+		
+		public double incrementFN() {
+			this.fn++;
+			return this.fn;
+		}
+		
+		public Evaluation plus(Evaluation evaluation) {
+			return new Evaluation(evaluation.tp + this.tp, evaluation.tn + this.tn, evaluation.fp + this.fp, evaluation.fn + this.fn);
+		}
+		
+		public double computeAccuracy() {
+			return (this.tp + this.tn)/(this.tp + this.tn + this.fn + this.fp);
+		}
+		
+		public double computeF1() {
+			return 2.0*this.tp/(2.0*this.tp + this.fn + this.fp);
+		}
+		
+		public double computePrecision() {
+			return this.tp/(this.tp + this.fp);
+		}
+		
+		public double computeRecall() {
+			return this.tp/(this.tp + this.fn);
+		}
 	}
 }

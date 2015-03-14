@@ -45,8 +45,6 @@ public class EvaluateByAnnotationData {
 		TokenSpansDatum.Tools<Boolean> binaryTools = TokenSpansDatum.getBooleanTools(dataTools);
 		NELLDataSetFactory dataFactory = new NELLDataSetFactory(dataTools, properties.getHazyFacc1DataDirPath(), 1000000);
 
-
-		LabelsList labels = new LabelsList(LabelsList.Type.ALL_NELL_CATEGORIES, dataTools);
 		NELLMentionCategorizer categorizer = new NELLMentionCategorizer(datumTools, "ALL_NELL_CATEGORIES", Double.MAX_VALUE, NELLMentionCategorizer.LabelType.WEIGHTED_CONSTRAINED, featuresFile, modelFilePathPrefix, dataFactory);
 		
 		File[] inputFiles = inputFileDir.listFiles();
@@ -59,7 +57,7 @@ public class EvaluateByAnnotationData {
 			String name = nameAndCategory[0];
 			String category = nameAndCategory[1];
 			
-			Pair<Evaluation, Evaluation> evaluation = evaluateByAnnotatedData(maxThreads, labels, categorizer, nellConfidenceThreshold, annotatedData.getSecond(), category);
+			Pair<Evaluation, Evaluation> evaluation = evaluateByAnnotatedData(maxThreads, categorizer, nellConfidenceThreshold, annotatedData.getSecond(), category);
 			
 			if (!categoryToNameToPerformance.containsKey(category))
 				categoryToNameToPerformance.put(category, new HashMap<String, Pair<Evaluation, Evaluation>>());
@@ -93,11 +91,10 @@ public class EvaluateByAnnotationData {
 		return new Pair<String, DataSet<TokenSpansDatum<Boolean>, Boolean>>(nameAndCategory, data);
 	}
 	
-	private static Pair<Evaluation, Evaluation> evaluateByAnnotatedData(int maxThreads, LabelsList labels, NELLMentionCategorizer categorizer, double nellConfidenceThreshold, DataSet<TokenSpansDatum<Boolean>, Boolean> data, String label) {
+	private static Pair<Evaluation, Evaluation> evaluateByAnnotatedData(int maxThreads, NELLMentionCategorizer categorizer, double nellConfidenceThreshold, DataSet<TokenSpansDatum<Boolean>, Boolean> data, String label) {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> unlabeledData = makeUnlabeledData(data);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> mentionLabeledData = categorizer.categorizeNounPhraseMentions(unlabeledData, maxThreads, true);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nellLabeledData = nellLabelData(unlabeledData, maxThreads, nellConfidenceThreshold);
-		
 		
 		Evaluation mentionEvaluation = new Evaluation();
 		Evaluation baselineEvaluation = new Evaluation();

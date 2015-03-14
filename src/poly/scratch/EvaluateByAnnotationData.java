@@ -101,6 +101,9 @@ public class EvaluateByAnnotationData {
 		double mentionModelCorrect = 0;
 		double nellCorrect = 0;
 		for (TokenSpansDatum<Boolean> datum : data) {
+			if (mentionLabeledData.getDatumById(datum.getId()).getLabel().equals(nellLabeledData.getDatumById(datum.getId()).getLabel().contains(label)))
+				System.out.println("ERROR: Equal labels " + datum.getId() + " " + datum.getTokenSpans()[0].toJSON(true));
+				
 			if (datum.getLabel().equals(mentionLabeledData.getDatumById(datum.getId()).getLabel().contains(label)))
 				mentionModelCorrect++;
 			if (datum.getLabel().equals(nellLabeledData.getDatumById(datum.getId()).getLabel().contains(label)))

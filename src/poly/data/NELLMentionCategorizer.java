@@ -179,8 +179,6 @@ public class NELLMentionCategorizer {
 			if (labels == null || aboveThreshold.size() == 0 || datum.isPolysemous()) {
 				featurizedData.add(datum);
 			} else {
-				System.out.println("ERROR " + ((aboveThreshold.size() > 0) ? aboveThreshold.get(0) : "") + " " + this.mentionModelThreshold + " " + labels.toString());
-				System.exit(0);
 				LabelsList label = filterToValidLabels(this.inverseLabelIndicator.label(labels.getWeightMap(), aboveThreshold));
 				labeledData.add(new TokenSpansDatum<LabelsList>(datum, label, isLabelPolysemous(label)));
 			}
@@ -195,6 +193,10 @@ public class NELLMentionCategorizer {
 			LabelsList label = filterToValidLabels(entry.getValue());
 			if (!outputUnlabeled && label.size() == 0)
 				continue;
+			
+			if (entry.getKey().getTokenSpans()[0].getDocument().getName().equals("en0000-78-04955")) {
+				this.datumTools.getDataTools().getOutputWriter().debugWriteln("NOTE: " + entry.getKey().getTokenSpans()[0] + " " + label.toString());
+			}
 			
 			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), label, isLabelPolysemous(label)));
 		}

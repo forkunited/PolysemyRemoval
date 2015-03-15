@@ -194,7 +194,7 @@ public class NELLMentionCategorizer {
 			if (!outputUnlabeled && label.size() == 0)
 				continue;
 			
-			if (entry.getKey().getTokenSpans()[0].getDocument().getName().equals("en0000-78-04955")) {
+			if (entry.getKey().getTokenSpans()[0].getDocument().getName().equals("en0000-78-04955")  && entry.getKey().getTokenSpans()[0].toString().equals("Yemen")) {
 				this.datumTools.getDataTools().getOutputWriter().debugWriteln("NOTE: " + entry.getKey().getTokenSpans()[0] + " " + label.toString());
 			}
 			

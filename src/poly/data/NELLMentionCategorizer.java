@@ -194,9 +194,9 @@ public class NELLMentionCategorizer {
 			if (!outputUnlabeled && label.size() == 0)
 				continue;
 			
-			//if (entry.getKey().getTokenSpans()[0].getDocument().getName().equals("en0000-78-04955")  && entry.getKey().getTokenSpans()[0].toString().equals("Yemen")) {
-			//	this.datumTools.getDataTools().getOutputWriter().debugWriteln("NOTE: " + entry.getKey().getTokenSpans()[0].toJSON(true) + " " + label.toString());
-			//}
+			if (entry.getKey().getTokenSpans()[0].getDocument().getName().equals("en0000-63-05394")) {
+				this.datumTools.getDataTools().getOutputWriter().debugWriteln("NOTE: " + entry.getKey().getTokenSpans()[0].toString() +" " + entry.getKey().getTokenSpans()[0].toJSON(true) + " " + label.toString());
+			}
 			
 			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), label, isLabelPolysemous(label)));
 		}

@@ -195,7 +195,13 @@ public class NELLMentionCategorizer {
 				continue;
 			
 			if (entry.getKey().getTokenSpans()[0].getDocument().getName().equals("en0000-63-05394")) {
-				this.datumTools.getDataTools().getOutputWriter().debugWriteln("NOTE: " + entry.getKey().getTokenSpans()[0].toString() +" " + entry.getKey().getTokenSpans()[0].toJSON(true) + " " + label.toString());
+				Map<Integer, Double> values = featurizedData.getFeatureVocabularyValuesAsMap(entry.getKey());
+				this.datumTools.getDataTools().getOutputWriter().debugWrite(entry.getKey().getId() + " " + entry.getKey().getTokenSpans()[0].toString() + "\t");
+				for (Entry<Integer, Double> value : values.entrySet())
+					this.datumTools.getDataTools().getOutputWriter().debugWrite(value.getKey() + ":" + value.getValue() + " ");
+				
+				
+				this.datumTools.getDataTools().getOutputWriter().debugWriteln("\nNOTE: " + entry.getKey().getTokenSpans()[0].toString() +" " + entry.getKey().getTokenSpans()[0].toJSON(true) + " " + label.toString());
 			}
 			
 			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), label, isLabelPolysemous(label)));

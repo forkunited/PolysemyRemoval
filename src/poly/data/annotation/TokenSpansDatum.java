@@ -641,18 +641,19 @@ public class TokenSpansDatum<L> extends Datum<L> {
 							continue;
 						documents.add(document.getName());
 						
-						if (this.strCache.containsKey(document.getName())) {
-							Set<String> cachedStrs = this.strCache.get(document.getName());
-							synchronized (this.strCache) {
+						synchronized (this.strCache) {
+							if (this.strCache.containsKey(document.getName())) {
+								Set<String> cachedStrs = this.strCache.get(document.getName());
 								strs.addAll(cachedStrs);
+								return strs.toArray(new String[0]);
 							}
-						} else {	
-							for (int sentenceIndex = 0; sentenceIndex < document.getSentenceCount(); sentenceIndex++) {
-								// FIXME: Check to see if equal to any other token spans in datum... and do similar for not-full document.
-								if (sentenceIndex != tokenSpan.getSentenceIndex())
-									extractForSentence(document, sentenceIndex, strs);
-							}
-						}
+						} 
+						
+						for (int sentenceIndex = 0; sentenceIndex < document.getSentenceCount(); sentenceIndex++) {
+							// FIXME: Check to see if equal to any other token spans in datum... and do similar for not-full document.
+							if (sentenceIndex != tokenSpan.getSentenceIndex())
+								extractForSentence(document, sentenceIndex, strs);
+						}		
 					} else {
 						extractForSentence(tokenSpan.getDocument(), tokenSpan.getSentenceIndex(), strs);
 					}

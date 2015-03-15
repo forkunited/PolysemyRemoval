@@ -179,6 +179,8 @@ public class NELLMentionCategorizer {
 			if (labels == null || aboveThreshold.size() == 0 || datum.isPolysemous()) {
 				featurizedData.add(datum);
 			} else {
+				System.out.println("ERROR " + ((aboveThreshold.size() > 0) ? aboveThreshold.get(0) : "") + " " + this.mentionModelThreshold + " " + labels.toString());
+				System.exit(0);
 				LabelsList label = filterToValidLabels(this.inverseLabelIndicator.label(labels.getWeightMap(), aboveThreshold));
 				labeledData.add(new TokenSpansDatum<LabelsList>(datum, label, isLabelPolysemous(label)));
 			}

@@ -103,7 +103,9 @@ public class EvaluateByAnnotationData {
 			boolean baselineLabel = nellLabeledData.getDatumById(datum.getId()).getLabel().contains(label);
 			
 			if (mentionLabel == baselineLabel) {
-				System.out.println("ERROR: Equal labels on " + label + " " + datum.getId() + " " + mentionLabel + " " + baselineLabel + " " + datum.getTokenSpans()[0].toJSON(true) + " " + mentionLabeledData.getDatumById(datum.getId()).getLabel());
+				System.out.println("ERROR: Equal labels on " + label + " " + datum.getId() + " " + datum.getTokenSpans()[0].toString() + " " + mentionLabel + " " + baselineLabel + " " + datum.getTokenSpans()[0].toJSON(true) + " " + mentionLabeledData.getDatumById(datum.getId()).getLabel());
+				System.out.println("\tMention: " + mentionLabeledData.getDatumById(datum.getId()).getTokenSpans()[0].toJSON(true));
+				System.out.println("\tBasline: " + nellLabeledData.getDatumById(datum.getId()).getTokenSpans()[0].toJSON(true));
 			}
 				
 			if (datum.getLabel()) {

@@ -200,6 +200,10 @@ public class NELLMentionCategorizer {
 				for (Entry<Integer, Double> value : values.entrySet())
 					this.datumTools.getDataTools().getOutputWriter().debugWrite(value.getKey() + ":" + value.getValue() + " ");
 				
+				Map<Integer, String> vocabNames = featurizedData.getFeatureVocabularyNamesForIndices(values.keySet());
+				if (vocabNames.containsKey(1116419))
+					this.datumTools.getDataTools().getOutputWriter().debugWriteln("\n HERE IS THE NAME " + vocabNames.get(1116419));
+				
 				
 				this.datumTools.getDataTools().getOutputWriter().debugWriteln("\nNOTE: " + entry.getKey().getTokenSpans()[0].toString() +" " + entry.getKey().getTokenSpans()[0].toJSON(true) + " " + label.toString());
 			}

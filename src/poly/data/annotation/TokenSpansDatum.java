@@ -630,13 +630,9 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			public String[] extract(TokenSpansDatum<L> datum) {
 				TokenSpan[] tokenSpans = datum.getTokenSpans();
 				Set<String> strs = new HashSet<String>();
-				Set<String> documents = new HashSet<String>();
 				for (TokenSpan tokenSpan : tokenSpans) {
 					if (this.fullDocument) {
 						Document document = tokenSpan.getDocument();
-						if (documents.contains(document.getName()))
-							continue;
-						documents.add(document.getName());
 						
 						for (int sentenceIndex = 0; sentenceIndex < document.getSentenceCount(); sentenceIndex++) {
 							if (sentenceIndex != tokenSpan.getSentenceIndex())

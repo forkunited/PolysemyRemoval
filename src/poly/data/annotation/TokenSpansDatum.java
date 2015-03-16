@@ -614,14 +614,11 @@ public class TokenSpansDatum<L> extends Datum<L> {
 			private boolean fullDocument;
 			private int n;
 			
-			private Map<String, Set<String>> strCache;
-			
 			public StringExtractorNGramPoSTag(String name, PoSTag[][] posTags, boolean fullDocument, int n) {
 				this.name = name;
 				this.posTags = posTags;
 				this.fullDocument = fullDocument;
 				this.n = n;
-				this.strCache = new ConcurrentHashMap<String, Set<String>>();
 			}
 			
 			@Override
@@ -641,18 +638,10 @@ public class TokenSpansDatum<L> extends Datum<L> {
 							continue;
 						documents.add(document.getName());
 						
-						synchronized (this.strCache) {
-							if (this.strCache.containsKey(document.getName())) {
-								Set<String> cachedStrs = this.strCache.get(document.getName());
-								strs.addAll(cachedStrs);
-							} else {
-								for (int sentenceIndex = 0; sentenceIndex < document.getSentenceCount(); sentenceIndex++) {
-									// FIXME: Check to see if equal to any other token spans in datum... and do similar for not-full document.
-									if (sentenceIndex != tokenSpan.getSentenceIndex())
-										extractForSentence(document, sentenceIndex, strs);
-								}
-							}
-						} 
+						for (int sentenceIndex = 0; sentenceIndex < document.getSentenceCount(); sentenceIndex++) {
+							if (sentenceIndex != tokenSpan.getSentenceIndex())
+								extractForSentence(document, sentenceIndex, strs);
+						}
 					} else {
 						extractForSentence(tokenSpan.getDocument(), tokenSpan.getSentenceIndex(), strs);
 					}
@@ -672,14 +661,6 @@ public class TokenSpansDatum<L> extends Datum<L> {
 					}
 					
 					String ngramStr = ngram.toString().trim();
-					
-					if (this.fullDocument) {
-						synchronized (this.strCache) {
-							if (!this.strCache.containsKey(document.getName()))
-								this.strCache.put(document.getName(), new HashSet<String>());
-							this.strCache.get(document.getName()).add(ngramStr);
-						}
-					}
 					
 					strs.add(ngramStr);
 				}

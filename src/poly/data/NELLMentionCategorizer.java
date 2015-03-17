@@ -194,20 +194,6 @@ public class NELLMentionCategorizer {
 			if (!outputUnlabeled && label.size() == 0)
 				continue;
 			
-			if (entry.getKey().getTokenSpans()[0].getDocument().getName().equals("en0000-63-05394")) {
-				Map<Integer, Double> values = featurizedData.getFeatureVocabularyValuesAsMap(entry.getKey());
-				this.datumTools.getDataTools().getOutputWriter().debugWrite(entry.getKey().getId() + " " + entry.getKey().getTokenSpans()[0].toString() + "\t");
-				for (Entry<Integer, Double> value : values.entrySet())
-					this.datumTools.getDataTools().getOutputWriter().debugWrite(value.getKey() + ":" + value.getValue() + " ");
-				
-				Map<Integer, String> vocabNames = featurizedData.getFeatureVocabularyNamesForIndices(values.keySet());
-				if (vocabNames.containsKey(1116419))
-					this.datumTools.getDataTools().getOutputWriter().debugWriteln("\n HERE IS THE NAME " + vocabNames.get(1116419));
-				
-				
-				this.datumTools.getDataTools().getOutputWriter().debugWriteln("\nNOTE: " + entry.getKey().getTokenSpans()[0].toString() +" " + entry.getKey().getTokenSpans()[0].toJSON(true) + " " + label.toString());
-			}
-			
 			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), label, isLabelPolysemous(label)));
 		}
 		

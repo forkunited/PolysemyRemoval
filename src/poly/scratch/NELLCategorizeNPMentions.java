@@ -88,6 +88,7 @@ public class NELLCategorizeNPMentions {
 				PolyDocument document = null;
 				if (inputType == InputType.PLAIN_TEXT) {
 					document = constructAnnotatedDocument(file);
+					
 					if (document == null) {
 						dataTools.getOutputWriter().debugWriteln("ERROR: Failed to annotate document " + file.getName() + ". ");
 						return false;

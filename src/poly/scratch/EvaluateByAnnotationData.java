@@ -65,7 +65,27 @@ public class EvaluateByAnnotationData {
 			names.add(name);
 		}
 		
-		outputEvaluations(names, categoryToNameToPerformance);
+		names.add("nb/lc");
+		names.add("~nonpoly");
+		
+		for (Entry<String, Map<String, Pair<Evaluation, Evaluation>>> entry : categoryToNameToPerformance.entrySet()) {
+			Pair<Evaluation, Evaluation> evaluationNb = entry.getValue().get("nb");
+			Pair<Evaluation, Evaluation> evaluationLc = entry.getValue().get("lc");
+			Pair<Evaluation, Evaluation> evaluationPoly = entry.getValue().get("hc_poly");
+		
+			Evaluation nbLc1 = evaluationNb.getFirst().plus(evaluationLc.getFirst());
+			Evaluation nbLc2 = evaluationNb.getSecond().plus(evaluationLc.getSecond());
+			Evaluation notNonpoly1 = nbLc1.plus(evaluationPoly.getFirst());
+			Evaluation notNonpoly2 = nbLc2.plus(evaluationPoly.getSecond());
+			
+			entry.getValue().put("nb/lc", new Pair<Evaluation, Evaluation>(nbLc1, nbLc2));
+			entry.getValue().put("~nonpoly", new Pair<Evaluation, Evaluation>(notNonpoly1, notNonpoly2));
+		}
+		
+		outputEvaluations(names, categoryToNameToPerformance, Evaluation.Measure.Accuracy);
+		outputEvaluations(names, categoryToNameToPerformance, Evaluation.Measure.F1);
+		outputEvaluations(names, categoryToNameToPerformance, Evaluation.Measure.Precision);
+		outputEvaluations(names, categoryToNameToPerformance, Evaluation.Measure.Recall);
 	}
 	
 	private static Pair<String, DataSet<TokenSpansDatum<Boolean>, Boolean>> loadAnnotatedData(File file, TokenSpansDatum.Tools<Boolean> tools, DocumentCache documents) {
@@ -103,9 +123,11 @@ public class EvaluateByAnnotationData {
 			boolean baselineLabel = nellLabeledData.getDatumById(datum.getId()).getLabel().contains(label);
 			
 			if (mentionLabel == baselineLabel) {
-				System.out.println("ERROR: Equal labels on " + label + " " + datum.getId() + " " + datum.getTokenSpans()[0].toString() + " " + mentionLabel + " " + baselineLabel + " " + datum.getTokenSpans()[0].toJSON(true) + " " + mentionLabeledData.getDatumById(datum.getId()).getLabel());
-				System.out.println("\tMention: " + mentionLabeledData.getDatumById(datum.getId()).getTokenSpans()[0].toJSON(true));
-				System.out.println("\tBaseline: " + nellLabeledData.getDatumById(datum.getId()).getTokenSpans()[0].toJSON(true));
+				System.out.println("ERROR: Equal labels on " + label + 
+						" " + datum.getId() + 
+						" " + datum.getTokenSpans()[0].toString() + 
+						" " + datum.getTokenSpans()[0].toJSON(true) + 
+						" " + mentionLabeledData.getDatumById(datum.getId()).getLabel());
 			}
 				
 			if (datum.getLabel()) {
@@ -168,13 +190,15 @@ public class EvaluateByAnnotationData {
 		return data;
 	}
 	
-	private static void outputEvaluations(Set<String> dataSetNames, Map<String, Map<String, Pair<Evaluation, Evaluation>>> evaluations) {
+	private static void outputEvaluations(Set<String> dataSetNames, Map<String, Map<String, Pair<Evaluation, Evaluation>>> evaluations, Evaluation.Measure measure) {
 		StringBuilder outputStr = new StringBuilder();
+		Map<String, Pair<Evaluation, Evaluation>> aggregateEvaluation = new HashMap<String, Pair<Evaluation, Evaluation>>();
 		
 		outputStr.append("\t");
 		for (String name : dataSetNames) {
 			outputStr.append(name).append("\t");
 			outputStr.append(name).append("-(base)\t");
+			aggregateEvaluation.put(name, new Pair<Evaluation, Evaluation>(new Evaluation(), new Evaluation()));
 		}
 		outputStr.append("\n");
 		
@@ -184,17 +208,34 @@ public class EvaluateByAnnotationData {
 			
 			for (String name : dataSetNames) {
 				Pair<Evaluation, Evaluation> evaluation = categoryEntry.getValue().get(name);
-				outputStr.append(evaluation.getFirst().computeAccuracy()).append("\t");
-				outputStr.append(evaluation.getSecond().computeAccuracy()).append("\t");
+				outputStr.append(evaluation.getFirst().compute(measure)).append("\t");
+				outputStr.append(evaluation.getSecond().compute(measure)).append("\t");
+			
+				aggregateEvaluation.get(name).setFirst(aggregateEvaluation.get(name).getFirst().plus(evaluation.getFirst()));
+				aggregateEvaluation.get(name).setSecond(aggregateEvaluation.get(name).getSecond().plus(evaluation.getSecond()));
 			}
 		
 			outputStr.append("\n");
 		}
 		
+		outputStr.append("Micro-average\t");
+		for (String name : dataSetNames) {
+			outputStr.append(aggregateEvaluation.get(name).getFirst().compute(measure)).append("\t");
+			outputStr.append(aggregateEvaluation.get(name).getSecond().compute(measure)).append("\t");
+		}
+		outputStr.append("\n\n");
+		
 		System.out.println(outputStr.toString());
 	}
 	
 	private static class Evaluation {
+		public enum Measure {
+			Accuracy,
+			F1,
+			Precision,
+			Recall
+		}
+		
 		private double tp;
 		private double tn;
 		private double fp;
@@ -233,6 +274,19 @@ public class EvaluateByAnnotationData {
 		
 		public Evaluation plus(Evaluation evaluation) {
 			return new Evaluation(evaluation.tp + this.tp, evaluation.tn + this.tn, evaluation.fp + this.fp, evaluation.fn + this.fn);
+		}
+		
+		public double compute(Measure measure) {
+			if (measure == Measure.Accuracy)
+				return computeAccuracy();
+			else if (measure == Measure.F1)
+				return computeF1();
+			else if (measure == Measure.Precision)
+				return computePrecision();
+			else if (measure == Measure.Recall)
+				return computeRecall();
+			else
+				return 0.0;
 		}
 		
 		public double computeAccuracy() {

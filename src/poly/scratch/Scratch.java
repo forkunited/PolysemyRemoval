@@ -3,6 +3,8 @@ package poly.scratch;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,7 +59,12 @@ public class Scratch {
 			}
 			System.out.println("");
 		}*/
-		System.out.println("hi");
+		
+		List<?> x = new ArrayList<Integer>();
+	
+		List<Integer> y = (List<Integer>)x;
+		
+		/*System.out.println("hi");
 		SupervisedModelEvaluation<TokenSpansDatum<LabelsList>, LabelsList> e = new SupervisedModelEvaluationPrecision<TokenSpansDatum<LabelsList>, LabelsList>();
 		try {
 			e.deserialize(new BufferedReader(new StringReader("Precision(weighted=false, filterLabel=true)")), true, TokenSpansDatum.getLabelsListTools(null));
@@ -66,7 +73,7 @@ public class Scratch {
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		}
+		}*/
 	}
 	
 	protected Pattern posTagClassPattern = Pattern.compile("<p:([^>]*)>");

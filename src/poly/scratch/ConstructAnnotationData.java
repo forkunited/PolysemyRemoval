@@ -139,8 +139,6 @@ public class ConstructAnnotationData {
 						predictionCount++;
 					
 					if (labelValue != mentionLabeledValue) {
-						if (name.equals("hc_nonpoly"))
-							output.debugWriteln(name + " " + label + " " + labelValue + " " + mentionLabeledValue + " " + datum.getTokenSpans()[0].toJSON(true) + " ");
 						double weight = mentionLabeledData.getDatumById(datum.getId()).getLabel().getLabelWeight(label);
 						double confidence = Math.abs(weight - 0.5);
 						scoredDatums.add(new Pair<TokenSpansDatum<Boolean>, Double>(datum, 

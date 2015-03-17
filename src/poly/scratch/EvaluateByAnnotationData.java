@@ -194,7 +194,7 @@ public class EvaluateByAnnotationData {
 		StringBuilder outputStr = new StringBuilder();
 		Map<String, Pair<Evaluation, Evaluation>> aggregateEvaluation = new HashMap<String, Pair<Evaluation, Evaluation>>();
 		
-		outputStr.append("\t");
+		outputStr.append(measure + "\t");
 		for (String name : dataSetNames) {
 			outputStr.append(name).append("\t");
 			outputStr.append(name).append("-(base)\t");

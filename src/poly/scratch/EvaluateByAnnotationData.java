@@ -298,10 +298,16 @@ public class EvaluateByAnnotationData {
 		}
 		
 		public double computePrecision() {
+			if (this.tp == 0 && this.fp == 0)
+				return 1.0;
+			
 			return this.tp/(this.tp + this.fp);
 		}
 		
 		public double computeRecall() {
+			if (this.tp == 0 && this.fn == 0)
+				return 1.0;
+			
 			return this.tp/(this.tp + this.fn);
 		}
 	}

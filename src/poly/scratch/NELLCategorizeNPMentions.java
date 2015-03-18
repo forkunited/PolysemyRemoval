@@ -50,13 +50,14 @@ public class NELLCategorizeNPMentions {
 	private static InputType inputType;
 	private static OutputType outputType;
 	private static int maxThreads;
-	private static File outputDataDir;
+	private static File outputDataLocation;
 	private static File outputDocumentDir;
 	private static List<File> inputFiles;
 	private static NELLMentionCategorizer categorizer;
 	private static NLPAnnotatorStanford nlpAnnotator;
 	private static boolean appendOutput;
 	private static long quittingTime;
+	private static BufferedWriter dataWriter;
 	
 	public static void main(String[] args) {
 		Timer timer = new Timer();
@@ -70,16 +71,31 @@ public class NELLCategorizeNPMentions {
 		if (!initializeNlpPipeline())
 			return;
 		
+		if (!initializeDataWriter())
+			return;
+		
 		final String outputFileExtension = (outputType == OutputType.TSV) ? "tsv" : "json"; 
 		ThreadMapper<File, Boolean> threads = new ThreadMapper<File, Boolean>(new Fn<File, Boolean>() {
 			public Boolean apply(File file) {
-				File outputDataFile = new File(outputDataDir, file.getName() + ".data." + outputFileExtension);
+				File outputDataFile = null; 
+				if (outputDataLocation.isDirectory())
+					outputDataFile = new File(outputDataLocation, file.getName() + ".data." + outputFileExtension);
+				else
+					outputDataFile = outputDataLocation;
+				
+				File outputDocumentFile = null;
+				if (outputDocumentDir != null)
+					outputDocumentFile = new File(outputDocumentDir, file.getName() + ".json");
+					
 				if (quittingTime > 0 && quittingTime <= timer.getClockRunTimeInMillis("")/1000.0) {
 					dataTools.getOutputWriter().debugWriteln("Skipping file " + file.getName() + ".  Time limit reached. ");
 					return true;
 				}
 				
-				if (appendOutput && outputDataFile.exists()) {
+				if (appendOutput && 
+						(outputDataLocation.isDirectory() && outputDataFile.exists() 
+							|| (outputDocumentFile != null && outputDocumentFile.exists())
+								)) {
 					dataTools.getOutputWriter().debugWriteln("Skipping file " + file.getName() + ".  Output already exists. ");
 					return true;
 				}
@@ -95,7 +111,7 @@ public class NELLCategorizeNPMentions {
 					}
 					
 					if (outputDocumentDir != null) {
-						if (!document.saveToJSONFile((new File(outputDocumentDir, document.getName() + ".json")).toString())) {
+						if (!document.saveToJSONFile(outputDocumentFile.getAbsolutePath())) {
 							dataTools.getOutputWriter().debugWriteln("ERROR: Failed to save annotated " + file.getName() + ". ");
 							return false;
 						}
@@ -115,7 +131,8 @@ public class NELLCategorizeNPMentions {
 					jsonLabeledData.add(datumTools.datumToJSON(datum));
 				
 				
-				if (!outputData(jsonLabeledData, outputDataFile)) {
+				if ((!outputDataLocation.isDirectory() && !outputData(jsonLabeledData))
+						|| !outputData(jsonLabeledData, outputDataFile)) {
 					dataTools.getOutputWriter().debugWriteln("ERROR: Failed to output data for " + file.getName() + ". ");
 					return false;
 				}
@@ -126,7 +143,70 @@ public class NELLCategorizeNPMentions {
 		});
 		
 		threads.run(inputFiles, maxThreads);
+		
+		if (!finalizeDataWriter())
+			return;
+		
 		dataTools.getOutputWriter().debugWriteln("Finished running annotation and models.");
+	}
+	
+	private static boolean initializeDataWriter() {
+		if (!outputDataLocation.isDirectory()) {
+			try {
+				dataWriter = new BufferedWriter(new FileWriter(outputDataLocation));
+			} catch (IOException e) {
+				dataTools.getOutputWriter().debugWriteln("ERROR: Failed to open data writer.");
+				e.printStackTrace();
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	private static boolean finalizeDataWriter() {
+		if (dataWriter != null) {
+			try {
+				dataWriter.close();
+			} catch (IOException e) {
+				dataTools.getOutputWriter().debugWriteln("ERROR: Failed to close data writer.");
+				e.printStackTrace();
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	private static boolean outputData(List<JSONObject> data) {
+		OutputWriter output = dataTools.getOutputWriter();
+		synchronized (dataWriter) {
+			output.debugWriteln("Outputting data...");
+			
+			if (dataWriter == null) {
+				dataTools.getOutputWriter().debugWriteln("ERROR: Failed to output data... data writer doesn't exist.");
+				return false;
+			}
+				
+			try {	
+				String outputData = constructOutput(data);
+				if (outputData == null) {
+					dataTools.getOutputWriter().debugWriteln("ERROR: Output construction failed.");
+					dataWriter.close();
+					return false;
+				}
+				
+				dataWriter.write(outputData);
+			} catch (IOException e) {
+				dataTools.getOutputWriter().debugWriteln("ERROR: Failed to output data. (" + e.getMessage() + ")");
+				e.printStackTrace();
+				return false;
+			}
+			
+			output.debugWriteln("Finished outputting data.");
+		}
+		
+		return true;
 	}
 	
 	private static boolean outputData(List<JSONObject> data, File outputFile) {
@@ -143,7 +223,6 @@ public class NELLCategorizeNPMentions {
 			
 			writer.write(outputData);
 			writer.close();
-			
 		} catch (IOException e) {
 			dataTools.getOutputWriter().debugWriteln("ERROR: Failed to output data to " + outputFile.getName() + ". (" + e.getMessage() + ")");
 			e.printStackTrace();
@@ -239,8 +318,8 @@ public class NELLCategorizeNPMentions {
 			.describedAs("ALL_NELL_CATEGORIES, FREEBASE_NELL_CATEGORIES, or a list of categories by which to classify " 
 					+ "noun-phrase mentions")
 			.defaultsTo(NELLMentionCategorizer.DEFAULT_VALID_LABELS);
-		parser.accepts("outputDataDir").withRequiredArg()
-			.describedAs("Path to noun-phrase mention categorization data output directory")
+		parser.accepts("outputDataLocation").withRequiredArg()
+			.describedAs("Path to noun-phrase mention categorization data output directory or file")
 			.ofType(File.class);
 		parser.accepts("outputDocumentDir").withRequiredArg()
 			.describedAs("Optional path to NLP document annotation output directory")
@@ -306,10 +385,10 @@ public class NELLCategorizeNPMentions {
 			return false;
 		}
 		
-		if (options.has("outputDataDir")) {
-			outputDataDir = (File)options.valueOf("outputDataDir");
+		if (options.has("outputDataLocation")) {
+			outputDataLocation = (File)options.valueOf("outputDataLocation");
 		} else {
-			dataTools.getOutputWriter().debugWriteln("ERROR: Missing 'outputDataDir' argument.");
+			dataTools.getOutputWriter().debugWriteln("ERROR: Missing 'outputDataLocation' argument.");
 			return false;
 		}
 		

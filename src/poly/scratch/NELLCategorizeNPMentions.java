@@ -153,7 +153,7 @@ public class NELLCategorizeNPMentions {
 	private static boolean initializeDataWriter() {
 		if (!outputDataLocation.isDirectory()) {
 			try {
-				dataWriter = new BufferedWriter(new FileWriter(outputDataLocation));
+				dataWriter = new BufferedWriter(new FileWriter(outputDataLocation, appendOutput));
 			} catch (IOException e) {
 				dataTools.getOutputWriter().debugWriteln("ERROR: Failed to open data writer.");
 				e.printStackTrace();

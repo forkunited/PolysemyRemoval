@@ -93,9 +93,15 @@ public class NELLMentionCategorizer {
 	}
 	
 	public boolean deserialize(File featuresFile, String modelFilePathPrefix) {
+		PolyDataTools dataTools = (PolyDataTools)this.datumTools.getDataTools();
+		
+		if (this.mentionModelThreshold < 0) {
+			dataTools.getOutputWriter().debugWriteln("Skipping model and feature deserialization due to negative mention (negative mention model threshold).");
+			return true;
+		}
+		
 		Feature<TokenSpansDatum<LabelsList>, LabelsList> feature = null;
 		List<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>> binaryModels = new ArrayList<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>>();
-		PolyDataTools dataTools = (PolyDataTools)this.datumTools.getDataTools();
 		this.features = new ArrayList<Feature<TokenSpansDatum<LabelsList>, LabelsList>>();
 		List<LabelIndicator<LabelsList>> labelIndicators = new ArrayList<LabelIndicator<LabelsList>>();
 		
@@ -161,7 +167,8 @@ public class NELLMentionCategorizer {
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, boolean outputUnlabeled) {
-		if (this.features == null || this.model == null)
+		if (this.mentionModelThreshold >= 0 
+				&& (this.features == null || this.model == null))
 			return null;
 
 		FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList> featurizedData = 
@@ -176,7 +183,7 @@ public class NELLMentionCategorizer {
 		for (TokenSpansDatum<LabelsList> datum : data) {
 			LabelsList labels = datum.getLabel();
 			List<String> aboveThreshold = (labels != null) ? labels.getLabelsAboveWeight(this.mentionModelThreshold) : null;
-			if (labels == null || aboveThreshold.size() == 0 || datum.isPolysemous()) {
+			if (this.mentionModelThreshold >= 0 && (labels == null || aboveThreshold.size() == 0 || datum.isPolysemous())) {
 				featurizedData.add(datum);
 			} else {
 				LabelsList label = filterToValidLabels(this.inverseLabelIndicator.label(labels.getWeightMap(), aboveThreshold));
@@ -184,17 +191,19 @@ public class NELLMentionCategorizer {
 			}
 		}
 		
-		if (!featurizedData.precomputeFeatures())
-			return null;
-		
-		Map<TokenSpansDatum<LabelsList>, LabelsList> dataLabels = this.model.classify(featurizedData);
-
-		for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : dataLabels.entrySet()) {
-			LabelsList label = filterToValidLabels(entry.getValue());
-			if (!outputUnlabeled && label.size() == 0)
-				continue;
+		if (this.mentionModelThreshold >= 0) {
+			if (!featurizedData.precomputeFeatures())
+				return null;
 			
-			labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), label, isLabelPolysemous(label)));
+			Map<TokenSpansDatum<LabelsList>, LabelsList> dataLabels = this.model.classify(featurizedData);
+	
+			for (Entry<TokenSpansDatum<LabelsList>, LabelsList> entry : dataLabels.entrySet()) {
+				LabelsList label = filterToValidLabels(entry.getValue());
+				if (!outputUnlabeled && label.size() == 0)
+					continue;
+				
+				labeledData.add(new TokenSpansDatum<LabelsList>(entry.getKey(), label, isLabelPolysemous(label)));
+			}
 		}
 		
 		return labeledData;

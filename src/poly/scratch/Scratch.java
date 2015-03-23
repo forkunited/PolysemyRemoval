@@ -1,10 +1,5 @@
 package poly.scratch;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,8 +10,6 @@ import ark.data.Gazetteer;
 import ark.data.annotation.Datum;
 import ark.data.annotation.nlp.PoSTag;
 import ark.data.annotation.nlp.PoSTagClass;
-import ark.model.evaluation.metric.SupervisedModelEvaluation;
-import ark.model.evaluation.metric.SupervisedModelEvaluationPrecision;
 
 public class Scratch {
 	public static void main(String[] args) {
@@ -59,10 +52,6 @@ public class Scratch {
 			}
 			System.out.println("");
 		}*/
-		
-		List<?> x = new ArrayList<Integer>();
-	
-		List<Integer> y = (List<Integer>)x;
 		
 		/*System.out.println("hi");
 		SupervisedModelEvaluation<TokenSpansDatum<LabelsList>, LabelsList> e = new SupervisedModelEvaluationPrecision<TokenSpansDatum<LabelsList>, LabelsList>();

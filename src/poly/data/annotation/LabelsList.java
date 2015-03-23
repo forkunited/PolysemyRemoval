@@ -163,6 +163,9 @@ public class LabelsList {
 	}
 	
 	public static LabelsList fromString(String str, PolyDataTools dataTools) {
+		if (str.equals("NONE"))
+			str = "";
+		
 		if (str.equals("ALL_NELL_CATEGORIES")) {
 			return new LabelsList(Type.ALL_NELL_CATEGORIES, dataTools);
 		} else if (str.equals("FREEBASE_NELL_CATEGORIES")) {

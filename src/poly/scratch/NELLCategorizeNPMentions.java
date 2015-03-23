@@ -252,9 +252,11 @@ public class NELLCategorizeNPMentions {
 					str.append(tokenSpanObj.getInt("endTokenIndex")).append("\t");
 					str.append(outputDatum.getString("str"));
 					
-					LabelsList datumLabels = LabelsList.fromString(outputDatum.getString("label"), dataTools);
-					for (String label : allLabels.getLabels())
-						str.append("\t").append(datumLabels.getLabelWeight(label));
+					if (outputDatum.has("label")) {
+						LabelsList datumLabels = LabelsList.fromString(outputDatum.getString("label"), dataTools);
+						for (String label : allLabels.getLabels())
+							str.append("\t").append(datumLabels.getLabelWeight(label));
+					}
 					str.append("\n");
 				}
 			} catch (JSONException e) {

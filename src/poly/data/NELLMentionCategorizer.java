@@ -95,8 +95,8 @@ public class NELLMentionCategorizer {
 	public boolean deserialize(File featuresFile, String modelFilePathPrefix) {
 		PolyDataTools dataTools = (PolyDataTools)this.datumTools.getDataTools();
 		
-		if (this.mentionModelThreshold < 0) {
-			dataTools.getOutputWriter().debugWriteln("Skipping model and feature deserialization due to negative mention (negative mention model threshold).");
+		if (this.mentionModelThreshold < 0 || this.validLabels.size() == 0) {
+			dataTools.getOutputWriter().debugWriteln("Skipping model and feature deserialization due to negative mention (negative mention model threshold and/or no valid labels).");
 			return true;
 		}
 		
@@ -167,10 +167,10 @@ public class NELLMentionCategorizer {
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(DataSet<TokenSpansDatum<LabelsList>, LabelsList> data, int maxThreads, boolean outputUnlabeled) {
-		if (this.mentionModelThreshold >= 0 
-				&& (this.features == null || this.model == null))
+		if (this.validLabels.size() == 0 || (this.mentionModelThreshold >= 0
+				&& (this.features == null || this.model == null)))
 			return null;
-
+		
 		FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList> featurizedData = 
 			new FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList>("", 
 																	this.features, 
@@ -232,9 +232,13 @@ public class NELLMentionCategorizer {
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> categorizeNounPhraseMentions(PolyDocument document, int maxThreads) {
-		if (this.features == null || this.model == null)
+		if (this.mentionModelThreshold >= 0 && this.validLabels.size() > 0 && (this.features == null || this.model == null))
 			return null;
-			
-		return categorizeNounPhraseMentions(this.nellDataFactory.constructDataSet(document, this.datumTools, (this.mentionModelThreshold <= 1.0), this.mentionModelThreshold, this.datumTools.getInverseLabelIndicator("WeightedGeneralized")), maxThreads, false);
+		
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> documentData = this.nellDataFactory.constructDataSet(document, this.datumTools, this.validLabels.size() > 0 && (this.mentionModelThreshold <= 1.0), this.mentionModelThreshold, this.datumTools.getInverseLabelIndicator("WeightedGeneralized"));
+		if (this.validLabels.size() == 0)
+			return documentData;
+		
+		return categorizeNounPhraseMentions(documentData, maxThreads, false);
 	}
 }

@@ -13,6 +13,7 @@ import poly.data.annotation.NELLDataSetFactory;
 import poly.data.annotation.PolyDocument;
 import poly.data.annotation.TokenSpansDatum;
 import poly.util.PolyProperties;
+import ark.data.Context;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
 import ark.data.annotation.Datum.Tools.InverseLabelIndicator;
@@ -39,8 +40,8 @@ public class NELLMentionCategorizer {
 	public static final File DEFAULT_FEATURES_FILE = new File("AregBasel2.model.out");
 	public static final String DEFAULT_MODEL_FILE_PATH_PREFIX = "AregBasel2.model.out.";
 	
-	private Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools;
-	private Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools;
+	private Context<TokenSpansDatum<LabelsList>, LabelsList> context;
+	private Context<TokenSpansDatum<Boolean>, Boolean> binaryContext;
 	private NELLDataSetFactory nellDataFactory;
 	private NELL nell;
 	
@@ -60,29 +61,49 @@ public class NELLMentionCategorizer {
 			 null);
 	}
 	
+	public NELLMentionCategorizer(String validLabels, double mentionModelThreshold, LabelType labelType, File featuresFile, String modelFilePathPrefix) {
+		this(TokenSpansDatum.getLabelsListTools(new PolyDataTools(new OutputWriter(), new PolyProperties())),
+			 validLabels,
+			 mentionModelThreshold,
+			 labelType,
+			 featuresFile,
+			 modelFilePathPrefix,
+			 null);
+	}
+	
+	public NELLMentionCategorizer(String validLabels, double mentionModelThreshold, LabelType labelType) {
+		this(TokenSpansDatum.getLabelsListTools(new PolyDataTools(new OutputWriter(), new PolyProperties())),
+			 validLabels,
+			 mentionModelThreshold,
+			 labelType,
+			 DEFAULT_FEATURES_FILE,
+			 DEFAULT_MODEL_FILE_PATH_PREFIX,
+			 null);
+	}
+	
 	public NELLMentionCategorizer(Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools, String validLabels, double mentionModelThreshold, LabelType labelType, File featuresFile, String modelFilePathPrefix, NELLDataSetFactory nellDataFactory) {
-		this.datumTools = datumTools;
-		this.binaryTools = TokenSpansDatum.getBooleanTools(datumTools.getDataTools());
+		this.context = new Context<TokenSpansDatum<LabelsList>, LabelsList>(datumTools);
+		this.binaryContext = context.makeBinary(TokenSpansDatum.getBooleanTools(this.context.getDatumTools().getDataTools()), null);
 		
 		if (nellDataFactory == null)
-			this.nellDataFactory = new NELLDataSetFactory((PolyDataTools)datumTools.getDataTools());
+			this.nellDataFactory = new NELLDataSetFactory((PolyDataTools)this.context.getDatumTools().getDataTools());
 		else
 			this.nellDataFactory = nellDataFactory;
 		
-		this.validLabels = LabelsList.fromString(validLabels, (PolyDataTools)datumTools.getDataTools());
+		this.validLabels = LabelsList.fromString(validLabels, (PolyDataTools)this.context.getDatumTools().getDataTools());
 		this.mentionModelThreshold = mentionModelThreshold;
 		
 		if (labelType == LabelType.UNWEIGHTED) {
-			this.inverseLabelIndicator = this.datumTools.getInverseLabelIndicator("Unweighted");
+			this.inverseLabelIndicator = this.context.getDatumTools().getInverseLabelIndicator("Unweighted");
 		} else if (labelType == LabelType.WEIGHTED) {
-			this.inverseLabelIndicator = this.datumTools.getInverseLabelIndicator("Weighted");
+			this.inverseLabelIndicator = this.context.getDatumTools().getInverseLabelIndicator("Weighted");
 		} else if (labelType == LabelType.UNWEIGHTED_CONSTRAINED) {
-			this.inverseLabelIndicator = this.datumTools.getInverseLabelIndicator("UnweightedConstrained");
+			this.inverseLabelIndicator = this.context.getDatumTools().getInverseLabelIndicator("UnweightedConstrained");
 		} else {
-			this.inverseLabelIndicator = this.datumTools.getInverseLabelIndicator("WeightedConstrained");
+			this.inverseLabelIndicator = this.context.getDatumTools().getInverseLabelIndicator("WeightedConstrained");
 		}
 		
-		this.nell = new NELL((PolyDataTools)this.datumTools.getDataTools());
+		this.nell = new NELL((PolyDataTools)this.context.getDatumTools().getDataTools());
 		
 		if (!deserialize(featuresFile, modelFilePathPrefix))
 			throw new IllegalArgumentException();
@@ -93,25 +114,24 @@ public class NELLMentionCategorizer {
 	}
 	
 	public boolean deserialize(File featuresFile, String modelFilePathPrefix) {
-		PolyDataTools dataTools = (PolyDataTools)this.datumTools.getDataTools();
+		PolyDataTools dataTools = (PolyDataTools)this.context.getDatumTools().getDataTools();
 		
 		if (this.mentionModelThreshold < 0 || this.validLabels.size() == 0) {
 			dataTools.getOutputWriter().debugWriteln("Skipping model and feature deserialization due to negative mention (negative mention model threshold and/or no valid labels).");
 			return true;
 		}
 		
-		Feature<TokenSpansDatum<LabelsList>, LabelsList> feature = null;
 		List<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>> binaryModels = new ArrayList<SupervisedModel<TokenSpansDatum<Boolean>, Boolean>>();
 		this.features = new ArrayList<Feature<TokenSpansDatum<LabelsList>, LabelsList>>();
 		List<LabelIndicator<LabelsList>> labelIndicators = new ArrayList<LabelIndicator<LabelsList>>();
 		
 		try {
-			BufferedReader reader = FileUtil.getFileReader(featuresFile.getPath());
-			while ((feature = Feature.deserialize(reader, true, this.datumTools)) != null) {
-				dataTools.getOutputWriter().debugWriteln("Deserialized " + feature.toString(false) + " (" + feature.getVocabularySize() + ")");
-				this.features.add(feature.clone(this.datumTools, dataTools.getParameterEnvironment(), false));
-			}
-			reader.close();
+			dataTools.getOutputWriter().debugWriteln("Deserializing features...");
+			
+			BufferedReader featureReader = FileUtil.getFileReader(featuresFile.getPath());
+			Context<TokenSpansDatum<LabelsList>, LabelsList> featureContext = Context.deserialize(this.context.getDatumTools(), featureReader);
+			featureReader.close();
+			this.features = featureContext.getFeatures();
 
 			dataTools.getOutputWriter().debugWriteln("Finished deserializing " + this.features.size() + " features.");
 			
@@ -120,14 +140,16 @@ public class NELLMentionCategorizer {
 				if (FileUtil.fileExists(modelFile.getPath())) {
 					dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getPath());
 					BufferedReader modelReader = FileUtil.getFileReader(modelFile.getPath());
-					SupervisedModel<TokenSpansDatum<Boolean>, Boolean> binaryModel = SupervisedModel.deserialize(modelReader, true, this.binaryTools);
-					if (binaryModel == null) {
+					Context<TokenSpansDatum<Boolean>, Boolean> modelContext = Context.deserialize(this.binaryContext.getDatumTools(), modelReader);
+					modelReader.close();
+					
+					if (modelContext == null || modelContext.getModels().size() == 0) {
 						dataTools.getOutputWriter().debugWriteln("WARNING: Failed to deserialize " + label + " model.  Maybe empty?");	
 						continue;
 					}
-					binaryModels.add(binaryModel);
-					modelReader.close();
-				
+					
+					binaryModels.add(modelContext.getModels().get(0));
+					
 					LabelIndicator<LabelsList> labelIndicator = new LabelIndicator<LabelsList>() {
 						@Override
 						public String toString() {
@@ -147,13 +169,13 @@ public class NELLMentionCategorizer {
 						}	
 					};
 					
-					this.datumTools.addLabelIndicator(labelIndicator);
+					this.context.getDatumTools().addLabelIndicator(labelIndicator);
 					labelIndicators.add(labelIndicator);
 				}
 			
 			}
 			
-			this.model = new SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(binaryModels, labelIndicators, binaryTools, inverseLabelIndicator);
+			this.model = new SupervisedModelCompositeBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(binaryModels, labelIndicators, binaryContext, inverseLabelIndicator);
 			dataTools.getOutputWriter().debugWriteln("Finished deserializing models.");
 			return true;
 		} catch (IOException e) {
@@ -175,10 +197,10 @@ public class NELLMentionCategorizer {
 			new FeaturizedDataSet<TokenSpansDatum<LabelsList>, LabelsList>("", 
 																	this.features, 
 																	maxThreads, 
-																	this.datumTools,
+																	this.context.getDatumTools(),
 																	null);
 		
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(this.datumTools, null);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> labeledData = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(this.context.getDatumTools(), null);
 		
 		for (TokenSpansDatum<LabelsList> datum : data) {
 			LabelsList labels = datum.getLabel();
@@ -235,7 +257,7 @@ public class NELLMentionCategorizer {
 		if (this.mentionModelThreshold >= 0 && this.validLabels.size() > 0 && (this.features == null || this.model == null))
 			return null;
 		
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> documentData = this.nellDataFactory.constructDataSet(document, this.datumTools, this.validLabels.size() > 0 && (this.mentionModelThreshold <= 1.0), this.mentionModelThreshold, this.datumTools.getInverseLabelIndicator("WeightedGeneralized"));
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> documentData = this.nellDataFactory.constructDataSet(document, this.context.getDatumTools(), this.validLabels.size() > 0 && (this.mentionModelThreshold <= 1.0), this.mentionModelThreshold, this.context.getDatumTools().getInverseLabelIndicator("WeightedGeneralized"));
 		if (this.validLabels.size() == 0)
 			return documentData;
 		

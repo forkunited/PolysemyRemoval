@@ -1,0 +1,88 @@
+value randomSeed=1;
+value maxThreads=33;
+value trainOnDev=false;
+value errorExampleExtractor=FirstTokenSpan;
+validLabels=(bodypart,militaryconflict,visualartform,sport,academicfield,fruit,bakedgood,officeitem,disease,animal,wine);
+
+evaluation accuracy=Accuracy();
+evaluation accuracyBase=Accuracy(computeBaseline=true);
+evaluation f.5=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=0.5);
+evaluation f1=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1);
+evaluation prec=Precision(weighted=false, filterLabel=true);
+evaluation recall=Recall(weighted=false, filterLabel=true);
+
+composite evaluation=LabelsListFreebase(evaluationType=Precision);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=Precision);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=Precision);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Precision);
+composite evaluation=LabelsListFreebase(evaluationType=Recall);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=Recall);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=Recall);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Recall);
+composite evaluation=LabelsListFreebase(evaluationType=F1);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=F1);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=F1);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=F1);
+composite evaluation=LabelsListFreebase(evaluationType=Accuracy);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=Accuracy);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=Accuracy);
+composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Accuracy);
+
+feature cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*");
+feature cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*");
+feature cpnb1=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*");
+feature cpnb2=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN,JJ,PRP> ((<p:NNP,NN,JJ,PRP>)+(SYM)?(<p:VB,RB>)*<p:VB>(<p:VB,RB>)*{~'that'}{~'because'}(IN|TO|JJ)*)");
+feature cpnb3=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*");
+feature cpnb4=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN> ((<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*)");
+feature cpnb5=GramContextPattern(capturePart=BEFORE, captureGroup=0, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern="^(<p:NN,JJ,NNP>)+(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*");
+feature cpnb6=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".*<<~p:CD,NNP,NN,JJ> ((<p:NN,JJ,NNP>)+(<p:NN,NNP>)(SYM)?{~'that'}{~'because'}(IN|TO|JJ)*)");
+feature cpb1=GramContextPattern(capturePart=BEFORE, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, beforePattern=".* (IN|TO|JJ)");
+feature cpa1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((<p:RB,VB>)*<p:VB>).*");
+
+feature dep=NGramDep(scale=INDICATOR, mode=ParentsAndChildren, useRelationTypes=true, minFeatureOccurrence=2, n=1, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans);
+feature ner=Ner(useTypes=true, tokenExtractor=AllTokenSpans);
+feature tcnt=TokenCount(maxCount=5, tokenExtractor=AllTokenSpans);
+feature form=StringForm(stringExtractor=FirstTokenSpan, minFeatureOccurrence=2);
+
+feature pos=GramCluster(scale=INDICATOR, minFeatureOccurrence=2, tokenExtractor=AllTokenSpans, clusterer=PoSTag);
+feature posb1=NGramContext(scale=INDICATOR, maxGramDistance=1, n=1, mode=BEFORE, minFeatureOccurrence=2, clusterer=PoSTag, tokenExtractor=AllTokenSpans);
+feature posb2=NGramContext(scale=INDICATOR, maxGramDistance=2, n=2, mode=BEFORE, minFeatureOccurrence=2, clusterer=PoSTag, tokenExtractor=AllTokenSpans);
+feature posb3=NGramContext(scale=INDICATOR, maxGramDistance=3, n=3, mode=BEFORE, minFeatureOccurrence=2, clusterer=PoSTag, tokenExtractor=AllTokenSpans);
+feature posa1=NGramContext(scale=INDICATOR, maxGramDistance=1, n=1, mode=AFTER, minFeatureOccurrence=2, clusterer=PoSTag, tokenExtractor=AllTokenSpans);
+feature posa2=NGramContext(scale=INDICATOR, maxGramDistance=2, n=2, mode=AFTER, minFeatureOccurrence=2, clusterer=PoSTag, tokenExtractor=AllTokenSpans);
+feature posa3=NGramContext(scale=INDICATOR, maxGramDistance=3, n=3, mode=AFTER, minFeatureOccurrence=2, clusterer=PoSTag, tokenExtractor=AllTokenSpans);
+
+feature ctxb1=NGramContext(scale=INDICATOR, maxGramDistance=1, n=1, mode=BEFORE, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans);
+feature ctxb2=NGramContext(scale=INDICATOR, maxGramDistance=2, n=2, mode=BEFORE, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans);
+feature ctxb3=NGramContext(scale=INDICATOR, maxGramDistance=3, n=3, mode=BEFORE, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans);
+feature ctxa1=NGramContext(scale=INDICATOR, maxGramDistance=1, n=1, mode=AFTER, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans);
+feature ctxa2=NGramContext(scale=INDICATOR, maxGramDistance=2, n=2, mode=AFTER, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans);
+feature ctxa3=NGramContext(scale=INDICATOR, maxGramDistance=3, n=3, mode=AFTER, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans);
+
+feature phr1=NGramContext(scale=INDICATOR, mode=WITHIN, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanNotLastToken);
+feature aff5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, mode=WITHIN, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanNotLastToken);
+feature phrh1=NGramContext(scale=INDICATOR, mode=WITHIN, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken);
+feature affh5=NGramContext(clusterer=AffixMaxLength5, scale=INDICATOR, mode=WITHIN, minFeatureOccurrence=2, n=1, cleanFn=PolyDefaultCleanFn, tokenExtractor=FirstTokenSpanLastToken);
+
+feature doc1=NGramSentence(scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllDocumentSentenceInitialTokens);
+feature sent1=NGramSentence(noTokenSpan=true, scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=1, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllTokenSpans);
+feature sent2=NGramSentence(noTokenSpan=true, scale=NORMALIZED_TFIDF, minFeatureOccurrence=2, n=2, cleanFn=PolyBagOfWordsFeatureCleanFn, tokenExtractor=AllTokenSpans);
+
+feature gnp=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=FirstTokenSpan, includeIds=true, includeWeights=true, weightThreshold=0.90);
+feature gnps=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=SentenceNELLNounPhrases, includeIds=true, includeWeights=true, weightThreshold=0.90);
+feature gnpd1=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllDocumentUnigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90);
+feature gnpd2=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllDocumentBigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90);
+feature gnpd3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtractor=AllDocumentTrigramsNP, includeIds=true, includeWeights=true, weightThreshold=0.90);
+
+model lr=Areg(l1=0, l2=0, convergenceEpsilon=.001, maxTrainingExamples=260001, batchSize=100, evaluationIterations=200, maxEvaluationConstantIterations=500, weightedLabels=false, computeTestEvaluations=false)
+{
+	validLabels=${VALID_LABELS}
+};
+
+gs g=GridSearch() {
+	dimension l2=Dimension(name=l2, values=(.000001,.00001,.0001), trainingDimension=true);
+	dimension ct=Dimension(name=classificationThreshold, values=(.5,.6,.7,.8,.9), trainingDimension=false);
+	
+	model model=${lr};
+	evaluation evaluation=${accuracy};
+};

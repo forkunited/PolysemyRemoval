@@ -6,7 +6,7 @@ public class PolyProperties extends Properties {
 	private String googleApiKey;
 	private String clueWeb09Facc1DirPath;
 	private String clueWeb09Facc1PlusTypesDirPath;
-	private String experimentInputDirPath;
+	private String contextInputDirPath;
 	private String experimentOutputDirPath;
 	private String cregDataDirPath;
 	private String cregCommandPath;
@@ -41,7 +41,7 @@ public class PolyProperties extends Properties {
 		this.googleApiKey = loadProperty("googleApiKey");
 		this.clueWeb09Facc1DirPath = loadProperty("clueWeb09Facc1DirPath");
 		this.clueWeb09Facc1PlusTypesDirPath = loadProperty("clueWeb09Facc1PlusTypesDirPath");
-		this.experimentInputDirPath = loadProperty("experimentInputDirPath");
+		this.contextInputDirPath = loadProperty("contextInputDirPath");
 		this.experimentOutputDirPath = loadProperty("experimentOutputDirPath");
 		this.cregDataDirPath = loadProperty("cregDataDirPath");
 		this.cregCommandPath = loadProperty("cregCommandPath");
@@ -79,8 +79,8 @@ public class PolyProperties extends Properties {
 		return this.clueWeb09Facc1PlusTypesDirPath;
 	}
 	
-	public String getExperimentInputDirPath() {
-		return this.experimentInputDirPath;
+	public String getContextInputDirPath() {
+		return this.contextInputDirPath;
 	}
 	
 	public String getExperimentOutputDirPath() {

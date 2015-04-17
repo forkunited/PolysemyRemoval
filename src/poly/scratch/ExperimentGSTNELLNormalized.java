@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ark.data.Context;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.model.evaluation.ValidationGSTBinary;
+import ark.util.FileUtil;
 import ark.util.OutputWriter;
 import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
@@ -22,18 +24,17 @@ public class ExperimentGSTNELLNormalized {
 	
 	public static void main(String[] args) {
 		String experimentName = "GSTNELLNormalized/" + args[0];
-		String labelsStr = args[1];
-		int randomSeed = Integer.valueOf(args[2]);
-		double nellConfidenceThreshold = Double.valueOf(args[3]);
-		int examplesPerLabel = Integer.valueOf(args[4]); 
-		int polysemousTestExamples = Integer.valueOf(args[5]);
-		int lowConfidenceTestExamples = Integer.valueOf(args[6]);
-		String dataSetName = args[7];
+		int randomSeed = Integer.valueOf(args[1]);
+		double nellConfidenceThreshold = Double.valueOf(args[2]);
+		int examplesPerLabel = Integer.valueOf(args[3]); 
+		int polysemousTestExamples = Integer.valueOf(args[4]);
+		int lowConfidenceTestExamples = Integer.valueOf(args[5]);
+		String dataSetName = args[6];
 		
 		String experimentOutputName = dataSetName + "/" + experimentName;
 
 		final PolyProperties properties = new PolyProperties();
-		String experimentInputPath = new File(properties.getExperimentInputDirPath(), experimentName + ".experiment").getAbsolutePath();
+		String experimentInputPath = new File(properties.getContextInputDirPath(), experimentName + ".ctx").getAbsolutePath();
 		String experimentOutputPath = new File(properties.getExperimentOutputDirPath(), experimentOutputName).getAbsolutePath(); 
 		
 		OutputWriter output = new OutputWriter(
@@ -45,11 +46,14 @@ public class ExperimentGSTNELLNormalized {
 		
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
 		dataTools.setRandomSeed(randomSeed);
-		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
-		
-		LabelsList labels = LabelsList.fromString(labelsStr, dataTools);
 		
 		TokenSpansDatum.Tools<LabelsList> datumTools = TokenSpansDatum.getLabelsListTools(dataTools);
+		Context<TokenSpansDatum<LabelsList>, LabelsList> context = Context.deserialize(datumTools, FileUtil.getFileReader(experimentInputPath));
+		if (context == null) {
+			output.debugWriteln("ERROR: Failed to deserialize experiment.");
+			return;
+		}
+		
 		NELLDataSetFactory dataFactory = new NELLDataSetFactory(dataTools, properties.getHazyFacc1DataDirPath(), 1000000);
 		
 		Datum.Tools.Clusterer<TokenSpansDatum<LabelsList>, LabelsList, String> documentClusterer = 
@@ -76,7 +80,7 @@ public class ExperimentGSTNELLNormalized {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> lowConfidenceData = dataFactory.loadLowConfidenceDataSet(properties.getNELLDataFileDirPath(), lowConfidenceTestExamples, nellConfidenceThreshold);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> polysemousData = dataFactory.loadPolysemousDataSet(properties.getNELLDataFileDirPath(), polysemousTestExamples, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("Unweighted"));
 		
-		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataSetName, labels, examplesPerLabel, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("UnweightedGeneralized"), devTestDocuments);
+		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataSetName, new LabelsList(context.getStringArray("validLabels").toArray(new String[0]), null, 0), examplesPerLabel, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("UnweightedGeneralized"), devTestDocuments);
 		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> nonPolysemousDataParts = nonPolysemousData.makePartition(new double[] { .9,  .1 }, documentClusterer, dataTools.getGlobalRandom());
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> trainData = nonPolysemousDataParts.get(0);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousTestData = nonPolysemousDataParts.get(1);
@@ -86,7 +90,7 @@ public class ExperimentGSTNELLNormalized {
 		compositeTestDataSets.put("Polysemous", polysemousData);
 		compositeTestDataSets.put("Non-polysemous", nonPolysemousTestData);
 		
-		for (final String label : labels.getLabels()) {
+		for (final String label : context.getStringArray("validLabels")) {
 			LabelIndicator<LabelsList> labelIndicator = new LabelIndicator<LabelsList>() {
 				public String toString() {
 					return label;
@@ -114,14 +118,14 @@ public class ExperimentGSTNELLNormalized {
 		ValidationGSTBinary<TokenSpansDatum<Boolean>,TokenSpansDatum<LabelsList>, LabelsList> validation = 
 				new ValidationGSTBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(
 						experimentName, 
-						trainData.getDatumTools(),
+						context,
 						trainData, 
 						devData, 
 						testData,
 						datumTools.getInverseLabelIndicator("UnweightedConstrained"),
 						compositeTestDataSets);
 		
-		if (!validation.runAndOutput(experimentInputPath))
+		if (!validation.runAndOutput())
 			output.debugWriteln("ERROR: Failed to run experiment.");
 	}
 }

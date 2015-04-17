@@ -17,6 +17,7 @@ import poly.data.annotation.LabelsList;
 import poly.data.annotation.NELLDataSetFactory;
 import poly.data.annotation.TokenSpansDatum;
 import poly.util.PolyProperties;
+import ark.data.Context;
 import ark.data.annotation.DataSet;
 import ark.data.annotation.Datum;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
@@ -51,7 +52,6 @@ public class ConstructAnnotationData {
 		
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
 		dataTools.setRandomSeed(randomSeed);
-		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
 		LabelsList labels = LabelsList.fromString(labelsStr, dataTools);
 		
@@ -126,8 +126,9 @@ public class ConstructAnnotationData {
 			public Pair<String, Integer> apply(String label) {
 				LabelIndicator<LabelsList> labelIndicator = nellLabeledData.getDatumTools().getLabelIndicator(label);
 				Datum.Tools<TokenSpansDatum<Boolean>, Boolean> binaryTools = nellLabeledData.getDatumTools().makeBinaryDatumTools(labelIndicator);
-				DataSet<TokenSpansDatum<Boolean>, Boolean> binaryData = nellLabeledData.makeBinaryDataSet(label, binaryTools);
-				DataSet<TokenSpansDatum<Boolean>, Boolean> mentionLabeledBinaryData = mentionLabeledData.makeBinaryDataSet(label, binaryTools);
+				Context<TokenSpansDatum<Boolean>, Boolean> binaryContext = new Context<TokenSpansDatum<Boolean>, Boolean>(binaryTools);
+				DataSet<TokenSpansDatum<Boolean>, Boolean> binaryData = nellLabeledData.makeBinary(labelIndicator, binaryContext);
+				DataSet<TokenSpansDatum<Boolean>, Boolean> mentionLabeledBinaryData = mentionLabeledData.makeBinary(labelIndicator, binaryContext);
 				int predictionCount = 0;
 				List<Pair<TokenSpansDatum<Boolean>, Double>> scoredDatums = new ArrayList<Pair<TokenSpansDatum<Boolean>, Double>>();
 				

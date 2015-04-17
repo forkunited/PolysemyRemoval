@@ -9,17 +9,26 @@ import poly.data.NELL;
 import poly.data.PolyDataTools;
 import poly.data.annotation.LabelsList;
 import poly.data.annotation.TokenSpansDatum;
-import ark.data.annotation.Datum.Tools;
+import ark.data.Context;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.data.feature.FeaturizedDataSet;
 import ark.model.SupervisedModel;
 import ark.model.evaluation.metric.SupervisedModelEvaluation;
+import ark.parse.Obj;
 
 public class SupervisedModelEvaluationPolysemy extends SupervisedModelEvaluation<TokenSpansDatum<LabelsList>, LabelsList> {
 	private double NELLConfidenceThreshold;
 	private boolean computeNELLBaseline;
 	
 	private String[] parameterNames = { "computeNELLBaseline", "NELLConfidenceThreshold" };
+	
+	public SupervisedModelEvaluationPolysemy() {
+		
+	}
+	
+	public SupervisedModelEvaluationPolysemy(Context<TokenSpansDatum<LabelsList>, LabelsList> context) {
+		this.context = context;
+	}
 	
 	@Override
 	public String getGenericName() {
@@ -61,30 +70,29 @@ public class SupervisedModelEvaluationPolysemy extends SupervisedModelEvaluation
 	}
 
 	@Override
-	public String getParameterValue(String parameter) {
+	public Obj getParameterValue(String parameter) {
 		if (parameter.equals("NELLConfidenceThreshold"))
-			return String.valueOf(this.NELLConfidenceThreshold);
+			return Obj.stringValue(String.valueOf(this.NELLConfidenceThreshold));
 		else if (parameter.equals("computeNELLBaseline"))
-			return String.valueOf(this.computeNELLBaseline);
+			return Obj.stringValue(String.valueOf(this.computeNELLBaseline));
 		
 		return null;
 	}
 
 	@Override
-	public boolean setParameterValue(String parameter, String parameterValue,
-			Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools) {
+	public boolean setParameterValue(String parameter, Obj parameterValue) {
 		if (parameter.equals("NELLConfidenceThreshold"))
-			this.NELLConfidenceThreshold = Double.valueOf(parameterValue);
+			this.NELLConfidenceThreshold = Double.valueOf(this.context.getMatchValue(parameterValue));
 		else if (parameter.equals("computeNELLBaseline"))
-			this.computeNELLBaseline = Boolean.valueOf(parameterValue);
+			this.computeNELLBaseline = Boolean.valueOf(this.context.getMatchValue(parameterValue));
 		else
 			return false;
 		return true;
 	}
 
 	@Override
-	public SupervisedModelEvaluation<TokenSpansDatum<LabelsList>, LabelsList> makeInstance() {
-		return new SupervisedModelEvaluationPolysemy();
+	public SupervisedModelEvaluation<TokenSpansDatum<LabelsList>, LabelsList> makeInstance(Context<TokenSpansDatum<LabelsList>, LabelsList> context) {
+		return new SupervisedModelEvaluationPolysemy(context);
 	}
 
 }

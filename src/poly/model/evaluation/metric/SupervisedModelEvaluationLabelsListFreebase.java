@@ -14,14 +14,15 @@ import poly.data.annotation.HazyFACC1Document;
 import poly.data.annotation.HazyFACC1Document.FACC1Annotation;
 import poly.data.annotation.LabelsList;
 import poly.data.annotation.TokenSpansDatum;
+import ark.data.Context;
 import ark.data.Gazetteer;
-import ark.data.annotation.Datum.Tools;
 import ark.data.annotation.Datum.Tools.InverseLabelIndicator;
 import ark.data.annotation.Datum.Tools.LabelIndicator;
 import ark.data.annotation.nlp.TokenSpan;
 import ark.data.feature.FeaturizedDataSet;
 import ark.model.SupervisedModel;
 import ark.model.evaluation.metric.SupervisedModelEvaluation;
+import ark.parse.Obj;
 import ark.util.Pair;
 
 public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModelEvaluation<TokenSpansDatum<LabelsList>, LabelsList> {
@@ -37,6 +38,14 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 	private EvaluationType evaluationType = EvaluationType.F1;
 	
 	private String[] parameterNames = { "computeNELLBaseline", "NELLConfidenceThreshold", "evaluationType" };
+	
+	public SupervisedModelEvaluationLabelsListFreebase() {
+		
+	}
+	
+	public SupervisedModelEvaluationLabelsListFreebase(Context<TokenSpansDatum<LabelsList>, LabelsList> context) {
+		this.context = context;
+	}
 	
 	@Override
 	public String getGenericName() {
@@ -128,33 +137,32 @@ public class SupervisedModelEvaluationLabelsListFreebase extends SupervisedModel
 	}
 
 	@Override
-	public String getParameterValue(String parameter) {
+	public Obj getParameterValue(String parameter) {
 		if (parameter.equals("NELLConfidenceThreshold"))
-			return String.valueOf(this.NELLConfidenceThreshold);
+			return Obj.stringValue(String.valueOf(this.NELLConfidenceThreshold));
 		else if (parameter.equals("computeNELLBaseline"))
-			return String.valueOf(this.computeNELLBaseline);
+			return Obj.stringValue(String.valueOf(this.computeNELLBaseline));
 		else if (parameter.equals("evaluationType"))
-			return this.evaluationType.toString();
+			return Obj.stringValue(this.evaluationType.toString());
 		
 		return null;
 	}
 
 	@Override
-	public boolean setParameterValue(String parameter, String parameterValue,
-			Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools) {
+	public boolean setParameterValue(String parameter, Obj parameterValue) {
 		if (parameter.equals("NELLConfidenceThreshold"))
-			this.NELLConfidenceThreshold = Double.valueOf(parameterValue);
+			this.NELLConfidenceThreshold = Double.valueOf(this.context.getMatchValue(parameterValue));
 		else if (parameter.equals("computeNELLBaseline"))
-			this.computeNELLBaseline = Boolean.valueOf(parameterValue);
+			this.computeNELLBaseline = Boolean.valueOf(this.context.getMatchValue(parameterValue));
 		else if (parameter.equals("evaluationType"))
-			this.evaluationType = EvaluationType.valueOf(parameterValue);
+			this.evaluationType = EvaluationType.valueOf(this.context.getMatchValue(parameterValue));
 		else
 			return false;
 		return true;
 	}
 
 	@Override
-	public SupervisedModelEvaluation<TokenSpansDatum<LabelsList>, LabelsList> makeInstance() {
-		return new SupervisedModelEvaluationLabelsListFreebase();
+	public SupervisedModelEvaluation<TokenSpansDatum<LabelsList>, LabelsList> makeInstance(Context<TokenSpansDatum<LabelsList>, LabelsList> context) {
+		return new SupervisedModelEvaluationLabelsListFreebase(context);
 	}
 }

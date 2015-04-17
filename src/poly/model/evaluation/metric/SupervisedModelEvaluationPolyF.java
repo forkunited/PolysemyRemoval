@@ -5,13 +5,21 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import poly.data.annotation.TokenSpansDatum;
-
+import ark.data.Context;
 import ark.data.feature.FeaturizedDataSet;
 import ark.model.SupervisedModel;
 import ark.model.evaluation.metric.SupervisedModelEvaluation;
 import ark.model.evaluation.metric.SupervisedModelEvaluationF;
 
 public class SupervisedModelEvaluationPolyF<L> extends SupervisedModelEvaluationF<TokenSpansDatum<L>, L> {
+	public SupervisedModelEvaluationPolyF() {
+		super();
+	}
+	
+	public SupervisedModelEvaluationPolyF(Context<TokenSpansDatum<L>, L> context) {
+		super(context);
+	}
+	
 	@Override
 	protected double compute(SupervisedModel<TokenSpansDatum<L>, L> model, FeaturizedDataSet<TokenSpansDatum<L>, L> data, Map<TokenSpansDatum<L>, L> predictions) {
 		Map<TokenSpansDatum<L>, L> polysemousPredictions = new HashMap<TokenSpansDatum<L>, L>();
@@ -30,7 +38,7 @@ public class SupervisedModelEvaluationPolyF<L> extends SupervisedModelEvaluation
 
 
 	@Override
-	public SupervisedModelEvaluation<TokenSpansDatum<L>, L> makeInstance() {
-		return new SupervisedModelEvaluationPolyF<L>();
+	public SupervisedModelEvaluation<TokenSpansDatum<L>, L> makeInstance(Context<TokenSpansDatum<L>, L> context) {
+		return new SupervisedModelEvaluationPolyF<L>(context);
 	}
 }

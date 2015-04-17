@@ -1,5 +1,6 @@
 package poly.scratch;
 
+/*
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,10 +21,10 @@ import ark.data.annotation.DataSet;
 import ark.model.evaluation.ValidationGST;
 import ark.model.evaluation.metric.SupervisedModelEvaluation;
 import ark.util.OutputWriter;
-import ark.util.Pair;
+import ark.util.Pair;*/
 
 public class ExperimentGSTSeqPolysemy {
-	private static String experimentName;
+	/* FIXME Needs refactoring	private static String experimentName;
 	private static LabelsList labels;
 	private static String experimentInputPath;
 	private static String experimentOutputPath;
@@ -32,27 +33,28 @@ public class ExperimentGSTSeqPolysemy {
 	private static boolean constantBaselines;
 	private static PolysemousDataSetFactory dataFactory;
 	
-	public static void main(String[] args) {
+
+  	public static void main(String[] args) {
+ 
 		experimentName = "GSTSeqPolysemy/" + args[0];
 		String dataSetName = args[1];
 		int iterations = Integer.valueOf(args[2]);
-		String labelsStr = args[3];
-		double dataFraction = Double.valueOf(args[4]);
-		int randomSeed = Integer.valueOf(args[5]);
-		int maxLabelThreads = Integer.valueOf(args[6]);
-		boolean onlyBaselineExperiments = Boolean.valueOf(args[7]);
-		boolean loadBySentence = Boolean.valueOf(args[8]);
-		constantBaselines = Boolean.valueOf(args[9]);
-		boolean nellFiltering = Boolean.valueOf(args[10]);
-		boolean singleMentionDatums = Boolean.valueOf(args[11]);
-		boolean onlyPolysemous = Boolean.valueOf(args[12]);
+		double dataFraction = Double.valueOf(args[3]);
+		int randomSeed = Integer.valueOf(args[4]);
+		int maxLabelThreads = Integer.valueOf(args[5]);
+		boolean onlyBaselineExperiments = Boolean.valueOf(args[6]);
+		boolean loadBySentence = Boolean.valueOf(args[7]);
+		constantBaselines = Boolean.valueOf(args[8]);
+		boolean nellFiltering = Boolean.valueOf(args[9]);
+		boolean singleMentionDatums = Boolean.valueOf(args[10]);
+		boolean onlyPolysemous = Boolean.valueOf(args[11]);
 		
 		targetBaselines = new HashMap<String, Double>();
 		
 		String experimentOutputName = dataSetName + "/" + experimentName;
 
 		properties = new PolyProperties();
-		experimentInputPath = new File(properties.getExperimentInputDirPath(), experimentName + ".experiment").getAbsolutePath();
+		experimentInputPath = new File(properties.getContextInputDirPath(), experimentName + ".experiment").getAbsolutePath();
 		experimentOutputPath = new File(properties.getExperimentOutputDirPath(), experimentOutputName).getAbsolutePath(); 
 		
 		OutputWriter output = new OutputWriter(
@@ -65,7 +67,6 @@ public class ExperimentGSTSeqPolysemy {
 		PolyDataTools dataTools = new PolyDataTools(output, properties);
 		dataTools.getGazetteer("NounPhraseNELLCategory"); // Ensures that this gazetteer is only loaded once
 		dataTools.setRandomSeed(randomSeed);
-		dataTools.addToParameterEnvironment("DATA_SET", dataSetName);
 		
 		labels = LabelsList.fromString(labelsStr, dataTools);
 		
@@ -298,5 +299,5 @@ public class ExperimentGSTSeqPolysemy {
 			result.setLabel(this.label);
 			return result;
 		}
-	}
+	}*/
 }

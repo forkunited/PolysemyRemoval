@@ -76,7 +76,7 @@ feature gnpd3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtracto
 
 model lr=Areg(l1=0, l2=0, convergenceEpsilon=.001, maxTrainingExamples=260001, batchSize=100, evaluationIterations=200, maxEvaluationConstantIterations=500, weightedLabels=false, computeTestEvaluations=false)
 {
-	validLabels=${validLabels}
+	array validLabels=${validLabels}
 };
 
 gs g=GridSearch() {

@@ -115,6 +115,8 @@ public class ExperimentGSTNELLNormalized {
 			testData.getDatumTools().addLabelIndicator(labelIndicator);
 		}
 		
+		context.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Setting up binary GST validation...");
+		
 		ValidationGSTBinary<TokenSpansDatum<Boolean>,TokenSpansDatum<LabelsList>, LabelsList> validation = 
 				new ValidationGSTBinary<TokenSpansDatum<Boolean>, TokenSpansDatum<LabelsList>, LabelsList>(
 						experimentName, 
@@ -124,6 +126,8 @@ public class ExperimentGSTNELLNormalized {
 						testData,
 						datumTools.getInverseLabelIndicator("UnweightedConstrained"),
 						compositeTestDataSets);
+		
+		context.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Running binary GST validation...");
 		
 		if (!validation.runAndOutput())
 			output.debugWriteln("ERROR: Failed to run experiment.");

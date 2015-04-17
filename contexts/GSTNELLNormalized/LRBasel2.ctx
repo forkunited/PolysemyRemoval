@@ -11,22 +11,22 @@ evaluation f1=F(mode=MACRO_WEIGHTED, filterLabel=true, Beta=1);
 evaluation prec=Precision(weighted=false, filterLabel=true);
 evaluation recall=Recall(weighted=false, filterLabel=true);
 
-composite evaluation=LabelsListFreebase(evaluationType=Precision);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=Precision);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=Precision);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Precision);
-composite evaluation=LabelsListFreebase(evaluationType=Recall);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=Recall);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=Recall);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Recall);
-composite evaluation=LabelsListFreebase(evaluationType=F1);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=F1);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=F1);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=F1);
-composite evaluation=LabelsListFreebase(evaluationType=Accuracy);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=Accuracy);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=Accuracy);
-composite evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Accuracy);
+(composite) evaluation=LabelsListFreebase(evaluationType=Precision);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=Precision);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=Precision);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Precision);
+(composite) evaluation=LabelsListFreebase(evaluationType=Recall);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=Recall);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=Recall);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Recall);
+(composite) evaluation=LabelsListFreebase(evaluationType=F1);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=F1);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=F1);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=F1);
+(composite) evaluation=LabelsListFreebase(evaluationType=Accuracy);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.5, evaluationType=Accuracy);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.75, evaluationType=Accuracy);
+(composite) evaluation=LabelsListFreebase(computeNELLBaseline=true, NELLConfidenceThreshold=0.9, evaluationType=Accuracy);
 
 feature cpna1=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS)(DT)?(<p:JJ,NN>)*<p:NN>).*");
 feature cpna2=GramContextPattern(capturePart=AFTER, captureGroup=1, minFeatureOccurrence=2, cleanFn=PolyStemCleanFn, tokenExtractor=AllTokenSpans, afterPattern="((((<p:RB,VB>)*<p:VB>)|POS){~'that'}{~'because'}(IN)+).*");
@@ -76,7 +76,7 @@ feature gnpd3=GazetteerContains(gazetteer=NounPhraseNELLCategory, stringExtracto
 
 model lr=Areg(l1=0, l2=0, convergenceEpsilon=.001, maxTrainingExamples=260001, batchSize=100, evaluationIterations=200, maxEvaluationConstantIterations=500, weightedLabels=false, computeTestEvaluations=false)
 {
-	array validLabels=${validLabels}
+	array validLabels=${validLabels};
 };
 
 gs g=GridSearch() {

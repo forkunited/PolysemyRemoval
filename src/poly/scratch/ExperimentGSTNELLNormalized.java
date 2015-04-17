@@ -89,8 +89,11 @@ public class ExperimentGSTNELLNormalized {
 		compositeTestDataSets.put("Low-confidence", lowConfidenceData);
 		compositeTestDataSets.put("Polysemous", polysemousData);
 		compositeTestDataSets.put("Non-polysemous", nonPolysemousTestData);
-		
-		for (final String label : context.getStringArray("validLabels")) {
+
+		context.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Constructing label indicators...");
+	
+		List<String> validLabels = context.getStringArray("validLabels");
+		for (final String label : validLabels) {
 			LabelIndicator<LabelsList> labelIndicator = new LabelIndicator<LabelsList>() {
 				public String toString() {
 					return label;

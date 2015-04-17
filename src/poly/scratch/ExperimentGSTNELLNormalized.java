@@ -81,6 +81,8 @@ public class ExperimentGSTNELLNormalized {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> polysemousData = dataFactory.loadPolysemousDataSet(properties.getNELLDataFileDirPath(), polysemousTestExamples, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("Unweighted"));
 		
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousData = dataFactory.loadSupervisedDataSet(properties.getNELLDataFileDirPath(), dataSetName, new LabelsList(context.getStringArray("validLabels").toArray(new String[0]), null, 0), examplesPerLabel, nellConfidenceThreshold,  datumTools.getInverseLabelIndicator("UnweightedGeneralized"), devTestDocuments);
+
+		context.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Partitioning data...");
 		List<DataSet<TokenSpansDatum<LabelsList>, LabelsList>> nonPolysemousDataParts = nonPolysemousData.makePartition(new double[] { .9,  .1 }, documentClusterer, dataTools.getGlobalRandom());
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> trainData = nonPolysemousDataParts.get(0);
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> nonPolysemousTestData = nonPolysemousDataParts.get(1);

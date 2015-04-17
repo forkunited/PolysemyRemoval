@@ -2,7 +2,7 @@ value randomSeed=1;
 value maxThreads=33;
 value trainOnDev=false;
 value errorExampleExtractor=FirstTokenSpan;
-validLabels=(bodypart,militaryconflict,visualartform,sport,academicfield,fruit,bakedgood,officeitem,disease,animal,wine);
+array validLabels=(bodypart,militaryconflict,visualartform,sport,academicfield,fruit,bakedgood,officeitem,disease,animal,wine);
 
 evaluation accuracy=Accuracy();
 evaluation accuracyBase=Accuracy(computeBaseline=true);

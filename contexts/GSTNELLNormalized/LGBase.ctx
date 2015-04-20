@@ -112,6 +112,17 @@ rs rules=RuleSet() {
 						->
 						(TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", 
 							fn=(Filter(type="PREFIX", filter=${FEATURE_STR}) o ${pos} o NGramContext(n=${n++}, type="AFTER"))));
+
+	rule ctxbInc= (TokenSpanFnDataVocab(fn=(Filter() o ${strStem} o NGramContext(n=[n], type="BEFORE"))))
+						->
+						(TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", 
+							fn=(Filter(type="SUFFIX", filter=${FEATURE_STR}) o ${strStem} o NGramContext(n=${n++}, type="BEFORE"))));
+							
+
+	rule ctxaInc= (TokenSpanFnDataVocab(fn=(Filter() o ${strStem} o NGramContext(n=[n], type="AFTER"))))
+						->
+						(TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", 
+							fn=(Filter(type="PREFIX", filter=${FEATURE_STR}) o ${strStem} o NGramContext(n=${n++}, type="AFTER"))));
 };
 
 model lg=LogistmarGramression(rules=${rules}, t=".5", l2="0", convergenceEpsilon=".001", maxTrainingExamples="260001", batchSize="100", evaluationIterations="200", maxEvaluationConstantIterations="500", computeTestEvaluations="false")
@@ -122,7 +133,7 @@ model lg=LogistmarGramression(rules=${rules}, t=".5", l2="0", convergenceEpsilon
 gs g=GridSearch() {
 	dimension l2=Dimension(name="l2", values=(.000001,.00001,.0001), trainingDimension="true");
 	dimension ct=Dimension(name="classificationThreshold", values=(.5,.6,.7,.8,.9), trainingDimension="false");
-	dimension t=Dimension(name="t", values=(.5,.75,1), trainingDimension="true");
+	dimension t=Dimension(name="t", values=(.1, .25, .5), trainingDimension="true");
 
 	model model=${lg};
 	evaluation evaluation=${accuracy};

@@ -185,7 +185,7 @@ rs rules=RuleSet() {
 						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fsufh5}, filter=${FEATURE_STR}, type="SUFFIX"));
 };
 
-model lg=LogistmarGramression(rules=${rules}, t=".5", l2="0", convergenceEpsilon=".001", maxTrainingExamples="260001", batchSize="100", evaluationIterations="200", maxEvaluationConstantIterations="500", computeTestEvaluations="false")
+model lg=LogistmarGramression(rules=${rules}, t=".1", l2="0", convergenceEpsilon=".001", maxTrainingExamples="260001", batchSize="100", evaluationIterations="200", maxEvaluationConstantIterations="500", computeTestEvaluations="false")
 {
 	array validLabels=${validLabels};
 };
@@ -193,7 +193,6 @@ model lg=LogistmarGramression(rules=${rules}, t=".5", l2="0", convergenceEpsilon
 gs g=GridSearch() {
 	dimension l2=Dimension(name="l2", values=(.000001,.00001,.0001), trainingDimension="true");
 	dimension ct=Dimension(name="classificationThreshold", values=(.5,.6,.7,.8,.9), trainingDimension="false");
-	dimension t=Dimension(name="t", values=(.1, .25, .5), trainingDimension="true");
 
 	model model=${lg};
 	evaluation evaluation=${accuracy};

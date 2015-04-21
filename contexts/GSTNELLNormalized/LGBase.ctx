@@ -185,7 +185,7 @@ rs rules=RuleSet() {
 						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fsufh5}, filter=${FEATURE_STR}, type="SUFFIX"));
 };
 
-model lg=LogistmarGramression(rules=${rules}, t=".1", l2="0", convergenceEpsilon=".001", maxTrainingExamples="260001", batchSize="100", evaluationIterations="200", maxEvaluationConstantIterations="500", computeTestEvaluations="false")
+model lg=LogistmarGramression(rules=${rules}, t=".4", l2="0", convergenceEpsilon=".001", maxTrainingExamples="260001", batchSize="100", evaluationIterations="200", maxEvaluationConstantIterations="500", computeTestEvaluations="false")
 {
 	array validLabels=${validLabels};
 };

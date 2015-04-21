@@ -174,4 +174,13 @@ public class FeatureNer<D extends Datum<L>, L> extends Feature<D, L> {
 			AssignmentList internalAssignments) {
 		return internalAssignments;
 	}
+
+	@Override
+	protected boolean cloneHelper(Feature<D, L> clone) {
+		FeatureNer<D, L> cloneNer = (FeatureNer<D, L>)clone;
+		
+		cloneNer.vocabulary = this.vocabulary;
+		
+		return true;
+	}
 }

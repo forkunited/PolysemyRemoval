@@ -1,6 +1,5 @@
 package poly.data.feature;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -84,17 +83,15 @@ public class FeatureNer<D extends Datum<L>, L> extends Feature<D, L> {
 	}
 	
 	@Override
-	public Map<Integer, Double> computeVector(D datum) {
-		Map<Integer, Double> vector = new HashMap<Integer, Double>();
-		
+	public Map<Integer, Double> computeVector(D datum, int offset, Map<Integer, Double> vector) {
 		if (this.useTypes) {
 			Set<String> typesForDatum = getTypesForDatum(datum);
 			for (String type : typesForDatum) {
 				if (this.vocabulary.containsKey(type))
-					vector.put(this.vocabulary.get(type), 1.0);		
+					vector.put(this.vocabulary.get(type) + offset, 1.0);		
 			}	
 		} else {
-			vector.put(0, (datumHasType(datum))? 1.0 : 0.0);
+			vector.put(offset, (datumHasType(datum))? 1.0 : 0.0);
 		}
 
 		return vector;

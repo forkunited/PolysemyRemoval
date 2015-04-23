@@ -1,0 +1,52 @@
+///// NEED TO REVISE 
+
+	rule posbInc1 = (TokenSpanFnDataVocab(fn=(${pos} o ${ctxb1})))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fposb2}, filter=${FEATURE_STR}, type="SUFFIX"));			
+	
+	rule posbInc2 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${pos} o ${ctxb2}))))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fposb3}, filter=${FEATURE_STR}, type="SUFFIX"));
+	
+	rule posaInc1 = (TokenSpanFnDataVocab(fn=(${pos} o ${ctxa1})))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fposa2}, filter=${FEATURE_STR}, type="PREFIX"));			
+	
+	rule posaInc2 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${pos} o ${ctxa2}))))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fposa3}, filter=${FEATURE_STR}, type="PREFIX"));
+
+
+	rule ctxbInc1 = (TokenSpanFnDataVocab(fn=(${strStem} o ${ctxb1})))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fctxb2}, filter=${FEATURE_STR}, type="SUFFIX"));
+									
+	rule ctxbInc2 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strStem} o ${ctxb2}))))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fctxb3}, filter=${FEATURE_STR}, type="SUFFIX"));
+						
+	rule ctxaInc1 = (TokenSpanFnDataVocab(fn=(${strStem} o ${ctxa1})))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fctxa2}, filter=${FEATURE_STR}, type="PREFIX"));	
+								
+	rule ctxaInc2 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strStem} o ${ctxa2}))))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fctxa3}, filter=${FEATURE_STR}, type="PREFIX"));
+
+
+	rule preInc3 = (TokenSpanFnDataVocab(fn=(${pre3} o ${strDef} o ${ins1})))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fpre4}, filter=${FEATURE_STR}, type="PREFIX"));
+						
+	rule preInc4 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${pre4} o ${strDef} o ${ins1}))))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fpre5}, filter=${FEATURE_STR}, type="PREFIX"));
+						
+	rule sufInc3 = (TokenSpanFnDataVocab(fn=(${suf3} o ${strDef} o ${ins1})))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fsuf4}, filter=${FEATURE_STR}, type="SUFFIX"));
+						
+	rule sufInc4 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${suf4} o ${strDef} o ${ins1}))))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fsuf5}, filter=${FEATURE_STR}, type="SUFFIX"));
+
+	
+	rule prehInc3 = (TokenSpanFnDataVocab(fn=(${pre3} o ${strDef} o ${head})))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fpreh4}, filter=${FEATURE_STR}, type="PREFIX"));
+						
+	rule prehInc4 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${pre4} o ${strDef} o ${head}))))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fpreh5}, filter=${FEATURE_STR}, type="PREFIX"));
+						
+	rule sufhInc3 = (TokenSpanFnDataVocab(fn=(${suf3} o ${strDef} o ${head})))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fsufh4}, filter=${FEATURE_STR}, type="SUFFIX"));
+						
+	rule sufhInc4 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${suf4} o ${strDef} o ${head}))))
+						-> (TokenSpanFnFilteredVocab(vocabFeature=${fsufh5}, filter=${FEATURE_STR}, type="SUFFIX"));

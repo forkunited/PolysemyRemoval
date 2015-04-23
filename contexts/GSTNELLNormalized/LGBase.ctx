@@ -93,12 +93,12 @@ feature fpreh3=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2",
 feature fsufh3=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${suf3} o ${strDef} o ${head}));
 feature fpre3=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${pre3} o ${strDef} o ${ins1}));
 feature fsuf3=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${suf3} o ${strDef} o ${ins1}));
-feature fsent1=TokenSpanFnDataVocab(scale="NORMALIZED_TFIDF", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${sent1}));
+feature fsent1=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${sent1}));
 
-(ignored) feature fsent2=TokenSpanFnDataVocabTrie(scale="NORMALIZED_TFIDF", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${sent2}));
-(ignored) feature fsent3=TokenSpanFnDataVocabTrie(scale="NORMALIZED_TFIDF", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${sent3}));
-(ignored) feature fdoc1=TokenSpanFnDataVocabTrie(scale="NORMALIZED_TFIDF", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${doc1}));
-(ignored) feature fdoc2=TokenSpanFnDataVocabTrie(scale="NORMALIZED_TFIDF", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${doc2}));
+(ignored) feature fsent2=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${sent2}));
+(ignored) feature fsent3=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${sent3}));
+(ignored) feature fdoc1=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${doc1}));
+(ignored) feature fdoc2=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${doc2}));
 (ignored) feature fctxb2=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${ctxb2}));
 (ignored) feature fctxb3=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${ctxb3}));
 (ignored) feature fctxa2=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${ctxa2}));
@@ -118,71 +118,24 @@ feature fsent1=TokenSpanFnDataVocab(scale="NORMALIZED_TFIDF", minFeatureOccurren
 
 rs rules=RuleSet() {
 	rule sentInc1 = (TokenSpanFnDataVocab(fn=(${strBoW} o ${sent1})))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fsent2}, filter=${FEATURE_STR}, type="SUFFIX_OR_PREFIX"));
+						-> (TokenSpanFnFilteredVocab(
+							vocabFeature=${fsent2}, vocabFilter=${FEATURE_STR}, vocabFilterType="SUFFIX_OR_PREFIX", fn=(${strBoW} o ${sent2}), tokenExtractor="AllTokenSpans"));
 	
-	rule sentInc2 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${sent2}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fsent3}, filter=${FEATURE_STR}, type="SUFFIX_OR_PREFIX"));
+	rule sentInc2 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${sent2})), fn=(${strBoW} o ${sent2})))
+						-> (TokenSpanFnFilteredVocab(
+							vocabFeature=${fsent3}, vocabFilter=${FEATURE_STR}, vocabFilterType="SUFFIX_OR_PREFIX", fn=(${strBoW} o ${sent3}), tokenExtractor="AllTokenSpans"));
 	
 	rule sentDoc1 = (TokenSpanFnDataVocab(fn=(${strBoW} o ${sent1})))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fdoc1}, filter=${FEATURE_STR}, type="EQUAL"));
+						-> (TokenSpanFnFilteredVocab(
+							vocabFeature=${fdoc1}, vocabFilter=${FEATURE_STR}, vocabFilterType="EQUAL", fn=(${strBoW} o ${doc1}), tokenExtractor="AllTokenSpans"));
 	
-	rule sentDoc2 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${sent2}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fdoc2}, filter=${FEATURE_STR}, type="EQUAL"));
+	rule sentDoc2 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${sent2})), fn=(${strBoW} o ${sent2})))
+						-> (TokenSpanFnFilteredVocab(
+							vocabFeature=${fdoc2}, vocabFilter=${FEATURE_STR}, vocabFilterType="EQUAL", fn=(${strBoW} o ${doc2}), tokenExtractor="AllTokenSpans"));
 	
-	rule docInc1 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${doc1}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fdoc2}, filter=${FEATURE_STR}, type="SUFFIX_OR_PREFIX"));
-	
-	
-	rule posbInc1 = (TokenSpanFnDataVocab(fn=(${pos} o ${ctxb1})))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fposb2}, filter=${FEATURE_STR}, type="SUFFIX"));			
-	
-	rule posbInc2 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${pos} o ${ctxb2}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fposb3}, filter=${FEATURE_STR}, type="SUFFIX"));
-	
-	rule posaInc1 = (TokenSpanFnDataVocab(fn=(${pos} o ${ctxa1})))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fposa2}, filter=${FEATURE_STR}, type="PREFIX"));			
-	
-	rule posaInc2 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${pos} o ${ctxa2}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fposa3}, filter=${FEATURE_STR}, type="PREFIX"));
-
-
-	rule ctxbInc1 = (TokenSpanFnDataVocab(fn=(${strStem} o ${ctxb1})))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fctxb2}, filter=${FEATURE_STR}, type="SUFFIX"));
-									
-	rule ctxbInc2 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strStem} o ${ctxb2}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fctxb3}, filter=${FEATURE_STR}, type="SUFFIX"));
-						
-	rule ctxaInc1 = (TokenSpanFnDataVocab(fn=(${strStem} o ${ctxa1})))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fctxa2}, filter=${FEATURE_STR}, type="PREFIX"));	
-								
-	rule ctxaInc2 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strStem} o ${ctxa2}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fctxa3}, filter=${FEATURE_STR}, type="PREFIX"));
-
-
-	rule preInc3 = (TokenSpanFnDataVocab(fn=(${pre3} o ${strDef} o ${ins1})))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fpre4}, filter=${FEATURE_STR}, type="PREFIX"));
-						
-	rule preInc4 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${pre4} o ${strDef} o ${ins1}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fpre5}, filter=${FEATURE_STR}, type="PREFIX"));
-						
-	rule sufInc3 = (TokenSpanFnDataVocab(fn=(${suf3} o ${strDef} o ${ins1})))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fsuf4}, filter=${FEATURE_STR}, type="SUFFIX"));
-						
-	rule sufInc4 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${suf4} o ${strDef} o ${ins1}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fsuf5}, filter=${FEATURE_STR}, type="SUFFIX"));
-
-	
-	rule prehInc3 = (TokenSpanFnDataVocab(fn=(${pre3} o ${strDef} o ${head})))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fpreh4}, filter=${FEATURE_STR}, type="PREFIX"));
-						
-	rule prehInc4 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${pre4} o ${strDef} o ${head}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fpreh5}, filter=${FEATURE_STR}, type="PREFIX"));
-						
-	rule sufhInc3 = (TokenSpanFnDataVocab(fn=(${suf3} o ${strDef} o ${head})))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fsufh4}, filter=${FEATURE_STR}, type="SUFFIX"));
-						
-	rule sufhInc4 = (TokenSpanFnDataFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${suf4} o ${strDef} o ${head}))))
-						-> (TokenSpanFnDataFilteredVocab(vocabFeature=${fsufh5}, filter=${FEATURE_STR}, type="SUFFIX"));
+	rule docInc1 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${doc1})), fn=(${strBoW} o ${doc1})))
+						-> (TokenSpanFnFilteredVocab(
+							vocabFeature=${fdoc2}, vocabFilter=${FEATURE_STR}, vocabFilterType="SUFFIX_OR_PREFIX", fn=(${strBoW} o ${doc2}), tokenExtractor="AllTokenSpans"));
 };
 
 model lg=LogistmarGramression(rules=${rules}, t=".4", l2="0", convergenceEpsilon=".001", maxTrainingExamples="260001", batchSize="100", evaluationIterations="200", maxEvaluationConstantIterations="500", computeTestEvaluations="false")

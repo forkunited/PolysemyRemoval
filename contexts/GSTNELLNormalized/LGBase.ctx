@@ -117,25 +117,10 @@ feature fsent1=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2",
 (ignored) feature fsufh5=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${suf5} o ${strDef} o ${head}));
 
 rs rules=RuleSet() {
-	rule sentInc1 = (TokenSpanFnDataVocab(fn=(${strBoW} o ${sent1})))
-						-> (TokenSpanFnFilteredVocab(
-							vocabFeature=${fsent2}, vocabFilter=${FEATURE_STR}, vocabFilterType="SUFFIX_OR_PREFIX", fn=(${strBoW} o ${sent2}), tokenExtractor="AllTokenSpans"));
-	
-	rule sentInc2 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${sent2})), fn=(${strBoW} o ${sent2})))
-						-> (TokenSpanFnFilteredVocab(
-							vocabFeature=${fsent3}, vocabFilter=${FEATURE_STR}, vocabFilterType="SUFFIX_OR_PREFIX", fn=(${strBoW} o ${sent3}), tokenExtractor="AllTokenSpans"));
-	
 	rule sentDoc1 = (TokenSpanFnDataVocab(fn=(${strBoW} o ${sent1})))
 						-> (TokenSpanFnFilteredVocab(
 							vocabFeature=${fdoc1}, vocabFilter=${FEATURE_STR}, vocabFilterType="EQUAL", fn=(${strBoW} o ${doc1}), tokenExtractor="AllTokenSpans"));
 	
-	rule sentDoc2 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${sent2})), fn=(${strBoW} o ${sent2})))
-						-> (TokenSpanFnFilteredVocab(
-							vocabFeature=${fdoc2}, vocabFilter=${FEATURE_STR}, vocabFilterType="EQUAL", fn=(${strBoW} o ${doc2}), tokenExtractor="AllTokenSpans"));
-	
-	rule docInc1 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${doc1})), fn=(${strBoW} o ${doc1})))
-						-> (TokenSpanFnFilteredVocab(
-							vocabFeature=${fdoc2}, vocabFilter=${FEATURE_STR}, vocabFilterType="SUFFIX_OR_PREFIX", fn=(${strBoW} o ${doc2}), tokenExtractor="AllTokenSpans"));
 };
 
 model lg=LogistmarGramression(rules=${rules}, t=".4", l2="0", convergenceEpsilon=".001", maxTrainingExamples="260001", batchSize="100", evaluationIterations="200", maxEvaluationConstantIterations="500", computeTestEvaluations="false")

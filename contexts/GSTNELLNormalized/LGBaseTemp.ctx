@@ -1,3 +1,21 @@
+// THESE OKAY
+
+rule sentInc1 = (TokenSpanFnDataVocab(fn=(${strBoW} o ${sent1})))
+						-> (TokenSpanFnFilteredVocab(
+							vocabFeature=${fsent2}, vocabFilter=${FEATURE_STR}, vocabFilterType="SUFFIX_OR_PREFIX", fn=(${strBoW} o ${sent2}), tokenExtractor="AllTokenSpans"));
+	
+	rule sentInc2 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${sent2})), fn=(${strBoW} o ${sent2})))
+						-> (TokenSpanFnFilteredVocab(
+							vocabFeature=${fsent3}, vocabFilter=${FEATURE_STR}, vocabFilterType="SUFFIX_OR_PREFIX", fn=(${strBoW} o ${sent3}), tokenExtractor="AllTokenSpans"));
+	
+	rule sentDoc2 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${sent2})), fn=(${strBoW} o ${sent2})))
+						-> (TokenSpanFnFilteredVocab(
+							vocabFeature=${fdoc2}, vocabFilter=${FEATURE_STR}, vocabFilterType="EQUAL", fn=(${strBoW} o ${doc2}), tokenExtractor="AllTokenSpans"));
+	
+	rule docInc1 = (TokenSpanFnFilteredVocab(vocabFeature=TokenSpanFnDataVocabTrie(fn=(${strBoW} o ${doc1})), fn=(${strBoW} o ${doc1})))
+						-> (TokenSpanFnFilteredVocab(
+							vocabFeature=${fdoc2}, vocabFilter=${FEATURE_STR}, vocabFilterType="SUFFIX_OR_PREFIX", fn=(${strBoW} o ${doc2}), tokenExtractor="AllTokenSpans"));
+	
 ///// NEED TO REVISE 
 
 	rule posbInc1 = (TokenSpanFnDataVocab(fn=(${pos} o ${ctxb1})))

@@ -132,8 +132,6 @@ public class ExperimentGSTNELLNormalized {
 						datumTools.getInverseLabelIndicator("UnweightedConstrained"),
 						compositeTestDataSets);
 		
-		context.getDatumTools().getDataTools().getOutputWriter().debugWriteln("Running binary GST validation...");
-		
 		if (!validation.runAndOutput())
 			output.debugWriteln("ERROR: Failed to run experiment.");
 	}

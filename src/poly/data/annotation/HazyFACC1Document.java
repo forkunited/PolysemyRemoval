@@ -619,43 +619,45 @@ public class HazyFACC1Document extends PolyDocument {
 		return true;
 	}
 	
-	private synchronized boolean loadSentence(int sentenceIndex) {
+	private boolean loadSentence(int sentenceIndex) {
 		if (this.tokens[sentenceIndex] != null)
 			return true;
 		
-		try {
-			File sentenceFile = new File(this.sentenceDirPath, this.name + ".s" + sentenceIndex);
-			BufferedReader reader = FileUtil.getFileReader(sentenceFile.getAbsolutePath());
-			StringBuilder str = new StringBuilder();
-			String line = null;
-			while ((line = reader.readLine()) != null)
-				str = str.append(line);
-			reader.close();
+		synchronized (this) {
+			try {
+				File sentenceFile = new File(this.sentenceDirPath, this.name + ".s" + sentenceIndex);
+				BufferedReader reader = FileUtil.getFileReader(sentenceFile.getAbsolutePath());
+				StringBuilder str = new StringBuilder();
+				String line = null;
+				while ((line = reader.readLine()) != null)
+					str = str.append(line);
+				reader.close();
+				
+				JSONObject sentenceJson = new JSONObject(str.toString());
+				JSONArray tokensJson = sentenceJson.getJSONArray("tokens");
+				JSONArray posTagsJson = (sentenceJson.has("posTags")) ? sentenceJson.getJSONArray("posTags") : null;
+				
+				this.tokens[sentenceIndex] = new String[tokensJson.length()];
+	
+				for (int j = 0; j < tokensJson.length(); j++) {
+					this.tokens[sentenceIndex][j] = tokensJson.getString(j);
+				}
+				
+				if (posTagsJson != null) {
+					this.posTags[sentenceIndex] = new PoSTag[posTagsJson.length()];
+					for (int j = 0; j < posTagsJson.length(); j++)
+						this.posTags[sentenceIndex][j] = PoSTag.valueOf(posTagsJson.getString(j));
+				}
+				
+				if (sentenceJson.has("dependencyParse"))
+					this.dependencyParses[sentenceIndex] = DependencyParse.fromString(sentenceJson.getString("dependencyParse"), this, sentenceIndex);
+				if (sentenceJson.has("constituencyParse"))
+					this.constituencyParses[sentenceIndex] = ConstituencyParse.fromString(sentenceJson.getString("constituencyParse"), this, sentenceIndex);
 			
-			JSONObject sentenceJson = new JSONObject(str.toString());
-			JSONArray tokensJson = sentenceJson.getJSONArray("tokens");
-			JSONArray posTagsJson = (sentenceJson.has("posTags")) ? sentenceJson.getJSONArray("posTags") : null;
-			
-			this.tokens[sentenceIndex] = new String[tokensJson.length()];
-
-			for (int j = 0; j < tokensJson.length(); j++) {
-				this.tokens[sentenceIndex][j] = tokensJson.getString(j);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
 			}
-			
-			if (posTagsJson != null) {
-				this.posTags[sentenceIndex] = new PoSTag[posTagsJson.length()];
-				for (int j = 0; j < posTagsJson.length(); j++)
-					this.posTags[sentenceIndex][j] = PoSTag.valueOf(posTagsJson.getString(j));
-			}
-			
-			if (sentenceJson.has("dependencyParse"))
-				this.dependencyParses[sentenceIndex] = DependencyParse.fromString(sentenceJson.getString("dependencyParse"), this, sentenceIndex);
-			if (sentenceJson.has("constituencyParse"))
-				this.constituencyParses[sentenceIndex] = ConstituencyParse.fromString(sentenceJson.getString("constituencyParse"), this, sentenceIndex);
-		
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
 		}
 		
 		return true;

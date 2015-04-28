@@ -40,6 +40,7 @@ public class NELLDataSetFactory {
 	private NELL nell;
 	private DocumentCache documentCache;
 	private String documentDirPath;
+	private int id;
 	
 	public NELLDataSetFactory(PolyDataTools dataTools) {
 		this(dataTools, null, 10000000);
@@ -60,6 +61,7 @@ public class NELLDataSetFactory {
 		
 		this.dataTools.setDocumentCache(this.documentCache);
 		this.documentDirPath = documentDirPath;
+		this.id = 0;
 	}
 	
 	public DataSet<TokenSpansDatum<LabelsList>, LabelsList> constructDataSet(Document document, Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools) {
@@ -70,7 +72,7 @@ public class NELLDataSetFactory {
 		this.documentCache.addDocument(document);
 		
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(datumTools, null);
-		int id = 0;
+
 		List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
 		for (TokenSpanCached np : nps) {
 			TokenSpansDatum<LabelsList> datum = null;
@@ -86,13 +88,13 @@ public class NELLDataSetFactory {
 				}
 				LabelsList labels = inverseLabelIndicator.label(weights, indicators);
 				
-				datum = new TokenSpansDatum<LabelsList>(id, np, labels, this.nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())));
+				datum = new TokenSpansDatum<LabelsList>(this.id, np, labels, this.nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())));
 			} else {
-				datum = new TokenSpansDatum<LabelsList>(id, np, null, false);
+				datum = new TokenSpansDatum<LabelsList>(this.id, np, null, false);
 			}
 			
 			data.add(datum);
-			id++;
+			this.id++;
 		}
 		
 		return data;
@@ -243,8 +245,9 @@ public class NELLDataSetFactory {
 			output.debugWriteln("Loading data set...");
 			data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 			try {
-				if (!data.deserialize(FileUtil.getFileReader(file.getAbsolutePath())))
+				if (!data.deserialize(FileUtil.getFileReader(file.getAbsolutePath()), this.id))
 					return null;
+				this.id += data.size();
 			} catch (Exception e) {
 				return null;
 			}
@@ -269,7 +272,6 @@ public class NELLDataSetFactory {
 		File documentDir = new File(this.documentDirPath);
 		File[] documentFiles = documentDir.listFiles();
 		Random r = this.dataTools.getGlobalRandom();
-		int id = 0;
 		for (File documentFile : documentFiles) {
 			if (r.nextDouble() >= dataFraction)
 				continue;
@@ -280,9 +282,9 @@ public class NELLDataSetFactory {
 				String npStr = np.toString();
 				List<Pair<String, Double>> categories = this.nell.getNounPhraseNELLWeightedCategories(npStr, 0.0);
 				LabelsList labels = new LabelsList(categories);
-				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, labels, this.nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())));
+				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(this.id, np, labels, this.nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())));
 				data.add(datum);
-				id++;
+				this.id++;
 			}
 		}
 		
@@ -295,7 +297,7 @@ public class NELLDataSetFactory {
 		File documentDir = new File(this.documentDirPath);
 		File[] documentFiles = documentDir.listFiles();
 		Map<String, Integer> labelCounts = new HashMap<String, Integer>();
-		int id = 0;
+
 		Set<String> unsaturatedLabels = new HashSet<String>();
 		for (String label : labels.getLabels()) {
 			labelCounts.put(label, 0);
@@ -338,9 +340,9 @@ public class NELLDataSetFactory {
 					}
 				}
 				
-				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, npLabels, false);
+				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(this.id, np, npLabels, false);
 				data.add(datum);
-				id++;
+				this.id++;
 			}
 			
 			if (unsaturatedLabels.isEmpty()) {
@@ -355,7 +357,7 @@ public class NELLDataSetFactory {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 		File documentDir = new File(this.documentDirPath);
 		File[] documentFiles = documentDir.listFiles();
-		int id = 0;
+
 		for (File documentFile : documentFiles) {
 			Document document = this.dataTools.getDocumentCache().getDocument(documentFile.getName());
 			List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
@@ -366,9 +368,9 @@ public class NELLDataSetFactory {
 				if (categories.size() != 0)
 					continue;
 				
-				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, null, false);
+				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(this.id, np, null, false);
 				data.add(datum);
-				id++;
+				this.id++;
 			
 				if (data.size() >= exampleCount)
 					break;
@@ -386,7 +388,6 @@ public class NELLDataSetFactory {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 		File documentDir = new File(this.documentDirPath);
 		File[] documentFiles = documentDir.listFiles();
-		int id = 0;
 		for (File documentFile : documentFiles) {
 			Document document = this.dataTools.getDocumentCache().getDocument(documentFile.getName());
 			List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
@@ -407,9 +408,9 @@ public class NELLDataSetFactory {
 				if (!lowConfidence)
 					continue;
 				
-				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, null, false);
+				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(this.id, np, null, false);
 				data.add(datum);
-				id++;
+				this.id++;
 			
 				if (data.size() >= exampleCount)
 					break;
@@ -427,7 +428,7 @@ public class NELLDataSetFactory {
 		DataSet<TokenSpansDatum<LabelsList>, LabelsList> data = new DataSet<TokenSpansDatum<LabelsList>, LabelsList>(TokenSpansDatum.getLabelsListTools(this.dataTools), null);
 		File documentDir = new File(this.documentDirPath);
 		File[] documentFiles = documentDir.listFiles();
-		int id = 0;
+		
 		for (File documentFile : documentFiles) {
 			Document document = this.dataTools.getDocumentCache().getDocument(documentFile.getName());
 			List<TokenSpanCached> nps = this.nell.extractNounPhrases(document);
@@ -441,9 +442,9 @@ public class NELLDataSetFactory {
 				if (!this.nell.areCategoriesMutuallyExclusive(Arrays.asList(labels.getLabels())))
 					continue;
 				
-				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(id, np, labels, true);
+				TokenSpansDatum<LabelsList> datum = new TokenSpansDatum<LabelsList>(this.id, np, labels, true);
 				data.add(datum);
-				id++;
+				this.id++;
 				
 				if (data.size() >= exampleCount)
 					break;

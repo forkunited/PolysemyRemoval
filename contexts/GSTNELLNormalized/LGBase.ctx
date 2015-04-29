@@ -68,7 +68,7 @@ ts_fn doc2=NGramDocument(n="2", noSentence="true");
 ts_str_fn pos=PoS();
 ts_str_fn strDef=String(cleanFn="PolyDefaultCleanFn");
 ts_str_fn strStem=String(cleanFn="PolyStemCleanFn");
-ts_str_fn strBoW=String(cleanFn="PolyBagOfWordsCleanFn");
+ts_str_fn strBoW=String(cleanFn="PolyBagOfWordsFeatureCleanFn");
 str_fn pre3=Affix(n="3",type="PREFIX"); 
 str_fn suf3=Affix(n="3",type="SUFFIX"); 
 str_fn pre4=Affix(n="4",type="PREFIX"); 

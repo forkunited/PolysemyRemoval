@@ -41,7 +41,6 @@ public class NELLMentionCategorizer {
 	public static final String DEFAULT_MODEL_FILE_PATH_PREFIX = "AregBasel2.model.out.";
 	
 	private Context<TokenSpansDatum<LabelsList>, LabelsList> context;
-	private Context<TokenSpansDatum<Boolean>, Boolean> binaryContext;
 	private NELLDataSetFactory nellDataFactory;
 	private NELL nell;
 	
@@ -83,7 +82,6 @@ public class NELLMentionCategorizer {
 	
 	public NELLMentionCategorizer(Datum.Tools<TokenSpansDatum<LabelsList>, LabelsList> datumTools, String validLabels, double mentionModelThreshold, LabelType labelType, File featuresFile, String modelFilePathPrefix, NELLDataSetFactory nellDataFactory) {
 		this.context = new Context<TokenSpansDatum<LabelsList>, LabelsList>(datumTools);
-		this.binaryContext = context.makeBinary(TokenSpansDatum.getBooleanTools(this.context.getDatumTools().getDataTools()), null);
 		
 		if (nellDataFactory == null)
 			this.nellDataFactory = new NELLDataSetFactory((PolyDataTools)this.context.getDatumTools().getDataTools());
@@ -133,6 +131,8 @@ public class NELLMentionCategorizer {
 			featureReader.close();
 			this.features = featureContext.getFeatures();
 
+			Context<TokenSpansDatum<Boolean>, Boolean> binaryContext = featureContext.makeBinary(TokenSpansDatum.getBooleanTools(this.context.getDatumTools().getDataTools()), null);
+			
 			dataTools.getOutputWriter().debugWriteln("Finished deserializing " + this.features.size() + " features.");
 			
 			for (final String label : this.validLabels.getLabels()) {
@@ -140,7 +140,7 @@ public class NELLMentionCategorizer {
 				if (FileUtil.fileExists(modelFile.getPath())) {
 					dataTools.getOutputWriter().debugWriteln("Deserializing " + label + " model at " + modelFile.getPath());
 					BufferedReader modelReader = FileUtil.getFileReader(modelFile.getPath());
-					Context<TokenSpansDatum<Boolean>, Boolean> modelContext = Context.deserialize(this.binaryContext.getDatumTools(), modelReader);
+					Context<TokenSpansDatum<Boolean>, Boolean> modelContext = Context.deserialize(binaryContext.getDatumTools(), modelReader);
 					modelReader.close();
 					
 					if (modelContext == null || modelContext.getModels().size() == 0) {

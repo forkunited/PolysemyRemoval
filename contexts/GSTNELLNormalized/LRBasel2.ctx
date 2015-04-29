@@ -60,7 +60,7 @@ ts_fn sent1=NGramSentence(n="1", noSpan="true");
 ts_str_fn pos=PoS();
 ts_str_fn strDef=String(cleanFn="PolyDefaultCleanFn");
 ts_str_fn strStem=String(cleanFn="PolyStemCleanFn");
-ts_str_fn strBoW=String(cleanFn="PolyBagOfWordsCleanFn");
+ts_str_fn strBoW=String(cleanFn="PolyBagOfWordsFeatureCleanFn");
 str_fn pre=Affix(n="3",type="PREFIX"); 
 str_fn suf=Affix(n="3",type="SUFFIX"); 
 str_fn filter=Filter(type="SUBSTRING");

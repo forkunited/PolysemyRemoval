@@ -69,12 +69,12 @@ ts_str_fn pos=PoS();
 ts_str_fn strDef=String(cleanFn="PolyDefaultCleanFn");
 ts_str_fn strStem=String(cleanFn="PolyStemCleanFn");
 ts_str_fn strBoW=String(cleanFn="PolyBagOfWordsFeatureCleanFn");
-str_fn pre3=Affix(n="3",type="PREFIX"); 
-str_fn suf3=Affix(n="3",type="SUFFIX"); 
-str_fn pre4=Affix(n="4",type="PREFIX"); 
-str_fn suf4=Affix(n="4",type="SUFFIX"); 
-str_fn pre5=Affix(n="5",type="PREFIX"); 
-str_fn suf5=Affix(n="5",type="SUFFIX"); 
+str_fn pre3=Affix(nMin="3", nMax="3", type="PREFIX"); 
+str_fn suf3=Affix(nMin="3", nMax="3",type="SUFFIX"); 
+str_fn pre4=Affix(nMin="4", nMax="4",type="PREFIX"); 
+str_fn suf4=Affix(nMin="4", nMax="4",type="SUFFIX"); 
+str_fn pre5=Affix(nMin="5", nMax="5",type="PREFIX"); 
+str_fn suf5=Affix(nMin="5", nMax="5",type="SUFFIX"); 
 str_fn filter_ss=Filter(type="SUBSTRING");
 str_fn filter_s=Filter(type="SUFFIX");
 str_fn filter_p=Filter(type="PREFIX");
@@ -93,12 +93,12 @@ feature fpreh3=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2",
 feature fsufh3=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${suf3} o ${strDef} o ${head}));
 feature fpre3=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${pre3} o ${strDef} o ${ins1}));
 feature fsuf3=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${suf3} o ${strDef} o ${ins1}));
-feature fsent1=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${sent1}));
+feature fsent1=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${sent1}));
 
-(ignored) feature fsent2=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${sent2}));
-(ignored) feature fsent3=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${sent3}));
-(ignored) feature fdoc1=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${doc1}));
-(ignored) feature fdoc2=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strBoW} o ${doc2}));
+(ignored) feature fsent2=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${sent2}));
+(ignored) feature fsent3=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${sent3}));
+(ignored) feature fdoc1=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${doc1}));
+(ignored) feature fdoc2=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${doc2}));
 (ignored) feature fctxb2=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${ctxb2}));
 (ignored) feature fctxb3=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${ctxb3}));
 (ignored) feature fctxa2=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${strStem} o ${ctxa2}));
@@ -122,7 +122,7 @@ rs rules=RuleSet() {
 								vocabFeature=${fdoc1}, 
 								vocabFilterFn=Filter(filter=${SRC_TERM}, type="EQUAL"), 
 								vocabFilterInit="FULL", 
-								fn=(${strBoW} o ${doc1}), 
+								fn=(${strStem} o ${doc1}), 
 								tokenExtractor="AllTokenSpans") {
 									value referenceName = ${RULE};
 								});

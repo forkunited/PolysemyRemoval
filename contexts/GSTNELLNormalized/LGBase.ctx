@@ -124,7 +124,7 @@ rs rules=RuleSet() {
 								vocabFilterInit="FULL", 
 								fn=(${strBoW} o ${doc1}), 
 								tokenExtractor="AllTokenSpans") {
-									value referenceName = ${RULE}
+									value referenceName = ${RULE};
 								});
 	
 };

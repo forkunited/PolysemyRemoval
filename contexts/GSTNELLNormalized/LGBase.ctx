@@ -117,7 +117,7 @@ feature fsent1=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2",
 (ignored) feature fsufh5=TokenSpanFnDataVocabTrie(scale="INDICATOR", minFeatureOccurrence="2", tokenExtractor="AllTokenSpans", fn=(${suf5} o ${strDef} o ${head}));
 
 rs rules=RuleSet() {
-	rule sentDoc1 = (TokenSpanFnDataVocab(fn=(${strBoW} o ${sent1})))
+	rule sentDoc1 = (TokenSpanFnDataVocab(fn=(${strStem} o ${sent1})))
 						-> (TokenSpanFnFilteredVocab(
 								vocabFeature=${fdoc1}, 
 								vocabFilterFn=Filter(filter=${SRC_TERM}, type="EQUAL"), 
@@ -129,7 +129,7 @@ rs rules=RuleSet() {
 	
 };
 
-model lg=LogistmarGramression(rules=${rules}, t=".2", l2="0", convergenceEpsilon=".001", maxTrainingExamples="260001", batchSize="100", evaluationIterations="200", maxEvaluationConstantIterations="500", computeTestEvaluations="false")
+model lg=LogistmarGramression(rules=${rules}, t=".4", l2="0", convergenceEpsilon=".001", maxTrainingExamples="260001", batchSize="100", evaluationIterations="200", maxEvaluationConstantIterations="500", computeTestEvaluations="false")
 {
 	array validLabels=${validLabels};
 };

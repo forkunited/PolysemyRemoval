@@ -75,7 +75,7 @@ str_fn pre4=Affix(n="4",type="PREFIX");
 str_fn suf4=Affix(n="4",type="SUFFIX"); 
 str_fn pre5=Affix(n="5",type="PREFIX"); 
 str_fn suf5=Affix(n="5",type="SUFFIX"); 
-str_fn filter=Filter(type="SUBSTRING");
+str_fn filter_ss=Filter(type="SUBSTRING");
 str_fn filter_s=Filter(type="SUFFIX");
 str_fn filter_p=Filter(type="PREFIX");
 
@@ -119,7 +119,13 @@ feature fsent1=TokenSpanFnDataVocab(scale="INDICATOR", minFeatureOccurrence="2",
 rs rules=RuleSet() {
 	rule sentDoc1 = (TokenSpanFnDataVocab(fn=(${strBoW} o ${sent1})))
 						-> (TokenSpanFnFilteredVocab(
-							vocabFeature=${fdoc1}, vocabFilter=${FEATURE_STR}, vocabFilterType="EQUAL", fn=(${strBoW} o ${doc1}), tokenExtractor="AllTokenSpans"));
+								vocabFeature=${fdoc1}, 
+								vocabFilterFn=Filter(filter=${SRC_TERM}, type="EQUAL"), 
+								vocabFilterInit="FULL", 
+								fn=(${strBoW} o ${doc1}), 
+								tokenExtractor="AllTokenSpans") {
+									value referenceName = ${RULE}
+								});
 	
 };
 

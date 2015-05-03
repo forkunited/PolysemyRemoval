@@ -2,6 +2,7 @@ package poly.data;
 
 import java.io.File;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import poly.data.annotation.DocumentCache;
 import poly.util.PolyProperties;
@@ -38,24 +39,40 @@ public class PolyDataTools extends DataTools {
 	
 		// For cleaning strings, and replacing all white space with "_"
 		this.addCleanFn(new DataTools.StringTransform() {
+			private ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<String, String>();
+			
 			public String toString() {
 				return "PolyDefaultCleanFn";
 			}
 			
 			@Override
 			public String transform(String str) {
-				return PolyDataTools.cleanString(str, false, false, false);
+				if (!this.cache.containsKey(str)) {
+					String transformed = PolyDataTools.cleanString(str, false, false, false);
+					this.cache.put(str, transformed);
+					return transformed;
+				} else {
+					return this.cache.get(str);
+				}
 			}
 		});
 		
 		this.addCleanFn(new DataTools.StringTransform() {
+			private ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<String, String>();
+			
 			public String toString() {
 				return "PolyStemCleanFn";
 			}
 			
 			@Override
 			public String transform(String str) {
-				return PolyDataTools.cleanString(str, true, true, true);
+				if (!this.cache.containsKey(str)) {
+					String transformed = PolyDataTools.cleanString(str, true, true, true);
+					this.cache.put(str, transformed);
+					return transformed;
+				} else {
+					return this.cache.get(str);
+				}
 			}
 		});
 		
